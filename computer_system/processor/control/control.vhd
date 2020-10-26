@@ -1,0 +1,12 @@
+LIBRARY IEEE;
+USE IEEE.std_logic_1164.ALL;
+ENTITY control IS
+	PORT(
+		
+	);
+END ENTITY control;
+ARCHITECTURE bhv OF control IS
+
+BEGIN
+
+END;
