@@ -6,8 +6,8 @@
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
-ENTITY processor IS
+ENTITY hal8080 IS
     PORT (
 
     );
-END ENTITY processor;
+END ENTITY hal8080;
