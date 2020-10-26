@@ -1,10 +1,10 @@
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
+USE IEEE.numeric_Std.ALL;
 ENTITY data_path IS
 	PORT(
 		clk			: IN 	std_logic;
 		reset			: IN 	std_logic;
-
 	-- From the controller
 		micro_inst 	: IN 	std_logic_vector(25 DOWNTO 0);	
 	-- To the controller
@@ -14,7 +14,6 @@ ENTITY data_path IS
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
 		ir				: OUT std_logic_vector(15 DOWNTO 0)
-		
 	);
 END ENTITY data_path;
 
@@ -24,9 +23,12 @@ ARCHITECTURE bhv OF data_path IS
 	
 	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
 
-	SIGNAL reg : reg_vector; --32 registers of 16 bits
-										--use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+	SIGNAL reg 			: reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+	SIGNAL busA, busB	: std_logic_vector(15 DOWNTO 0);
+	
+									
 -- Split up the micro instruction									
+
 	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(25 DOWNTO 21);
 	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(19 DOWNTO 15);
 	SIGNAL muxA		: std_logic 							:= micro_inst(20);			-- 0 then take MIR A or 1 take from %r 
@@ -42,7 +44,7 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= "0000000000000000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= "0000000000000000";
 	
--- MUX DEC
+-- MUX DECODER
 	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL mux2decB: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	
@@ -102,6 +104,48 @@ BEGIN
 		ELSE
 			Abus <= reg(to_integer(unsigned(addr2decA)));
 			Bbus <= reg(to_integer(unsigned(addr2decB)));
-		END PROCESS DECODER:
+		END IF;
+	END PROCESS DECODER:
 			
+
+	reg(0) <= x"0000";-- make sure reg(0) is always 0
+	
+	--put data in registerB on the B bus	
+	PROCESS (clk, reset) 
+		VARIABLE regB : integer;
+	BEGIN 
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+		regB := to_integer(unsigned(addrB));
+			busB <= reg(regB);
+		END IF;
+	END PROCESS;
+
+	--put data in registerA on the A bus	
+	PROCESS (clk, reset) 
+		VARIABLE regA : integer;
+	BEGIN 
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			regA := to_integer(unsigned(addrA));
+			busA <= reg(regA);
+		END IF;
+	END PROCESS;
+	
+	--pseudo random generator
+	PROCESS (clk, reset)
+		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
+		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
+	BEGIN
+		IF reset = '0' THEN
+			random := seed;
+		ELSIF rising_edge(clk) THEN
+			IF random = x"0000" THEN
+				random := seed;
+			ELSE
+				random := RESIZE((random * seed), 16);
+			END IF;		
+		END IF;
+	END PROCESS;
+	
 END;
