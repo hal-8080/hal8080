@@ -18,7 +18,7 @@ ENTITY hal8080 IS
         leds : OUT STD_LOGIC_VECTOR(9 DOWNTO 0); -- leds
         -- INPUT
         switches : IN STD_LOGIC_VECTOR(9 DOWNTO 0); -- user switches
-        buttons : IN STD_LOGIC_VECTOR(3 DOWNTO 0); -- user buttons
+        buttons : IN STD_LOGIC_VECTOR(3 DOWNTO 0) -- user buttons
     );
 END ENTITY hal8080;
 
@@ -27,7 +27,8 @@ BEGIN
 
     -- setup, used to burn the main memory and setup.
     setup: ENTITY work.setup PORT MAP(
-        clk => clk
+        clk => clk,
+        leds => leds
     );
     -- memory, the main memory.
     memory:ENTITY work.memory PORT MAP(
