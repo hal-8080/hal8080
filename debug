@@ -71,15 +71,23 @@ LDC %rd, CONST		Load Constant
 AND %rd, %rs		Bitwise AND 
 	Bitwise and between registries %rd and %rs, store result in %rd
 	Set ZEROFLAG to true if result is 0
+CP %rd, %rs			Copy
+	Copy the contents in %rs to %rd
 
-BZERO CONST			Branch if zero
-	Jump to address CONST if ZEROFLAG is true
+
+BZERO %rd			Branch if zero
+	Jump to address stored in %rd if ZEROFLAG is true
 CALL %rd			Call subroutine
 	%RetAddr <- PC, PC <- $rd
 RET					Return from subroutine 
 	PC <- %RetAddr + 2
 
 ------------------------------------------------
+
+	#
+	#	FIX THE DEBUG/USER STATUS BIT ISSUE
+	#
+
 
 	#Store address of start of user program in dbgPC (can only do 8 bits at a time)
 SETHI %dbgPC, USERMEM
@@ -88,44 +96,59 @@ SETLO %dbgPC, USERMEM
 	#Store first user program instruction in dbgIR
 LD %dbgIR, %dbgPC
 
-	#Load state of levers in dbgLeverState (can only do 8 bits at a time)
-SETHI %TempAddr, SWMEM
-SETLO %TempAddr, SWMEM
-LD %LeverState, %TempAddr
 
-	#Check if lever 8 is on
-	#	if on jump to STEPMODE
-	#	if off jump to MEMORYMODE
-SETHI %TempVal, x00
-SETLO %TempVal, x80
-AND %TempVal, %LeverState
-BZERO
-If lever 8 == on
-	Jump STEPMODE
-If lever 8 == off
-	Jump MEMORYMODE
+STARTJUMP
+		#Load state of levers in dbgLeverState (can only do 8 bits at a time)
+	SETHI %TempAddr, SWMEM
+	SETLO %TempAddr, SWMEM
+	LD %LeverState, %TempAddr
+	
+		#Check if lever 8 is on
+		#	if off 	jump to MEMORYMODE
+		#	else 	jump to STEPMODE
+	SETHI %TempVal, x00
+	SETLO %TempVal, x80
+	AND %TempVal, %LeverState
+	BZERO MEMORYMODE
+	BA STEPMODE
 
 
 STEPMODE
-	Load leverstate in DBG LeverState
-	Load buttonstate in DBG ButtonState
+		#Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
+	CP %dbgAddr, %dbgPC
+	CP %dbgValue, %dbgIR
+
+	#
+	#	IMPORT BUTTONS
+	#	
+	#	CHECK IF BUTTON3 IS HIGH, IF YES EXECUTE INSTRUCTION
+	#
+
+		#Check if lever 7 is on
+		#	if off 	write the user PC to display
+		#	else	write the user IR to display
+	SETHI %TempVal, x01
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO DISPADDR
+	BA DISPVAL
 	
-	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
+
+DISPADDR
+	#
+	#	DISPLAY VALUE IN dbgAddr ONTO DISPLAY
+	#	
+	BA STARTJUMP
 	
-	If lever 7 == on 		(Write Address/Value to display)
-		Write DBG:ProgramCounter to display
-	If lever 7 == off 		(Write Address/Value to display)
-		Write DBG:InstructionRegister to display	
-	If button3 == HIGH
-		Execute instruction (???)
-	Jump STEPMODE
+DISPVAL
+	#
+	#	DISPLAY VALUE IN dbgValue ONTO DISPLAY
+	#	
+	BA STARTJUMP
+
+
 
 MEMORYMODE
-	Load leverstate in DBG LeverState
-	Load buttonstate in DBG ButtonState
-	
-	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
-	
 	If lever 6 == on		(Registry/MainMemory)
 		Set DBG addr = DBG PC
 		Set DBG value = value at DBG PC
