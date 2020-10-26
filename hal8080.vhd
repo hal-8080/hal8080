@@ -41,6 +41,7 @@ BEGIN
         clk => clk
     );
 
+    -- Async reset when all buttons are pressed at once.
     reset <= '0' WHEN buttons = "0000" else '1';
 
 END structure;
