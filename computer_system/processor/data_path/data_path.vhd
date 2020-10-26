@@ -65,5 +65,21 @@ BEGIN
 		END IF;
 	END PROCESS;
 	
+	--pseudo random generator
+	PROCESS (clk, reset)
+		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
+		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
+	BEGIN
+		IF reset = '0' THEN
+			random := seed;
+		ELSIF rising_edge(clk) THEN
+			IF random = x"0000" THEN
+				random := seed;
+			ELSE
+				random := RESIZE((random * seed), 16);
+			END IF;		
+		END IF;
+	END PROCESS;
+	
 		
 END;
