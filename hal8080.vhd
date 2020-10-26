@@ -6,8 +6,14 @@
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
+
 ENTITY hal8080 IS
     PORT (
-
+        clk : IN std_logic
     );
 END ENTITY hal8080;
+
+ARCHITECTURE structure OF hal8080 IS
+BEGIN
+
+END structure;
