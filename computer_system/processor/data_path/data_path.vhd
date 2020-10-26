@@ -4,6 +4,7 @@ ENTITY data_path IS
 	PORT(
 		clk			: IN 	std_logic;
 		reset			: IN 	std_logic;
+<<<<<<< HEAD
 	-- From the controller
 		micro_inst 	: IN 	std_logic_vector(25 DOWNTO 0);	
 	-- To the controller
@@ -13,10 +14,20 @@ ENTITY data_path IS
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
 		ir				: OUT std_logic_vector(15 DOWNTO 0);
+=======
+		instruction : IN 	std_logic_vector(15 DOWNTO 0);
+		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
+		statusN		: OUT std_logic;
+		statusZ		: OUT std_logic;
+		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
+		mmData		: OUT std_logic_vector(15 DOWNTO 0);
+		ir				: OUT std_logic_vector(15 DOWNTO 0)
+>>>>>>> 5eb785d629fcf1c670645506ea261df98e6df8db
 		
 	);
 END ENTITY data_path;
 ARCHITECTURE bhv OF data_path IS
+<<<<<<< HEAD
 	
 	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
 
@@ -36,6 +47,12 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL instr	: 
 	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
 		SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
+=======
+	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
+	
+	SIGNAL reg : reg_vector; --32 registers of 16 bits
+										--use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+>>>>>>> 5eb785d629fcf1c670645506ea261df98e6df8db
 BEGIN
 
 	-- DecoderA
