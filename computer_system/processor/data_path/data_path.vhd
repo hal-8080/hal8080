@@ -10,7 +10,7 @@ ENTITY data_path IS
 		statusZ		: OUT std_logic;
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
-		ir				: OUT integer -- have to set a range
+		ir				: OUT std_logic_vector(15 DOWNTO 0)
 		
 	);
 END ENTITY data_path;
