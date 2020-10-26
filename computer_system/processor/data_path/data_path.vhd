@@ -1,5 +1,6 @@
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
+USE IEEE.numeric_Std.ALL;
 ENTITY data_path IS
 	PORT(
 		clk			: IN 	std_logic;
@@ -20,7 +21,9 @@ ARCHITECTURE bhv OF data_path IS
 	
 	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
 
-	SIGNAL reg : reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+	SIGNAL reg 			: reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+	SIGNAL busA, busB	: std_logic_vector(15 DOWNTO 0);
+	
 									
 -- Split up the micro instruction									
 	SIGNAL addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(25 DOWNTO 21);
@@ -38,9 +41,29 @@ ARCHITECTURE bhv OF data_path IS
 	
 BEGIN
 
-		reg(0) <= x"0000";		-- make sure reg(0) is always 0
-		
+	reg(0) <= x"0000";-- make sure reg(0) is always 0
+	
+	--put data in registerB on the B bus	
+	PROCESS (clk, reset) 
+		VARIABLE regB : integer;
+	BEGIN 
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+		regB := to_integer(unsigned(addrB));
+			busB <= reg(regB);
+		END IF;
+	END PROCESS;
 
-
+	--put data in registerA on the A bus	
+	PROCESS (clk, reset) 
+		VARIABLE regA : integer;
+	BEGIN 
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			regA := to_integer(unsigned(addrA));
+			busA <= reg(regA);
+		END IF;
+	END PROCESS;
+	
 		
 END;
