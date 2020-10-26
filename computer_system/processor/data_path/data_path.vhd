@@ -24,7 +24,6 @@ ARCHITECTURE bhv OF data_path IS
 	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
 
 	SIGNAL reg 			: reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
-	SIGNAL busA, busB	: std_logic_vector(15 DOWNTO 0);
 	
 									
 -- Split up the micro instruction									
@@ -49,10 +48,18 @@ ARCHITECTURE bhv OF data_path IS
 -- MUX DECODER
 	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL mux2decB: std_logic_vector(4 DOWNTO 0)	:= "00000";
+
+-- from alu & memory to register
+	SIGNAL ALUout	: std_logic_vector(15 DOWNTO 0);
 	
 
 BEGIN
 
+	reg(0) <= x"0000";-- make sure reg(0) is always 0
+	
+	
+	
+	--A MUX & B MUX
 	MUX:PROCESS(clk, reset)
 		BEGIN
 	IF reset = '0' THEN
@@ -94,7 +101,7 @@ BEGIN
 		END IF;
 	END PROCESS MUX;
 
-	
+	--THE DECODERS
 	DECODER:PROCESS(clk, reset)
 		BEGIN
 		IF reset = '0' THEN
@@ -108,13 +115,34 @@ BEGIN
 			END IF;
 		END IF;
 	END PROCESS DECODER;
-			
-
-	reg(0) <= x"0000";-- make sure reg(0) is always 0
+		
+	--THE ALU	
+	ALU:PROCESS(clk,reset)
+	BEGIN
 	
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			CASE ALU IS
+			WHEN x"0" => ALUout <= Abus AND Bbus; --AND
+			WHEN x"1" => ALUout <= Abus NAND BbUS;--NAND
+			WHEN x"2" => ALUout <= Abus OR BbUS;--OR
+			WHEN x"3" => ALUout <= Abus OR (NOT bBUS);--ORN
+			WHEN x"4" => ALUout <= Abus + BbUS;--ADD
+			WHEN x"5" => ALUout <= Abus * BbUS;--MUL
+			WHEN x"6" => ALUout <= Abus * (BbUS**(-1));--DIV
+			WHEN x"7" => null;--NOP
+			WHEN x"8" => ALUout <= Abus(14 DOWNTO 0) & '0';--SHIFTL
+			WHEN x"9" => ALUout <= Abus(15) & Abus(15 DOWNTO 1);--SHIFTR
+			WHEN x"A" => ALUout <= NOT Abus;--INV
+			WHEN x"B" => ALUout <= Abus** Bbus;--POW
+			WHEN OTHERS => null;--EQL, GT, LT, RAND
+			END CASE;
+		END IF;
+	
+	END PROCESS ALU;
 	
 	--pseudo random generator
-	PROCESS (clk, reset)
+	RANDO:PROCESS (clk, reset)
 		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
 		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
 	BEGIN
@@ -127,6 +155,7 @@ BEGIN
 				random := RESIZE((random * seed), 16);
 			END IF;		
 		END IF;
-	END PROCESS;
+	END PROCESS RANDO;
+	
 	
 END;
