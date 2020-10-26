@@ -9,7 +9,16 @@ USE IEEE.std_logic_1164.ALL;
 
 ENTITY hal8080 IS
     PORT (
-        clk : IN std_logic
+        -- INTERNALS
+        clk : IN std_logic; -- 50 Mhz Clock
+        -- OUTPUT
+        seg0, seg1 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0); -- first segment display pair
+        seg2, seg3 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0); -- second segment display piar
+        seg4, seg5 : OUT STD_LOGIC_VECTOR(6 DOWNTO 0); -- third segment display piar
+        leds : OUT STD_LOGIC_VECTOR(9 DOWNTO 0); -- leds
+        -- INPUT
+        switches : IN STD_LOGIC_VECTOR(9 DOWNTO 0); -- user switches
+        buttons : IN STD_LOGIC_VECTOR(3 DOWNTO 0); -- user buttons
     );
 END ENTITY hal8080;
 
