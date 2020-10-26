@@ -1,0 +1,15 @@
+vendor_name = ModelSim
+source_file = 1, C:/Edit/FPGA/hal8080/processor/datapath/datapath.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/processor/control/control.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/processor/processor.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/memory/memory.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/setup/setup.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/hal8080.vhd
+source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/prmtvs_b.vhd
+source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/prmtvs_p.vhd
+source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/timing_b.vhd
+source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/timing_p.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/db/hal8080.cbx.xml
+design_name = hal8080
+instance = comp, \clk~input\, clk~input, hal8080, 1
+instance = comp, \~QUARTUS_CREATED_GND~I\, ~QUARTUS_CREATED_GND~I, hal8080, 1
