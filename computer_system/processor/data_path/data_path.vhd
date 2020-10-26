@@ -40,97 +40,78 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL jump		: std_logic_vector(7 DOWNTO 0) 	:= micro_inst(7 DOWNTO 0);
 	
 	SIGNAL instr	: std_logic_vector(15 DOWNTO 0) 	:= reg(31);
-	SIGNAL 
-	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= "0000000000000000";
-	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= "0000000000000000";
+	
+	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
+	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
+	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
+	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
 	
 -- MUX DECODER
 	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL mux2decB: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	
-	
-	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
-	
-	SIGNAL reg : reg_vector; --32 registers of 16 bits
-										--use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
 
 BEGIN
 
-	MUX:PROCESS()
+	MUX:PROCESS(clk, reset)
 		BEGIN
-		
+	IF reset = '0' THEN
+	ELSIF rising_edge(clk) THEN
 		-- MUX A
-			IF muxA THEN
+			IF muxA = '1' THEN
 				addr2decA <= '0' & instr(12 DOWNTO 9);
 			ELSE
 				addr2decA <= micro_addrA;
 			END IF;
 			
 		-- MUX B	
-			IF muxB THEN	-- The role of i [instr(13)] depents on OP1
+			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(15 DOWNTO 14) = "00" THEN				-- ARITHMATIC
-					IF NOT(instr(13)) THEN
-						addr2decB <= '0' & instr(3 DOWNTO 0);
+					IF instr(13) = '0' THEN
+						addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
 					ELSE
-						Bbus <= "00000000000" & instr(4 DOWNTO 0);
+						Bbus <= "00000000000" & instr(4 DOWNTO 0); -- Bbus <= constant in assembly instruction
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "01" THEN			-- MEMORY
-					IF NOT(instr(13)) THEN
-						addr2decB <= "0" & instr(3 DOWNTO 0);
+					IF instr(13) = '0' THEN
+						addr2decB <= "0" & instr(3 DOWNTO 0);	-- addr2decB <= B adress of the assemby instruction
 					ELSE
-						Bbus <= "0000000" & instr(7 DOWNTO 0);
+						Bbus <= x"00" & instr(7 DOWNTO 0); -- addr2decB <= constant in assembly instruction
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "10" THEN			-- DISP
-					END IF;
+
 					
 				ELSIF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
-					END IF;
+
 					
 				END IF;
 				
 			ELSE
 				addr2decB <= micro_addrB;
 			END IF;
+		END IF;
 	END PROCESS MUX;
 
 	
-	DECODER:PROCESS(addr2decA, addr2decB)
+	DECODER:PROCESS(clk, reset)
 		BEGIN
-		-- DECODER	set binary addr to integer that points to register
-		IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001")
-			Abus <= reg(to_integer(unsigned(addr2decA)));
-		ELSE
-			Abus <= reg(to_integer(unsigned(addr2decA)));
-			Bbus <= reg(to_integer(unsigned(addr2decB)));
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			-- DECODER	set binary addr to integer that points to register
+			IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001") THEN
+				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
+			ELSE
+				Abus <= reg(to_integer(unsigned(addr2decA)));
+				Bbus <= reg(to_integer(unsigned(addr2decB)));
+			END IF;
 		END IF;
-	END PROCESS DECODER:
+	END PROCESS DECODER;
 			
 
 	reg(0) <= x"0000";-- make sure reg(0) is always 0
 	
-	--put data in registerB on the B bus	
-	PROCESS (clk, reset) 
-		VARIABLE regB : integer;
-	BEGIN 
-		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
-		regB := to_integer(unsigned(addrB));
-			busB <= reg(regB);
-		END IF;
-	END PROCESS;
-
-	--put data in registerA on the A bus	
-	PROCESS (clk, reset) 
-		VARIABLE regA : integer;
-	BEGIN 
-		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
-			regA := to_integer(unsigned(addrA));
-			busA <= reg(regA);
-		END IF;
-	END PROCESS;
 	
 	--pseudo random generator
 	PROCESS (clk, reset)
