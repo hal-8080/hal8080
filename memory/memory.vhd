@@ -53,7 +53,7 @@ ARCHITECTURE bhv OF memory IS
     -- display  - Initialised with FFFF, which makes the segments turned off.
     SIGNAL display  : memory_table(start_display TO start_leds-1)     := (x"FF", x"FF", x"FF", x"FF", x"FF", x"FF");
     -- leds     - Initialised with 0000, which makes the leds turned off.
-    SIGNAL leds     : memory_table(start_leds TO start_switches-1)    := (x"00", x"00");
+    SIGNAL leds     : memory_table(start_leds TO start_switches-1)    := (x"01", x"01");
     -- switches - Initialised with 0000, is updated async.
     SIGNAL switches : memory_table(start_switches TO start_buttons-1) := (x"00", x"00");
     -- buttons  - Initialised with 0000, is updated async.
@@ -61,13 +61,18 @@ ARCHITECTURE bhv OF memory IS
 
 BEGIN
 
-    -- Update IO asyncly based on the values in fake 'memory'.
-    o_seg0 <= bios(start_bios+0)(6 DOWNTO 0); --LOL Test bios!
-    o_seg1 <= ram(start_ram+0)(6 DOWNTO 0);
+    -- Update fake 'memory' asyncly based on the signal values.
+    switches(start_switches+1) <= "000000" & i_switches(9 DOWNTO 8);
+    switches(start_switches) <= i_switches(7 DOWNTO 0);
+    -- Update outputs asyncly based on the values in fake 'memory'.
+    o_seg0 <= display(start_display+0)(6 DOWNTO 0);
+    o_seg1 <= display(start_display+1)(6 DOWNTO 0);
     o_seg2 <= display(start_display+2)(6 DOWNTO 0);
     o_seg3 <= display(start_display+3)(6 DOWNTO 0);
     o_seg4 <= display(start_display+4)(6 DOWNTO 0);
     o_seg5 <= display(start_display+5)(6 DOWNTO 0);
+    -- DEBUG switches.
+    o_leds <= switches(start_switches+1)(1 DOWNTO 0) & switches(start_switches);
     -- buttons(start_buttons) <= i_buttons & x"0";
 
 END bhv;

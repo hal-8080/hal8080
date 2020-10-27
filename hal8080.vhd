@@ -40,7 +40,7 @@ BEGIN
     setup: ENTITY work.setup PORT MAP(
         clk => clk,
         reset => reset,
-        leds => leds
+        leds => fake_leds
     );
     -- memory, the main memory and mapped IO.
     memory:ENTITY work.memory PORT MAP(
@@ -57,7 +57,7 @@ BEGIN
         o_seg0 => seg0, o_seg1 => seg1,
         o_seg2 => seg2, o_seg3 => seg3,
         o_seg4 => seg4, o_seg5 => seg5,
-        o_leds => fake_leds,
+        o_leds => leds,
         i_switches => switches,
         i_buttons => buttons
     );
