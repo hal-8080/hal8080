@@ -20,7 +20,8 @@ ENTITY data_path IS
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
-		ir				: OUT std_logic_vector(15 DOWNTO 0)
+		ir				: OUT std_logic_vector(15 DOWNTO 0);
+		Dig0, dig1, dig2, dig3, dig4, dig5	: OUT std_logic_vector(6 DOWNTO 0)
 	);
 END ENTITY data_path;
 
@@ -63,11 +64,57 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL ALUbool	: boolean;
 	SIGNAL Big_temp_reg: std_logic_vector(15 DOWNTO 0):= x"0000";
 	SIGNAL temp_reg: std_logic_vector(7 DOWNTO 0)	:= x"00";
+
+--Display
+	SIGNAL Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
+	SIGNAL OP3	: std_logic_vector (1 DOWNTO 0);
+   SIGNAL Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
+	SIGNAL DIS	: std_logic;
+	
 	
 --status bits
 	
 	--SIGNAL status	: std_logic_vector(1 DOWNTO 0); --vector of status bits ZN
 	
+--look up table for display port
+	FUNCTION hex2display(nib:std_logic_vector(4 DOWNTO 0)) RETURN std_logic_vector IS
+    VARIABLE res : std_logic_vector(6 DOWNTO 0);
+        BEGIN
+        CASE nib IS          --         low active
+        WHEN "00000" => RETURN NOT "0111111"; --0
+        WHEN "00001" => RETURN NOT "0000110"; --1
+        WHEN "00010" => RETURN NOT "1011011"; --2
+        WHEN "00011" => RETURN NOT "1001111"; --3
+        WHEN "00100" => RETURN NOT "1100110"; --4
+        WHEN "00101" => RETURN NOT "1101101"; --5
+        WHEN "00110" => RETURN NOT "1111101"; --6
+        WHEN "00111" => RETURN NOT "0000111"; --7
+        WHEN "01000" => RETURN NOT "1111111"; --8
+        WHEN "01001" => RETURN NOT "1101111"; --9
+        WHEN "01010" => RETURN NOT "1110111"; --A
+        WHEN "01011" => RETURN NOT "1111100"; --B
+        WHEN "01100" => RETURN NOT "0111001"; --C
+        WHEN "01101" => RETURN NOT "1011110"; --D
+        WHEN "01110" => RETURN NOT "1111001"; --E
+        WHEN "01111" => RETURN NOT "1110001"; --F
+        WHEN "10000" => RETURN NOT "1110110"; --H
+        WHEN "10001" => RETURN NOT "0111000"; --L
+        WHEN "10010" => RETURN NOT "1101110"; --Y
+        WHEN "10011" => RETURN NOT "0011110"; --J
+        WHEN "10100" => RETURN NOT "1010100"; --n
+        WHEN "10101" => RETURN NOT "1110011"; --p
+        WHEN "10110" => RETURN NOT "1100111"; --q
+        WHEN "10111" => RETURN NOT "1111000"; --t
+        WHEN "11000" => RETURN NOT "0111110"; --u
+        WHEN "11001" => RETURN NOT "0111101"; --G
+        WHEN "11010" => RETURN NOT "0000001"; --UP
+        WHEN "11011" => RETURN NOT "1000000"; --MID
+        WHEN "11100" => RETURN NOT "0001000"; --BOT
+        WHEN "11101" => RETURN NOT "0000110"; --LEFT
+        WHEN "11110" => RETURN NOT "0110000"; --RIGHT
+        WHEN OTHERS => RETURN NOT "0000000";  --EMPTY
+        END CASE;
+    END hex2display;
 
 BEGIN
 	statusZ <= ALUout(16);
@@ -105,7 +152,24 @@ BEGIN
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "10" THEN			-- DISP
-					
+				   OP3  <= instr(12 DOWNTO 11);
+					IF instr(13) = '0' THEN 
+						  IF instr(8) = '0' THEN
+								--Bregister split it up in 16 bits and set those with a + '0' so that they are 5 long
+								--put them in seg1, seg2, seg3 and seg4
+								Seg1<='0'& Bbus(3 DOWNTO 0);
+								Seg2<='0'& Bbus(7 DOWNTO 4);
+								Seg3<='0'& Bbus(11 DOWNTO 8);
+								Seg4<='0'& Bbus(15 DOWNTO 12);
+							ELSE
+								 Seg1<=Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
+								 Seg2<=Bbus(9 DOWNTO 5);
+						  END IF;
+
+               ELSE
+                    Seg1 <= instr(9 DOWNTO 5);
+                    Seg2 <= instr(4 DOWNTO 0);
+					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
 					IF instr(13) = '0' THEN							-- Branch
@@ -246,5 +310,28 @@ BEGIN
 		END IF;
 	END PROCESS RANDO;
 	
-	
+	--DISPLAY
+Display:PROCESS (clk, reset)
+    BEGIN
+
+        IF reset = '0' THEN
+		  
+        ELSIF rising_edge(clk) THEN
+					CASE OP3 IS
+					WHEN "00" => Digi0 <= hex2display(Seg1); Digi1 <= hex2display(Seg2);Digi2 <= hex2display(Seg3);Digi3 <= hex2display(Seg4);
+					WHEN "01" => Digi2 <= hex2display(Seg1); Digi3 <= hex2display(Seg2);Digi4 <= hex2display(Seg3);Digi5 <= hex2display(Seg4);
+					WHEN "10" => Digi4 <= hex2display(Seg1); Digi5 <= hex2display(Seg2);
+					WHEN OTHERS => null;
+					END CASE;
+
+        END IF;
+    END PROCESS    Display;
+
+    Dig0 <= Digi0;
+    Dig1 <= Digi1;
+    Dig2 <= Digi2;
+    Dig3 <= Digi3;
+    Dig4 <= Digi4;
+    Dig5 <= Digi5;
+	 
 END;
