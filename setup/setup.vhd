@@ -18,6 +18,8 @@ END ENTITY setup;
 ARCHITECTURE bhv OF setup IS
     SIGNAL cnt : integer RANGE 0 TO 50000000 := 0;
     SIGNAL ledcnt : unsigned(9 downto 0) := (others => '0');
+    TYPE memory_table IS ARRAY (natural range <>) OF std_logic_vector(7 DOWNTO 0);
+    SIGNAL test     : memory_table(8 TO 9) := (x"00", x"FF");
 BEGIN
     PROCESS(clk, reset)
     BEGIN
