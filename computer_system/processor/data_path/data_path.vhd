@@ -147,13 +147,7 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
-
-			ELSIF (instr(15 DOWNTO 13) = "000") OR (instr(15 DOWNTO 13) = "010") THEN	-- For ALU and MEM when i '0'
-				Abus <= reg(to_integer(unsigned(addr2decA)));
-				Bbus <= reg(to_integer(unsigned(addr2decB)));
-			END IF;
-			
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)			
 		END IF;
 	END PROCESS DECODER;
 		
