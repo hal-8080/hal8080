@@ -103,7 +103,7 @@ STARTJUMP
 	SETLO %TempAddr, SWMEM
 	LD %LeverState, %TempAddr
 	
-		#Check if lever 8 is on
+		#Check if lever 8 is HIGH
 		#	if off 	jump to MEMORYMODE
 		#	else 	jump to STEPMODE
 	SETHI %TempVal, x00
@@ -124,7 +124,7 @@ STEPMODE
 	#	CHECK IF BUTTON3 IS HIGH, IF YES EXECUTE INSTRUCTION
 	#
 
-		#Check if lever 7 is on
+		#Check if lever 7 is HIGH
 		#	if off 	write the user PC to display
 		#	else	write the user IR to display
 	SETHI %TempVal, x01
@@ -149,14 +149,16 @@ DISPVAL
 
 
 MEMORYMODE
-	If lever 6 == on		(Registry/MainMemory)
-		Set DBG addr = DBG PC
-		Set DBG value = value at DBG PC
-		Jump MAINMEM
-	If lever 6 == off 		(Registry/MainMemory)
-		Set DBG addr = r0
-		Set DBG value = value at r0
-		Jump REGISTRY
+		#Check if lever 6 is HIGH
+		#	if off 	jump to REGISTRY (UserRegistryReader)
+		#	else 	jump to MAINMEM (MainMemoryReader)
+	SETHI %TempVal, x02
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO REGISTRY
+	BA MAINMEM
+
+
 
 REGISTRY
 		#Change X in "Display register X" to correct value, switch DBGREGISTRES off, execute instruction, switch DBGREGISTRIES on
@@ -189,10 +191,6 @@ LBL:
 
 
 MAINMEM
-	Load leverstate in DBG LeverState
-	Load buttonstate in DBG ButtonState
-	
-	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
 	
 	If lever 7 == on 		(Write Address/Value to display)
 		Write DBG:ProgramCounter to display
