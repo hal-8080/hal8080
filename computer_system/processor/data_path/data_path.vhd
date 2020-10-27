@@ -120,7 +120,7 @@ BEGIN
 		CONSTANT	max_value				: integer := 1024;
 		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
 		VARIABLE abus_int, Bbus_int	: integer RANGE -32768 TO 32767;
-		VARIABLE powTemp					: integer RANGE -32768 TO 32767;
+		VARIABLE powTemp					: integer RANGE 0 TO 32767;
 		VARIABLE solution					: signed(15 DOWNTO 0);
 		--random gen
 		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
@@ -146,7 +146,7 @@ BEGIN
 			WHEN x"9" => solution := signed(Abus(15) & Abus(15 DOWNTO 1));	--SHIFTR
 			WHEN x"A" => solution := NOT Abus_sign;									--INV
 			
-			WHEN x"B" => 																	--POW B can be max 1024 (2^11)
+			WHEN x"B" => 																	--POW B must be positive and can be max 1024 (2^11), A must be positive
 				powTemp := Abus_int;
 				FOR i IN 1 TO max_value LOOP
 					IF i < Bbus_int THEN
