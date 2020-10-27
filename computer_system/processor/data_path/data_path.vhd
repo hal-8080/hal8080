@@ -3,6 +3,14 @@
 --the controller has to send a copy (ALU) instruction to copy
 --the contents of the assembly instruction's target register
 --to reg(PC) when the relevent status bit is active
+--
+--still need to add main memory store (from register to memory)
+--ir still needs to be outputted
+--change display process such that it's output 7-segment codes go to specific mm adresses
+--
+--change it such that the status bits don't update at a copy instruction
+--
+--
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
