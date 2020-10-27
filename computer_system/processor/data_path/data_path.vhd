@@ -11,6 +11,7 @@
 --change it such that the status bits don't update at a copy instruction
 --
 --
+--
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -62,7 +63,7 @@ ARCHITECTURE bhv OF data_path IS
 	
 -- MUX DECODER
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
-	SIGNAL addr2decB : std_logic_vector(7 DOWNTO 0) := x"00";
+	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
 
 -- from alu & memory to register
 	SIGNAL ALUout	: signed(15 DOWNTO 0);
@@ -125,17 +126,12 @@ BEGIN
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
-					addr2decB <= x"0" & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
+					addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
 				ELSE							--the role of i differs when it is 0
-					CASE instr(15 DOWNTO 14) IS
-						WHEN "00" 	=> addr2decB <= "000" & instr(4 DOWNTO 0); 	-- ARITHMATIC 	--addr2decB <= constant in assembly instruction
-						WHEN "01" 	=> addr2decB <= instr(7 DOWNTO 0);				-- MEMORY		--addr2decB <= constant in assembly instruction
-						WHEN "10" 	=> null;													-- DISPLAY		
-						WHEN OTHERS => null;													-- branch/sethi
-					END CASE;
+
 				END IF;				
 			ELSE
-				addr2decB <= "000" & micro_addrB;
+				addr2decB <= micro_addrB;
 			END IF;
 		END IF;
 	END PROCESS MUX;
@@ -147,7 +143,15 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)			
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
+			IF muxB = '1'AND instr(13) = '1' THEN
+				CASE instr(15 DOWNTO 14) IS --make this properly!!!!!!!!!!!!!!!!!!!!!!!
+					WHEN "00" 	=> Bbus <= instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4) & instr(4 DOWNTO 0); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
+					WHEN "01" 	=> Bbus <= instr(7) & instr(7) & instr(7) & instr(7) & instr(7) & instr(7) & instr(7) & instr(7) & instr(7 DOWNTO 0);				-- MEMORY		--Bbus <= constant in assembly instruction
+					WHEN "10" 	=> null;													-- DISPLAY		
+					WHEN OTHERS => null;													-- branch/sethi
+				END CASE;
+			END IF;
 		END IF;
 	END PROCESS DECODER;
 		
@@ -193,12 +197,8 @@ BEGIN
 					END IF;
 				END LOOP;
 				
-			WHEN x"C" => 																	--EQL true is denoted as hex FFFF and false as hex 0000
-				IF Abus = Bbus THEN
-					ALUout <= x"FFFF";
-				ELSE
-					ALUout <= x"0000";
-				END IF;
+			WHEN x"C" => solution := to_signed(Abus_int - Bbus_int, 16);			--SUB
+
 				
 			WHEN x"D" =>																	--GT  true is denoted as hex FFFF and false as hex 0000
 				IF Abus > Bbus THEN
@@ -328,12 +328,9 @@ BEGIN
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
-			IF instr(8) ='0' and instr(15 DOWNTO 14) = "01" THEN			-- loading something 
-				mmAdres <= Bbus;
-				
-			ELSE							--storing something
---				addr2decA <=reg(to_integer(unsigned(addr2decB))));				
-			
+			IF instr(15 DOWNTO 14) = "01" THEN			-- loading something 
+				mmAdress <= Bbus;
+				mmData <= Abus;			
 			END IF;
 		END IF;
 	END PROCESS MEMORY;
