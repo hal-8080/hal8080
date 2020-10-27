@@ -1,4 +1,10 @@
 vendor_name = ModelSim
+source_file = 1, C:/Edit/FPGA/hal8080/scripts/preflow.tcl
+source_file = 1, C:/Edit/FPGA/hal8080/scripts/bios2vhdl.tcl
+source_file = 1, C:/Edit/FPGA/hal8080/scripts/ram2vhdl.tcl
+source_file = 1, C:/Edit/FPGA/hal8080/memory/memory_utils.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/memory/synthesis/bios.vhd
+source_file = 1, C:/Edit/FPGA/hal8080/memory/synthesis/ram.vhd
 source_file = 1, C:/Edit/FPGA/hal8080/processor/datapath/datapath.vhd
 source_file = 1, C:/Edit/FPGA/hal8080/processor/control/control.vhd
 source_file = 1, C:/Edit/FPGA/hal8080/processor/processor.vhd
