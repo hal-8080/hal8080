@@ -159,21 +159,34 @@ MEMORYMODE
 		Jump REGISTRY
 
 REGISTRY
-	Load leverstate in DBG LeverState
-	Load buttonstate in DBG ButtonState
+		#Change X in "Display register X" to correct value, switch DBGREGISTRES off, execute instruction, switch DBGREGISTRIES on
+		
+	#
+	#	CHECK IF BUTTON 3/2 IS HIGH
+	#
+	Load %tempAddr, LBL 		#Microinstruction for Display Register X
+	SetHi %tempVal, 00000000
+	SetLo %tempVal, 00001111
+	AND %tempVal, %tempAddr		#%tempVal = 0..0 XXXX
+	#
+	#	ADD/SUB %tempVal, 1		CHECK IF PREVIOUS/NEXT BUTTON IS HIGH
+	#			
+	AND %tempVal, 01111
+	#
+	#	WRITE LAST 4 BITS OF %tempVal TO LEFT 2 DISPLAYS
+	#
+	AND %tempAddr, 10000		#%tempAddr = X..X 0000
+	OR %tempAddr, %tempVal
+	ST LBL, %tempAddr
 	
-	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
+	set DEBGREGISTRIES to 0
+LBL:	
+	Display Register XXXX
+	set DEBGREGISTRIES to 1
 	
-	Write to leftmost 2 displays the DBG Addr in decimal (0-31)
-	Write to rightmost 4 displays the DBG Value in Hex
-	If button 3 == HIGH
-		If DBG addr != 0
-			DBG addr -= 1
-	If button 2 == HIGH
-		If DBG addr != 31
-			DBG addr += 1
-	DBG value = value at register DBG addr
-	Jump REGISTRY
+	Jump STARTJUMP
+
+
 
 MAINMEM
 	Load leverstate in DBG LeverState
@@ -206,6 +219,64 @@ MAINMEM
 	Jump MAINMEM
 
 
+------------------------------------------------
+
+BIOS
+	if lever is set, jump to debug
+	write 0000 to dbgRegMainMemAddress
 
 
 
+DEBUG
+	write 1111 to dbgRegMainMemAddress
+	Het enige moment dat we user registries willen inlezen is wanneer we ze schrijven naar de displays
+	write 0000 to dbgRegMainMemAddress
+
+
+
+Buttons low->high
+
+
+
+
+1
+2
+3
+4
+5
+
+6: 1
+7
+8
+9
+10
+
+
+
+DBGREGISTRIES
+
+DBGFLAGS
+
+Display register 0
+
+
+		Load %tempAddr, LBL 		#Microinstruction for Display Register X
+		SetHi %tempVal, 00000000
+		SetLo %tempVal, 00001111
+		AND %tempVal, %tempAddr		#%tempVal = 0..0 XXXX
+		#
+		#	ADD/SUB %tempVal, 1		CHECK IF PREVIOUS/NEXT BUTTON IS HIGH
+		#			
+		AND %tempVal, 01111
+		#
+		#	WRITE LAST 4 BITS OF %tempVal TO LEFT 2 DISPLAYS
+		#
+		AND %tempAddr, 10000		#%tempAddr = X..X 0000
+		OR %tempAddr, %tempVal
+		ST LBL, %tempAddr
+		
+		set DEBGREGISTRIES to 0
+LBL:	Display Register XXXX
+		set DEBGREGISTRIES to 1
+
+ 
