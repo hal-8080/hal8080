@@ -66,12 +66,19 @@ ARCHITECTURE bhv OF memory IS
 BEGIN
 
     -- Synchronous write.
-    PROCESS(clk)
+    PROCESS(clk, i_switches, i_buttons)
+        VARIABLE address : natural;
     BEGIN
         IF rising_edge(clk) THEN
-            IF do_write='1' THEN
+            address := to_integer(unsigned(address_bus));
+            IF do_write='1' AND address < start_switches THEN
                 write_mem_a(mmio, address_bus, data_bus_in);
             END IF;
+
+            -- Update fake 'memory' syncly based on the signal values.
+            mmio(start_switches+1) <= "000000" & i_switches(9 DOWNTO 8);
+            mmio(start_switches) <= i_switches(7 DOWNTO 0);
+            mmio(start_buttons) <= x"0" & (NOT i_buttons);
         END IF; 
     END PROCESS;
     -- Directly output from memory based on address_bus.
@@ -85,9 +92,5 @@ BEGIN
     o_seg4 <= mmio(start_display+4)(6 DOWNTO 0);
     o_seg5 <= mmio(start_display+5)(6 DOWNTO 0);
     o_leds <= mmio(start_leds+1)(1 DOWNTO 0) & mmio(start_leds);
-    -- Update fake 'memory' asyncly based on the signal values.
-    mmio(start_switches+1) <= "000000" & i_switches(9 DOWNTO 8);
-    mmio(start_switches) <= i_switches(7 DOWNTO 0);
-    mmio(start_buttons) <= x"0" & (NOT i_buttons);
 
 END bhv;
