@@ -136,7 +136,7 @@ BEGIN
 			-- DECODER	set binary addr to integer that points to register
 			IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001") THEN		-- For ALU and MEM when i '1'
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decA))); --Bbus<=reg(B)
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
 			ELSIF (instr(15 DOWNTO 13) = "000") OR (instr(15 DOWNTO 13) = "010") THEN	-- For ALU and MEM when i '0'
 				Abus <= reg(to_integer(unsigned(addr2decA)));
 				Bbus <= reg(to_integer(unsigned(addr2decB)));
@@ -316,5 +316,6 @@ BEGIN
 			Dig5 <= Digi5;
 		END IF;
 	END PROCESS Display;
+	
 	 
 END;
