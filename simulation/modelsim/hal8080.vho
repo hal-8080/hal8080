@@ -16,7 +16,7 @@
 -- PROGRAM "Quartus Prime"
 -- VERSION "Version 18.0.0 Build 614 04/24/2018 SJ Lite Edition"
 
--- DATE "10/27/2020 20:12:00"
+-- DATE "10/27/2020 20:29:01"
 
 -- 
 -- Device: Altera 5CSEMA5F31C6 Package FBGA896
@@ -102,10 +102,6 @@ END hal8080;
 -- leds[7]	=>  Location: PIN_W20,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- leds[8]	=>  Location: PIN_W21,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- leds[9]	=>  Location: PIN_Y21,	 I/O Standard: 2.5 V,	 Current Strength: Default
--- buttons[0]	=>  Location: PIN_AA14,	 I/O Standard: 2.5 V,	 Current Strength: Default
--- buttons[1]	=>  Location: PIN_AA15,	 I/O Standard: 2.5 V,	 Current Strength: Default
--- buttons[2]	=>  Location: PIN_W15,	 I/O Standard: 2.5 V,	 Current Strength: Default
--- buttons[3]	=>  Location: PIN_Y16,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- switches[0]	=>  Location: PIN_AB12,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- switches[1]	=>  Location: PIN_AC12,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- switches[2]	=>  Location: PIN_AF9,	 I/O Standard: 2.5 V,	 Current Strength: Default
@@ -116,6 +112,10 @@ END hal8080;
 -- switches[7]	=>  Location: PIN_AC9,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- switches[8]	=>  Location: PIN_AD10,	 I/O Standard: 2.5 V,	 Current Strength: Default
 -- switches[9]	=>  Location: PIN_AE12,	 I/O Standard: 2.5 V,	 Current Strength: Default
+-- buttons[0]	=>  Location: PIN_AA14,	 I/O Standard: 2.5 V,	 Current Strength: Default
+-- buttons[1]	=>  Location: PIN_AA15,	 I/O Standard: 2.5 V,	 Current Strength: Default
+-- buttons[2]	=>  Location: PIN_W15,	 I/O Standard: 2.5 V,	 Current Strength: Default
+-- buttons[3]	=>  Location: PIN_Y16,	 I/O Standard: 2.5 V,	 Current Strength: Default
 
 
 ARCHITECTURE structure OF hal8080 IS
@@ -139,11 +139,6 @@ SIGNAL ww_leds : std_logic_vector(9 DOWNTO 0);
 SIGNAL ww_switches : std_logic_vector(9 DOWNTO 0);
 SIGNAL ww_buttons : std_logic_vector(3 DOWNTO 0);
 SIGNAL \clk~input_o\ : std_logic;
-SIGNAL \buttons[0]~input_o\ : std_logic;
-SIGNAL \buttons[1]~input_o\ : std_logic;
-SIGNAL \buttons[2]~input_o\ : std_logic;
-SIGNAL \buttons[3]~input_o\ : std_logic;
-SIGNAL \~QUARTUS_CREATED_GND~I_combout\ : std_logic;
 SIGNAL \switches[0]~input_o\ : std_logic;
 SIGNAL \switches[1]~input_o\ : std_logic;
 SIGNAL \switches[2]~input_o\ : std_logic;
@@ -154,6 +149,15 @@ SIGNAL \switches[6]~input_o\ : std_logic;
 SIGNAL \switches[7]~input_o\ : std_logic;
 SIGNAL \switches[8]~input_o\ : std_logic;
 SIGNAL \switches[9]~input_o\ : std_logic;
+SIGNAL \~QUARTUS_CREATED_GND~I_combout\ : std_logic;
+SIGNAL \buttons[0]~input_o\ : std_logic;
+SIGNAL \buttons[1]~input_o\ : std_logic;
+SIGNAL \buttons[2]~input_o\ : std_logic;
+SIGNAL \buttons[3]~input_o\ : std_logic;
+SIGNAL \ALT_INV_buttons[3]~input_o\ : std_logic;
+SIGNAL \ALT_INV_buttons[2]~input_o\ : std_logic;
+SIGNAL \ALT_INV_buttons[1]~input_o\ : std_logic;
+SIGNAL \ALT_INV_buttons[0]~input_o\ : std_logic;
 
 BEGIN
 
@@ -170,6 +174,10 @@ ww_buttons <= buttons;
 ww_devoe <= devoe;
 ww_devclrn <= devclrn;
 ww_devpor <= devpor;
+\ALT_INV_buttons[3]~input_o\ <= NOT \buttons[3]~input_o\;
+\ALT_INV_buttons[2]~input_o\ <= NOT \buttons[2]~input_o\;
+\ALT_INV_buttons[1]~input_o\ <= NOT \buttons[1]~input_o\;
+\ALT_INV_buttons[0]~input_o\ <= NOT \buttons[0]~input_o\;
 
 -- Location: IOOBUF_X89_Y8_N39
 \seg0[0]~output\ : cyclonev_io_obuf
@@ -726,7 +734,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[0]~input_o\,
+	i => \ALT_INV_buttons[0]~input_o\,
 	devoe => ww_devoe,
 	o => ww_leds(0));
 
@@ -739,7 +747,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[1]~input_o\,
+	i => \ALT_INV_buttons[1]~input_o\,
 	devoe => ww_devoe,
 	o => ww_leds(1));
 
@@ -752,7 +760,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[2]~input_o\,
+	i => \ALT_INV_buttons[2]~input_o\,
 	devoe => ww_devoe,
 	o => ww_leds(2));
 
@@ -765,7 +773,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[3]~input_o\,
+	i => \ALT_INV_buttons[3]~input_o\,
 	devoe => ww_devoe,
 	o => ww_leds(3));
 
@@ -778,7 +786,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[4]~input_o\,
+	i => GND,
 	devoe => ww_devoe,
 	o => ww_leds(4));
 
@@ -791,7 +799,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[5]~input_o\,
+	i => GND,
 	devoe => ww_devoe,
 	o => ww_leds(5));
 
@@ -804,7 +812,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[6]~input_o\,
+	i => GND,
 	devoe => ww_devoe,
 	o => ww_leds(6));
 
@@ -817,7 +825,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[7]~input_o\,
+	i => GND,
 	devoe => ww_devoe,
 	o => ww_leds(7));
 
@@ -830,7 +838,7 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[8]~input_o\,
+	i => VCC,
 	devoe => ww_devoe,
 	o => ww_leds(8));
 
@@ -843,9 +851,64 @@ GENERIC MAP (
 	shift_series_termination_control => "false")
 -- pragma translate_on
 PORT MAP (
-	i => \switches[9]~input_o\,
+	i => GND,
 	devoe => ww_devoe,
 	o => ww_leds(9));
+
+-- Location: IOIBUF_X36_Y0_N1
+\buttons[0]~input\ : cyclonev_io_ibuf
+-- pragma translate_off
+GENERIC MAP (
+	bus_hold => "false",
+	simulate_z_as => "z")
+-- pragma translate_on
+PORT MAP (
+	i => ww_buttons(0),
+	o => \buttons[0]~input_o\);
+
+-- Location: IOIBUF_X36_Y0_N18
+\buttons[1]~input\ : cyclonev_io_ibuf
+-- pragma translate_off
+GENERIC MAP (
+	bus_hold => "false",
+	simulate_z_as => "z")
+-- pragma translate_on
+PORT MAP (
+	i => ww_buttons(1),
+	o => \buttons[1]~input_o\);
+
+-- Location: IOIBUF_X40_Y0_N1
+\buttons[2]~input\ : cyclonev_io_ibuf
+-- pragma translate_off
+GENERIC MAP (
+	bus_hold => "false",
+	simulate_z_as => "z")
+-- pragma translate_on
+PORT MAP (
+	i => ww_buttons(2),
+	o => \buttons[2]~input_o\);
+
+-- Location: IOIBUF_X40_Y0_N18
+\buttons[3]~input\ : cyclonev_io_ibuf
+-- pragma translate_off
+GENERIC MAP (
+	bus_hold => "false",
+	simulate_z_as => "z")
+-- pragma translate_on
+PORT MAP (
+	i => ww_buttons(3),
+	o => \buttons[3]~input_o\);
+
+-- Location: IOIBUF_X32_Y0_N1
+\clk~input\ : cyclonev_io_ibuf
+-- pragma translate_off
+GENERIC MAP (
+	bus_hold => "false",
+	simulate_z_as => "z")
+-- pragma translate_on
+PORT MAP (
+	i => ww_clk,
+	o => \clk~input_o\);
 
 -- Location: IOIBUF_X12_Y0_N18
 \switches[0]~input\ : cyclonev_io_ibuf
@@ -956,61 +1019,6 @@ GENERIC MAP (
 PORT MAP (
 	i => ww_switches(9),
 	o => \switches[9]~input_o\);
-
--- Location: IOIBUF_X32_Y0_N1
-\clk~input\ : cyclonev_io_ibuf
--- pragma translate_off
-GENERIC MAP (
-	bus_hold => "false",
-	simulate_z_as => "z")
--- pragma translate_on
-PORT MAP (
-	i => ww_clk,
-	o => \clk~input_o\);
-
--- Location: IOIBUF_X36_Y0_N1
-\buttons[0]~input\ : cyclonev_io_ibuf
--- pragma translate_off
-GENERIC MAP (
-	bus_hold => "false",
-	simulate_z_as => "z")
--- pragma translate_on
-PORT MAP (
-	i => ww_buttons(0),
-	o => \buttons[0]~input_o\);
-
--- Location: IOIBUF_X36_Y0_N18
-\buttons[1]~input\ : cyclonev_io_ibuf
--- pragma translate_off
-GENERIC MAP (
-	bus_hold => "false",
-	simulate_z_as => "z")
--- pragma translate_on
-PORT MAP (
-	i => ww_buttons(1),
-	o => \buttons[1]~input_o\);
-
--- Location: IOIBUF_X40_Y0_N1
-\buttons[2]~input\ : cyclonev_io_ibuf
--- pragma translate_off
-GENERIC MAP (
-	bus_hold => "false",
-	simulate_z_as => "z")
--- pragma translate_on
-PORT MAP (
-	i => ww_buttons(2),
-	o => \buttons[2]~input_o\);
-
--- Location: IOIBUF_X40_Y0_N18
-\buttons[3]~input\ : cyclonev_io_ibuf
--- pragma translate_off
-GENERIC MAP (
-	bus_hold => "false",
-	simulate_z_as => "z")
--- pragma translate_on
-PORT MAP (
-	i => ww_buttons(3),
-	o => \buttons[3]~input_o\);
 
 -- Location: LABCELL_X31_Y59_N0
 \~QUARTUS_CREATED_GND~I\ : cyclonev_lcell_comb
