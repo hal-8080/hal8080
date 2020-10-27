@@ -7,8 +7,8 @@ ENTITY control IS
 		reset			: IN 	std_logic;
 		ir				: IN	std_logic_vector(15 DOWNTO 0);
 	-- PSR
-		ALUout		: IN 	std_logic_vector(17 DOWNTO 0);
-		
+		statusN, statusZ	: IN std_logic;
+
 	-- CONTROL STORE
 		micro_instr	: IN 	std_logic_vector(32 DOWNTO 0);
 		address2cs	: OUT	std_logic_vector(10 DOWNTO 0)		-- 11 bit from CS address MUX
@@ -29,12 +29,13 @@ ARCHITECTURE bhv OF control IS
 	SIGNAL OPLS		: std_logic := ir(8);				-- load store bit mem format
 	SIGNAL OPi		: std_logic := ir(13);				-- i bit for branch set formats
 -- PROGRAM STATUS REGISTER
-	SIGNAL psr		: std_logic_vector(1 DOWNTO 0)	:= ALUout(17 DOWNTO 16);-- psr(1):N and psr(0):z
+	SIGNAL psr		: std_logic_vector(1 DOWNTO 0)	:= "00";-- psr(1):N and psr(0):z
 -- CONTROL BRANCH LOGIC
 	SIGNAL COND		: std_logic_vector(2 DOWNTO 0)	:= micro_instr(13 DOWNTO 11);
 BEGIN
 
-	psr	<= ALUout(17 DOWNTO 16);
+	psr(1)	<= statusN;
+	psr(0)	<= statusZ;
 	COND	<= micro_instr(13 DOWNTO 11);
 
 CLB:PROCESS(reset,clk)

@@ -1,5 +1,16 @@
 --untested
---compiling with quartus takes ages, use modelsim instead
+--branch instruction needs to be computed in the controller
+--the controller has to send a copy (ALU) instruction to copy
+--the contents of the assembly instruction's target register
+--to reg(PC) when the relevent status bit is active
+--
+--still need to add main memory store (from register to memory)
+--ir still needs to be outputted
+--change display process such that it's output 7-segment codes go to specific mm adresses
+--
+--change it such that the status bits don't update at a copy instruction
+--
+--
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -43,7 +54,7 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(13 DOWNTO 11);
 	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= micro_inst(10 DOWNTO 0);
 --	
-	SIGNAL instr	: std_logic_vector(15 DOWNTO 0) 	:= reg(31);
+	SIGNAL instr	: std_logic_vector(15 DOWNTO 0)			:= x"0000";
 --busses	
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
@@ -96,6 +107,7 @@ ARCHITECTURE bhv OF data_path IS
         END CASE;
     END hex2display;
 
+-----------------------------------------------------------------------
 BEGIN
 	
 	--A MUX & B MUX
@@ -103,7 +115,7 @@ BEGIN
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
-		-- MUX A
+		-- MUX A  !!!!!!!!!!!! add that addr2decA is reg(PC) when OP1= 110
 			IF muxA = '1' THEN
 				addr2decA <= '0' & instr(12 DOWNTO 9);
 			ELSE
@@ -134,14 +146,8 @@ BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
-			IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001") THEN		-- For ALU and MEM when i '1'
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decA))); --Bbus<=reg(B)
-			ELSIF (instr(15 DOWNTO 13) = "000") OR (instr(15 DOWNTO 13) = "010") THEN	-- For ALU and MEM when i '0'
-				Abus <= reg(to_integer(unsigned(addr2decA)));
-				Bbus <= reg(to_integer(unsigned(addr2decB)));
-			END IF;
-			
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)			
 		END IF;
 	END PROCESS DECODER;
 		
@@ -240,7 +246,7 @@ BEGIN
 		
 		IF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
 			IF instr(13) = '0' THEN							-- Branch
-				-- PC needs to be updated? ---!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NOT DONE YET !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+				--!!!!!!!!branch instruction has to be changed to a different micro instruction in the controller
 			ELSE													-- Set-hi/lo
 				IF instr(8) = '0' THEN						-- high
 					Cbus <= instr(7 DOWNTO 0) & Abus(7 DOWNTO 0);
@@ -251,7 +257,7 @@ BEGIN
 			--store ALU/MM in Cbus
 		ELSIF instr(15 DOWNTO 14) = "00" THEN
 			Cbus <= std_logic_vector(ALUout);
-		ELSIF (instr(15 DOWNTO 14) = "01") AND (instr(8) = '0') THEN
+		ELSIF instr(15 DOWNTO 14) = "01" THEN
 			Cbus <= mmI;
 		END IF;
 	END IF;
@@ -316,5 +322,21 @@ BEGIN
 			Dig5 <= Digi5;
 		END IF;
 	END PROCESS Display;
+	
+		--Memory
+		MEMORY:PROCESS(clk, reset)
+	BEGIN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			IF instr(8) ='0' and instr(15 DOWNTO 14) = "01" THEN			-- loading something 
+				mmAdrres <= Bbus;
+
+				
+			ELSIF instr(8) ='1' and instr(15 DOWNTO 14) = "01" THEN							--store something				
+				mmAdrres <= Bbus;
+				mmdata <= Abus;
+			END IF;
+		END IF;
+	END PROCESS MEMORY;
 	 
 END;
