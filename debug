@@ -65,8 +65,8 @@ LD %rd, %rs			Load
 	%rs contains an address of a word in main memory, the value at that address is loaded into registry %rd
 ST %rd, %rs			Store
 	%rd contains an address of a word in main memory, the value at %rs is written into that address
-LDC %rd, CONST		Load Constant
-	%rd contains an address of a word in main memory, the CONST is written into that address
+LDC(H/L) %rd, CONST		Load Constant
+	%rd contains an address of a word in main memory, the CONST is written into (HIGH/LOW) byte at that address
 
 AND %rd, %rs		Bitwise AND 
 	Bitwise AND between registries %rd and %rs, store result in %rd
@@ -94,24 +94,30 @@ DISP %rs
 
 ------------------------------------------------
 
-	#
-	#	FIX THE DEBUG/USER STATUS BIT ISSUE
-	#
 
 
-	#Store address of start of user program in dbgPC (can only do 8 bits at a time)
-SETHI %dbgPC, USERMEM
-SETLO %dbgPC, USERMEM
+# (PNS) = "(Possibly needs seperation)"
+#	When loading/storing a value at a dedicated, pre-known memory address I use "LD %reg, MEMADDR". 
+#	If the assembler doesn't work out, this needs to be hardcoded and put into a %TempReg with SETHI and SETLO, 
+#	and then LD from the address stored in %TempReg into a new registry.
+
+
+SET DBGREGISTRIES TO 1
+SET DBGFLAGS TO 1
+
+	#Store address of start of user program in dbgPC
+LD %dbgPC, USERMEM 					(PNS)
 
 	#Store first user program instruction in dbgIR
-LD %dbgIR, %dbgPC
+LD %dbgIR, %dbgPC					(PNS)
+
+LD %ButtonState, BUTTONSTATE		(PNS)
+ST PREVBUTTONSTATE, %ButtonState	(PNS)
 
 
 STARTJUMP
-		#Load state of levers in dbgLeverState (can only do 8 bits at a time)
-	SETHI %TempAddr, SWMEM
-	SETLO %TempAddr, SWMEM
-	LD %LeverState, %TempAddr
+		#Load state of levers in dbgLeverState
+	LD %LeverState, LEVERSTATE		(PNS)
 	
 		#Check if lever 8 is HIGH
 		#	if off 	jump to MEMORYMODE
@@ -126,36 +132,35 @@ STARTJUMP
 STEPMODE
 		#Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
 	CP %dbgAddr, %dbgPC
-	CP %dbgValue, %dbgIR
-
-	#
-	#	IMPORT BUTTONS
-	#	
-	#	CHECK IF BUTTON3 IS HIGH, IF YES EXECUTE INSTRUCTION
-	#
-
-		#Check if lever 7 is HIGH
-		#	if off 	write the user PC to display
-		#	else	write the user IR to display
-	SETHI %TempVal, x01
-	SETLO %TempVal, x00
-	AND %TempVal, %LeverState
-	BZERO DISPADDR
-	BA DISPVAL
+	CP %dbgValue, %dbgIR	
+	
+		#Check which button went from 0 to 1, store results in %tempVal 
+	LD %ButtonState, BUTTONSTATE
+	LD %TempVal, PREVBUTTONSTATE
+	INV %TempVal
+	AND %TempVal, %ButtonState
+	ST PREVBUTTONSTATE, %ButtonState
+	
+	
+		#Check if button 3 is HIGH
+		#	If LOW, display value
+		#	If HIGH, execute instruction
+	CP %TempAddr, %TempVal 			#Not an address but its unused atm
+	SETHI %TempAddr, x10
+	SETLO %TempAddr, x00
+	AND %TempVal, %TempAddr
+	BZERO ADDRESVALUEDISPLAY
 	
 
-DISPADDR
+	SET DBGREGISTRIES TO 0
+	SET DBGFLAGS TO 0	
 	#
-	#	DISPLAY VALUE IN dbgAddr ONTO DISPLAY
-	#	
-	BA STARTJUMP
-	
-DISPVAL
+	#	EXECUTE INSTRUCTION
+	#		How to do branch?
 	#
-	#	DISPLAY VALUE IN dbgValue ONTO DISPLAY
-	#	
+	SET DBGREGISTRIES TO 1
+	SET DBGFLAGS TO 1
 	BA STARTJUMP
-
 
 
 MEMORYMODE
@@ -170,28 +175,55 @@ MEMORYMODE
 
 REGISTRY
 		#Change X in "Display register X" to correct value, switch DBGREGISTRES off, execute instruction, switch DBGREGISTRIES on
-		
-	#
-	#	CHECK IF BUTTON 3/2 IS HIGH
-	#
-	Load %tempAddr, LBL 		#Microinstruction for Display Register X
-	SetHi %tempVal, 00000000
-	SetLo %tempVal, 00001111
+	
+		#Check which button went from 0 to 1, store results in %tempVal 
+	LD %ButtonState, BUTTONSTATE
+	LD %TempVal, PREVBUTTONSTATE
+	INV %TempVal
+	AND %TempVal, %ButtonState
+	ST PREVBUTTONSTATE, %ButtonState
+	
+		#Check if button 3 and/or 2 is HIGH
+			#If both LOW, jump to REGISTRYSTATIC
+			#If either HIGH, jump to REGISTRYMOVE
+	CP %TempAddr, %TempVal 			#Not an address but its unused atm
+	SETHI %TempAddr, x30
+	SETLO %TempAddr, x00
+	AND %TempVal, %TempAddr
+	BZERO REGISTRYSTATIC
+	BA REGISTRYMOVE
+
+
+REGISTRYMOVE
+	LD %tempAddr, LBL 		#Microinstruction for "Display Register XXXX"
+	CP %TempVal, TempAddr
+	AND %TempVal, 01111
 	AND %tempVal, %tempAddr		#%tempVal = 0..0 XXXX
 	#
 	#	ADD/SUB %tempVal, 1		CHECK IF PREVIOUS/NEXT BUTTON IS HIGH
 	#			
 	AND %tempVal, 01111
 	#
-	#	WRITE LAST 4 BITS OF %tempVal TO LEFT 2 DISPLAYS
+	#	WRITE LAST 4 BITS OF %TempVal TO LEFT 2 DISPLAYS
 	#
 	AND %tempAddr, 10000		#%tempAddr = X..X 0000
 	OR %tempAddr, %tempVal
 	ST LBL, %tempAddr
-	
+	BA REGISTRYREADOUTPUT
+
+
+REGISTRYSTATIC
+	LD %TempVal, LBL
+	AND %TempVal, 01111
+	#
+	#	WRITE LAST 4 BITS OF %TempVal TO LEFT 2 DISPLAYS
+	#
+	BA REGISTRYREADOUTPUT
+
+REGISTRYREADOUTPUT
 	set DEBGREGISTRIES to 0
 LBL:	
-	Display Register XXXX
+	"Display Register XXXX"
 	set DEBGREGISTRIES to 1
 	
 	Jump STARTJUMP
@@ -251,12 +283,10 @@ MAINMEMCALCMOVE
 	#
 	BA ADDRESVALUEDISPLAY
 
-
-
 ADDRESVALUEDISPLAY
 		#Check if lever 7 is HIGH
-			#	if off 	jump to DISPLAYVALUE
-			#	else 	jump to DISPLAYADDRES
+		#	if off 	jump to DISPLAYVALUE
+		#	else 	jump to DISPLAYADDRES
 	SETHI %TempVal, x01
 	SETLO %TempVal, x00
 	AND %TempVal, %LeverState
@@ -276,7 +306,12 @@ DISPLAYADDRES
 
 
 
+-Checking if any buttons are high, and then check which buttons are high
+	-Corrospondingly add/sub large numbers
+-Displaying const from register to display
+-Executing instruction (mainly branch)
 
+-Write Assembler
 
 
 ------------------------------------------------
@@ -293,50 +328,3 @@ DEBUG
 	write 0000 to dbgRegMainMemAddress
 
 
-
-Buttons low->high
-
-
-
-
-1
-2
-3
-4
-5
-
-6: 1
-7
-8
-9
-10
-
-
-
-DBGREGISTRIES
-
-DBGFLAGS
-
-Display register 0
-
-
-		Load %tempAddr, LBL 		#Microinstruction for Display Register X
-		SetHi %tempVal, 00000000
-		SetLo %tempVal, 00001111
-		AND %tempVal, %tempAddr		#%tempVal = 0..0 XXXX
-		#
-		#	ADD/SUB %tempVal, 1		CHECK IF PREVIOUS/NEXT BUTTON IS HIGH
-		#			
-		AND %tempVal, 01111
-		#
-		#	WRITE LAST 4 BITS OF %tempVal TO LEFT 2 DISPLAYS
-		#
-		AND %tempAddr, 10000		#%tempAddr = X..X 0000
-		OR %tempAddr, %tempVal
-		ST LBL, %tempAddr
-		
-		set DEBGREGISTRIES to 0
-LBL:	Display Register XXXX
-		set DEBGREGISTRIES to 1
-
- 
