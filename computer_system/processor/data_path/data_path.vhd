@@ -1,9 +1,5 @@
---clear drivers (move random gen to alu)
---try moving the alu to a different entity
---
---
---
-
+--untested
+--compiling with quartus takes ages, use modelsim instead
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -37,14 +33,14 @@ ARCHITECTURE bhv OF data_path IS
 
 	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(29 DOWNTO 25);
 	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(23 DOWNTO 19);
-	SIGNAL muxA		: std_logic 							:= micro_inst(24);			-- 0 then take MIR A or 1 take from %r 
-	SIGNAL muxB		: std_logic 							:= micro_inst(18);
-	SIGNAL muxC		: std_logic 							:= micro_inst(17);			-- !! To either get data from the ALU or MM
-	SIGNAL rd		: std_logic 							:= micro_inst(16);
-	SIGNAL wr		: std_logic 							:= micro_inst(15);
-	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)	:= micro_inst(14 DOWNTO 11);
-	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 	:= micro_inst(10 DOWNTO 8);
-	SIGNAL jump		: std_logic_vector(7 DOWNTO 0) 	:= micro_inst(7 DOWNTO 0);
+	SIGNAL muxA		: std_logic 									:= micro_inst(24);			-- 0 then take MIR A or 1 take from %r 
+	SIGNAL muxB		: std_logic 									:= micro_inst(18);
+	SIGNAL muxC		: std_logic 									:= micro_inst(17);			-- !! To either get data from the ALU or MM
+	SIGNAL rd		: std_logic 									:= micro_inst(16);
+	SIGNAL wr		: std_logic 									:= micro_inst(15);
+	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(14 DOWNTO 11);
+	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(10 DOWNTO 8);
+	SIGNAL jump		: std_logic_vector(7 DOWNTO 0) 			:= micro_inst(7 DOWNTO 0);
 --	
 	SIGNAL instr	: std_logic_vector(15 DOWNTO 0) 	:= reg(31);
 	
@@ -231,14 +227,14 @@ BEGIN
 	END IF;
 	END PROCESS CMUX;
 	
---	CTOREG:PROCESS(clk, reset)
---	BEGIN
---		IF reset = '0' THEN
---		ELSIF rising_edge(clk) THEN
---			reg(0) <= x"0000";-- make sure reg(0) is always 0
---			reg(to_integer(unsigned(addr2decA))) <= Cbus;
---		END IF;
---	END PROCESS CTOREG;
+	CTOREG:PROCESS(clk, reset)
+	BEGIN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			reg(0) <= x"0000";-- make sure reg(0) is always 0
+			reg(to_integer(unsigned(addr2decA))) <= Cbus;
+		END IF;
+	END PROCESS CTOREG;
 	
 	
 	
