@@ -3,6 +3,14 @@
 --the controller has to send a copy (ALU) instruction to copy
 --the contents of the assembly instruction's target register
 --to reg(PC) when the relevent status bit is active
+--
+--still need to add main memory store (from register to memory)
+--ir still needs to be outputted
+--change display process such that it's output 7-segment codes go to specific mm adresses
+--
+--change it such that the status bits don't update at a copy instruction
+--
+--
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -139,13 +147,7 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
-
-			ELSIF (instr(15 DOWNTO 13) = "000") OR (instr(15 DOWNTO 13) = "010") THEN	-- For ALU and MEM when i '0'
-				Abus <= reg(to_integer(unsigned(addr2decA)));
-				Bbus <= reg(to_integer(unsigned(addr2decB)));
-			END IF;
-			
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)			
 		END IF;
 	END PROCESS DECODER;
 		
