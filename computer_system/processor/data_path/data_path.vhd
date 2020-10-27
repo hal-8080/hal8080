@@ -59,7 +59,6 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL ALUout	: signed(15 DOWNTO 0);
 --Display
 	SIGNAL Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
-	SIGNAL OP3	: std_logic_vector (1 DOWNTO 0);
    SIGNAL Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
 	SIGNAL DIS	: std_logic;
 
@@ -108,9 +107,9 @@ BEGIN
 	
 	--A MUX & B MUX
 	MUX:PROCESS(clk, reset)
-		BEGIN
-	IF reset = '0' THEN
-	ELSIF rising_edge(clk) THEN
+	BEGIN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
 		-- MUX A
 			IF muxA = '1' THEN
 				addr2decA <= '0' & instr(12 DOWNTO 9);
@@ -133,27 +132,11 @@ BEGIN
 					ELSE
 						addr2decB <= instr(7 DOWNTO 0); -- addr2decB <= constant in assembly instruction
 					END IF;
-					
-				ELSIF instr(15 DOWNTO 14) = "10" THEN			-- DISP
-
-				   OP3  <= instr(12 DOWNTO 11);
-					IF instr(13) = '0' THEN 
-						  IF instr(8) = '0' THEN
-								--Bregister split it up in 16 bits and set those with a + '0' so that they are 5 long
-								--put them in seg1, seg2, seg3 and seg4
-								Seg1<='0'& Bbus(3 DOWNTO 0);
-								Seg2<='0'& Bbus(7 DOWNTO 4);
-								Seg3<='0'& Bbus(11 DOWNTO 8);
-								Seg4<='0'& Bbus(15 DOWNTO 12);
-							ELSE
-								 Seg1<=Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
-								 Seg2<=Bbus(9 DOWNTO 5);
-						  END IF;
-
-               ELSE
-                    Seg1 <= instr(9 DOWNTO 5);
-                    Seg2 <= instr(4 DOWNTO 0);
+				ELSIF instr(15 DOWNTO 14) = "10" THEN	--DISPLAY
+					IF instr(13) = '0' THEN
+						addr2decB <= instr(7 DOWNTO 0);
 					END IF;
+					
 				END IF;
 				
 			ELSE
@@ -303,27 +286,49 @@ BEGIN
 	
 	
 	--DISPLAY
-Display:PROCESS (clk, reset)
-    BEGIN
+	Display:PROCESS (clk, reset)
+		VARIABLE OP3 : std_logic_vector(1 DOWNTO 0);
+	BEGIN
 
-        IF reset = '0' THEN
-		  
-        ELSIF rising_edge(clk) THEN
-					CASE OP3 IS
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			OP3  := instr(12 DOWNTO 11);
+			IF instr(15 DOWNTO 14) = "10" THEN
+				IF instr(13) = '0' THEN 
+					IF instr(8) = '0' THEN
+					--Bregister split it up in 16 bits and set those with a + '0' so that they are 5 long
+					--put them in seg1, seg2, seg3 and seg4
+						Seg1<='0'& Bbus(3 DOWNTO 0);
+						Seg2<='0'& Bbus(7 DOWNTO 4);
+						Seg3<='0'& Bbus(11 DOWNTO 8);
+						Seg4<='0'& Bbus(15 DOWNTO 12);
+					ELSE
+						Seg1<=Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
+						Seg2<=Bbus(9 DOWNTO 5);
+					END IF;
+			
+				ELSE
+					Seg1 <= instr(9 DOWNTO 5);
+               Seg2 <= instr(4 DOWNTO 0);
+				END IF;
+				
+				CASE OP3 IS
 					WHEN "00" => Digi0 <= hex2display(Seg1); Digi1 <= hex2display(Seg2);Digi2 <= hex2display(Seg3);Digi3 <= hex2display(Seg4);
 					WHEN "01" => Digi2 <= hex2display(Seg1); Digi3 <= hex2display(Seg2);Digi4 <= hex2display(Seg3);Digi5 <= hex2display(Seg4);
 					WHEN "10" => Digi4 <= hex2display(Seg1); Digi5 <= hex2display(Seg2);
 					WHEN OTHERS => null;
-					END CASE;
+				END CASE;
+			
+			END IF;
+			Dig0 <= Digi0;
+			Dig1 <= Digi1;
+			Dig2 <= Digi2;
+			Dig3 <= Digi3;
+			Dig4 <= Digi4;
+			Dig5 <= Digi5;
+		END IF;
+	END PROCESS Display;
 
-        END IF;
-    END PROCESS    Display;
 
-    Dig0 <= Digi0;
-    Dig1 <= Digi1;
-    Dig2 <= Digi2;
-    Dig3 <= Digi3;
-    Dig4 <= Digi4;
-    Dig5 <= Digi5;
 	 
 END;
