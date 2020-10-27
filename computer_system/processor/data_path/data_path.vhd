@@ -327,11 +327,12 @@ BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			IF instr(8) ='0' and instr(15 DOWNTO 14) = "01" THEN			-- loading something 
-				mmAdres <= Bbus;
+				mmAdrres <= Bbus;
+
 				
-			ELSE							--storing something
---				addr2decA <=reg(to_integer(unsigned(addr2decB))));				
-			
+			ELSIF instr(8) ='1' and instr(15 DOWNTO 14) = "01" THEN							--store something				
+				mmAdrres <= Bbus;
+				mmdata <= Abus;
 			END IF;
 		END IF;
 	END PROCESS MEMORY;
