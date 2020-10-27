@@ -1,3 +1,10 @@
+--clear drivers (move all bus assignments to the decoder process)
+--try moving the alu to a different entity
+--
+--
+--
+
+
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_Std.ALL;
@@ -23,7 +30,7 @@ ARCHITECTURE bhv OF data_path IS
 	
 	TYPE reg_vector IS ARRAY (0 to 31) OF std_logic_vector(15 DOWNTO 0); --array of 32 16-bit vectors
 
-	SIGNAL reg 			: reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
+	SIGNAL reg : reg_vector; --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
 	
 									
 -- Split up the micro instruction									
@@ -52,14 +59,20 @@ ARCHITECTURE bhv OF data_path IS
 
 
 -- from alu & memory to register
-	SIGNAL ALUout	: std_logic_vector(15 DOWNTO 0);
+	SIGNAL ALUout	: signed(17 DOWNTO 0);
+	SIGNAL ALUbool	: boolean;
 	SIGNAL Big_temp_reg: std_logic_vector(15 DOWNTO 0):= x"0000";
 	SIGNAL temp_reg: std_logic_vector(7 DOWNTO 0)	:= x"00";
 	
+--status bits
+	
+	--SIGNAL status	: std_logic_vector(1 DOWNTO 0); --vector of status bits ZN
+	
 
 BEGIN
-
-	reg(0) <= x"0000";-- make sure reg(0) is always 0
+	statusZ <= ALUout(16);
+	statusN <= ALUout(17);
+	--reg(0) <= x"0000";-- make sure reg(0) is always 0
 	
 	
 	
@@ -132,31 +145,78 @@ BEGIN
 	END PROCESS DECODER;
 		
 	--THE ALU	
-	ALU:PROCESS(clk,reset)
+	Maths:PROCESS(clk,reset)
+		CONSTANT	max_value				: integer := 1024;
+		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
+		VARIABLE abus_int, Bbus_int	: integer RANGE -32768 TO 32767;
+		VARIABLE powTemp					: integer RANGE -32768 TO 32767;
+		VARIABLE solution					: signed(15 DOWNTO 0);
 	BEGIN
-	
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
+			Abus_sign 	:= signed(Abus);
+			Bbus_sign 	:= signed(Bbus);
+			Abus_int 	:= to_integer(Abus_sign);
+			Bbus_int		:= to_integer(Bbus_sign);
+			
 			CASE ALU IS
-			WHEN x"0" => ALUout <= Abus AND Bbus; --AND
-			WHEN x"1" => ALUout <= Abus NAND BbUS;--NAND
-			WHEN x"2" => ALUout <= Abus OR BbUS;--OR
-			WHEN x"3" => ALUout <= Abus OR (NOT bBUS);--ORN
-			WHEN x"4" => ALUout <= Abus + BbUS;--ADD
-			WHEN x"5" => ALUout <= Abus * BbUS;--MUL
-			WHEN x"6" => ALUout <= Abus * (BbUS**(-1));--DIV
-			WHEN x"7" => null;--NOP
-			WHEN x"8" => ALUout <= Abus(14 DOWNTO 0) & '0';--SHIFTL
-			WHEN x"9" => ALUout <= Abus(15) & Abus(15 DOWNTO 1);--SHIFTR
-			WHEN x"A" => ALUout <= NOT Abus;--INV
-			WHEN x"B" => ALUout <= Abus** Bbus;--POW
-			WHEN OTHERS => null;--EQL, GT, LT, RAND
+			WHEN x"0" => solution := Abus_sign AND Bbus_sign;						--AND
+			WHEN x"1" => solution := Abus_sign NAND Bbus_sign;					--NAND
+			WHEN x"2" => solution := Abus_sign OR Bbus_sign;						--OR
+			WHEN x"3" => solution := Abus_sign OR NOT Bbus_sign;					--ORN
+			WHEN x"4" => solution := to_signed(Abus_int + Bbus_int, 16);		--ADD
+			WHEN x"5" => solution := to_signed(Abus_int * Bbus_int, 16);		--MUL
+			WHEN x"6" => solution := to_signed(Abus_int / Bbus_int, 16);		--DIV
+			WHEN x"7" => null;															--NOP
+			WHEN x"8" => solution := signed(Abus(14 DOWNTO 0) & '0');			--SHIFTL
+			WHEN x"9" => solution := signed(Abus(15) & Abus(15 DOWNTO 1));	--SHIFTR
+			WHEN x"A" => solution := NOT Abus_sign;									--INV
+			
+			WHEN x"B" => 																	--POW B can be max 1024 (2^11)
+				powTemp := Abus_int;
+				FOR i IN 1 TO max_value LOOP
+					IF i < Bbus_int THEN
+						powTemp := powTemp * Abus_int;
+					ELSE
+						solution := to_signed(powTemp, 16);
+						EXIT WHEN i = Bbus_int;
+					END IF;
+				END LOOP;
+				
+			WHEN x"C" => 																	--EQL
+				IF Abus = Bbus THEN
+					ALUbool <= TRUE;
+				ELSE
+					ALUbool <= FALSE;
+				END IF;
+				
+			WHEN x"D" =>																	--GT
+				IF Abus > Bbus THEN
+					ALUbool <= TRUE;
+				ELSE
+					ALUbool <= FALSE;
+				END IF;
+				
+			WHEN x"E" =>	solution := Bbus_sign;										--COPY
+			WHEN OTHERS => null;															-- RAND (SEPERATE PROCESS)
+			
 			END CASE;
+				ALUout(15 DOWNTO 0) <= solution;
+				IF to_integer(ALUout(15 DOWNTO 0)) = 0 THEN
+					ALUout(16) <= '1'; --statusZ
+					ALUout(17) <= '0'; --statusN
+				ELSIF to_integer(ALUout(15 DOWNTO 0)) < 0 THEN
+					ALUout(16) <= '0'; --statusZ
+					ALUout(17) <= '1'; --statusN
+				ELSE
+					ALUout(16) <= '0'; --statusZ
+					ALUout(17) <= '0'; --statusN
+				END IF;
 		END IF;
+	END PROCESS Maths;
 	
-	END PROCESS ALU;
 	
-	--pseudo random generator
+	--pseudo random generator (ALU ="F")
 	RANDO:PROCESS (clk, reset)
 		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
 		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
@@ -164,11 +224,16 @@ BEGIN
 		IF reset = '0' THEN
 			random := seed;
 		ELSIF rising_edge(clk) THEN
-			IF random = x"0000" THEN
+			--multiplying random with seed and store the lower 16 bits in random every clock cycle
+			IF random = x"0000" THEN		
 				random := seed;
 			ELSE
 				random := RESIZE((random * seed), 16);
-			END IF;		
+			END IF;
+			--when ALU is x"F", send the current random value to the mux
+			IF ALU = x"F" THEN
+				ALUout(15 DOWNTO 0) <= signed(random);
+			END IF;
 		END IF;
 	END PROCESS RANDO;
 	
