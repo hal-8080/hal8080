@@ -69,8 +69,12 @@ LDC %rd, CONST		Load Constant
 	%rd contains an address of a word in main memory, the CONST is written into that address
 
 AND %rd, %rs		Bitwise AND 
-	Bitwise and between registries %rd and %rs, store result in %rd
+	Bitwise AND between registries %rd and %rs, store result in %rd
 	Set ZEROFLAG to true if result is 0
+AND %rd, CONST 		Bitwise AND 
+	Bitwise AND between a register and a 5 bit const. First const bit determines if first 12 bits are 0 or 1, last 4 bits are custom
+
+
 CP %rd, %rs			Copy
 	Copy the contents in %rs to %rd
 
@@ -81,6 +85,12 @@ CALL %rd			Call subroutine
 	%RetAddr <- PC, PC <- $rd
 RET					Return from subroutine 
 	PC <- %RetAddr + 2
+
+DISP(L/M/R) CONST, CONST
+	L/M/R determines left 2, middle 2 or right 2
+	Const are value in lookup table. First Const is displayed on left display, second const on right display
+DISP %rs
+	Value in %rs is displayed on last 4 segments
 
 ------------------------------------------------
 
@@ -158,8 +168,6 @@ MEMORYMODE
 	BZERO REGISTRY
 	BA MAINMEM
 
-
-
 REGISTRY
 		#Change X in "Display register X" to correct value, switch DBGREGISTRES off, execute instruction, switch DBGREGISTRIES on
 		
@@ -190,31 +198,85 @@ LBL:
 
 
 
-MAINMEM
+MAINMEM	
+	#
+	#	CHECK IF BUTTON 3 OR 2 IS HIGH, IF YES JUMP TO MAINMEMSETMOVE
+	#
+	BA ADDRESVALUEDISPLAY
+
+MAINMEMSETMOVE
+	CP %TempVal, %LeverState
+	SHIFTR %TempVal, 4
+	SETLO %TempVal, x00
+	SHIFTL %TempVal, 4		#%TempVal = XXXX 0000 0000 0000
+	BZERO MOVE2
+	SHIFTL %TempVal, 1
+	BZERO MOVE20
+	SHIFTL %TempVal, 1
+	BZERO MOVE200
+	SHIFTL %TempVal, 1
+	BZERO MOVE2000
+	BA MOVE20000			#If its not 0 after 3 lshifts, lever 3 must be on
 	
-	If lever 7 == on 		(Write Address/Value to display)
-		Write DBG:ProgramCounter to display
-	If lever 7 == off 		(Write Address/Value to display)
-		Write DBG:InstructionRegister to display
+MAINMEMMOVE2	
+	SETHI %TempAddr, x00
+	SETLO %TempAddr, x02
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE20
+	SETHI %TempAddr, x00
+	SETLO %TempAddr, x14
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE200
+	SETHI %TempAddr, x00
+	SETLO %TempAddr, x64
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE2000
+	SETHI %TempAddr, x07
+	SETLO %TempAddr, xD0
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE20000
+	SETHI %TempAddr, x4E
+	SETLO %TempAddr, x20
+	BA MAINMEMCALCMOVE
 	
-	
-	If lever 0 == on 		(Move = 2)
-		DBG:TempVal = 2
-	If lever 1 == on 		(Move = 20)
-		DBG:TempVal = 20
-	If lever 2 == on 		(Move = 200)
-		DBG:TempVal = 200
-	If lever 3 == on 		(Move = 2 000)
-		DBG:TempVal = 2 000
-	If lever 4 == on		(Move = 20 000)
-		DBG:TempVal = 20 000
-	
-	If button 3 == HIGH
-		DBG:Addr -= DBG:TempVal (CHECK IF NOT BELOW 0)
-	If button 2 == HIGH
-		DBG:Addr += DBG:TempVal (CHECK IF NOT ABOVE MAXVAL)
-	
-	Jump MAINMEM
+
+MAINMEMCALCMOVE
+	#
+	#	IF BUTTON 3 HIGH, SUB %DBGaddr, %TempAddr
+	#	IF BUTTON 2 HIGH, ADD %DBGaddr, %TempAddr
+	#
+	#	ACCOUNT FOR OVERVLOW
+	#
+	#	LOAD %DBGvalue, %DBGaddr 
+	#
+	BA ADDRESVALUEDISPLAY
+
+
+
+ADDRESVALUEDISPLAY
+		#Check if lever 7 is HIGH
+			#	if off 	jump to DISPLAYVALUE
+			#	else 	jump to DISPLAYADDRES
+	SETHI %TempVal, x01
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO DISPLAYVALUE
+	BA DISPLAYADDRES
+
+
+DISPLAYVALUE
+	DISP %DBGvalue
+	BA STARTJUMP
+
+
+DISPLAYADDRES
+	DISP %DBGaddr
+	BA STARTJUMP
+
+
+
+
+
 
 
 ------------------------------------------------
