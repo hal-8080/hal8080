@@ -44,7 +44,7 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL jump		: std_logic_vector(7 DOWNTO 0) 			:= micro_inst(7 DOWNTO 0);
 --	
 	SIGNAL instr	: std_logic_vector(15 DOWNTO 0) 	:= reg(31);
-	
+--busses	
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Cbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
@@ -240,7 +240,7 @@ BEGIN
 		
 		IF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
 			IF instr(13) = '0' THEN							-- Branch
-				-- PC needs to be updated?
+				-- PC needs to be updated? ---!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! NOT DONE YET !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 			ELSE													-- Set-hi/lo
 				IF instr(8) = '0' THEN						-- high
 					Cbus <= instr(7 DOWNTO 0) & Abus(7 DOWNTO 0);
@@ -251,7 +251,7 @@ BEGIN
 			--store ALU/MM in Cbus
 		ELSIF instr(15 DOWNTO 14) = "00" THEN
 			Cbus <= std_logic_vector(ALUout);
-		ELSIF instr(15 DOWNTO 14) = "01" THEN
+		ELSIF (instr(15 DOWNTO 14) = "01") AND (instr(8) = '0') THEN
 			Cbus <= mmI;
 		END IF;
 	END IF;
@@ -262,7 +262,9 @@ BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			reg(0) <= x"0000";-- make sure reg(0) is always 0
-			reg(to_integer(unsigned(addr2decA))) <= Cbus;
+			IF (instr(15 DOWNTO 14) = "01" XOR instr(8) = '1') AND (instr(15 DOWNTO 14) /= "10") AND (instr(15 DOWNTO 13) /= "110")THEN
+				reg(to_integer(unsigned(addr2decA))) <= Cbus;
+			END IF;
 		END IF;
 	END PROCESS CTOREG;
 	
@@ -314,7 +316,5 @@ BEGIN
 			Dig5 <= Digi5;
 		END IF;
 	END PROCESS Display;
-
-
 	 
 END;
