@@ -15,6 +15,8 @@ ENTITY control IS
 
 	);
 END ENTITY control;
+
+
 ARCHITECTURE bhv OF control IS
 	SIGNAL cbl 		: std_logic_vector(1 DOWNTO 0)	:= "00";		-- Control branch logic IN(%psr,COND) OUT(CSaddrMUX)
 	SIGNAL jmpA		: std_logic_vector(10 DOWNTO 0)	:= micro_instr(10 DOWNTO 0);
@@ -32,8 +34,11 @@ ARCHITECTURE bhv OF control IS
 	SIGNAL COND		: std_logic_vector(2 DOWNTO 0)	:= micro_instr(13 DOWNTO 11);
 BEGIN
 
+	psr	<= ALUout(17 DOWNTO 16);
+	COND	<= micro_instr(13 DOWNTO 11);
+
 CLB:PROCESS(reset,clk)
-  BEGIN
+	BEGIN
     IF reset='0' THEN
       --reset
     ELSIF rising_edge(clk) THEN
@@ -64,7 +69,13 @@ CSAI:PROCESS(reset,clk)
     END IF;
   END PROCESS;  
 
-
+	OP		<= ir(15 DOWNTO 14);
+	OP2	<= ir(8  DOWNTO 5 );
+	OP3	<= ir(12 DOWNTO 11);
+	OPLS	<= ir(8);
+	OPi	<= ir(13);
+	jmpA	<= micro_instr(10 DOWNTO 0);
+  
 MUX:	PROCESS(clk, reset)
 	BEGIN
 	IF reset = '0' THEN

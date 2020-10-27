@@ -4,7 +4,8 @@ USE IEEE.numeric_std.ALL;
 
 ENTITY MStore IS
 	PORT(	address 		: IN	std_logic_vector(10 DOWNTO 0);		-- 11 bit 2048 addr DECODE format "10000[OP][OP2/3]"
-			microcode 	: OUT std_logic_vector(32 DOWNTO 0)			-- 29 bit word 
+			microcode 	: OUT std_logic_vector(32 DOWNTO 0);			-- 29 bit word to datapath 
+			microcode2contr: OUT std_logic_vector(32 DOWNTO 0)		-- to control
 			);		-- 
 END ENTITY MStore;
 
