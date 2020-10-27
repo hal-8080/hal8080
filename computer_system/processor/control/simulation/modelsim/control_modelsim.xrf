@@ -1,4 +1,6 @@
 vendor_name = ModelSim
+source_file = 1, C:/Users/denni/Desktop/Hal8080/hal8080/computer_system/processor/control/control_section.vhd
+source_file = 1, C:/Users/denni/Desktop/Hal8080/hal8080/computer_system/processor/control/MStore.vhd
 source_file = 1, C:/Users/denni/Desktop/Hal8080/hal8080/computer_system/processor/control/control.vhd
 source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/prmtvs_b.vhd
 source_file = 1, c:/intelfpga_lite/18.0/quartus/libraries/vhdl/ieee/prmtvs_p.vhd
