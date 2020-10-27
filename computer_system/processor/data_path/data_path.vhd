@@ -149,6 +149,11 @@ BEGIN
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
 				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
 
+			ELSIF (instr(15 DOWNTO 13) = "000") OR (instr(15 DOWNTO 13) = "010") THEN	-- For ALU and MEM when i '0'
+				Abus <= reg(to_integer(unsigned(addr2decA)));
+				Bbus <= reg(to_integer(unsigned(addr2decB)));
+			END IF;
+			
 		END IF;
 	END PROCESS DECODER;
 		
@@ -323,5 +328,20 @@ BEGIN
 			Dig5 <= Digi5;
 		END IF;
 	END PROCESS Display;
+	
+		--Memory
+		MEMORY:PROCESS(clk, reset)
+	BEGIN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
+			IF instr(8) ='0' and instr(15 DOWNTO 14) = "01" THEN			-- loading something 
+				mmAdres <= Bbus;
+				
+			ELSE							--storing something
+--				addr2decA <=reg(to_integer(unsigned(addr2decB))));				
+			
+			END IF;
+		END IF;
+	END PROCESS MEMORY;
 	 
 END;
