@@ -50,18 +50,11 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL Cbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	
 -- MUX DECODER
-	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
-	SIGNAL mux2decB: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL addr2decB : std_logic_vector(7 DOWNTO 0) := x"00";
 
 -- from alu & memory to register
 	SIGNAL ALUout	: signed(15 DOWNTO 0);
---Display
-	SIGNAL Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
-   SIGNAL Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
-	SIGNAL DIS	: std_logic;
-
 	
 --look up table for display port
 	FUNCTION hex2display(nib:std_logic_vector(4 DOWNTO 0)) RETURN std_logic_vector IS
@@ -119,26 +112,16 @@ BEGIN
 			
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
-				IF instr(15 DOWNTO 14) = "00" THEN				-- ARITHMATIC
-					IF instr(13) = '0' THEN
-						addr2decB <= x"0" & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
-					ELSE
-						addr2decB <= "000" & instr(4 DOWNTO 0); -- addr2decB <= constant in assembly instruction
-					END IF;
-					
-				ELSIF instr(15 DOWNTO 14) = "01" THEN			-- MEMORY
-					IF instr(13) = '0' THEN
-						addr2decB <= x"0" & instr(3 DOWNTO 0);	-- addr2decB <= B adress of the assemby instruction
-					ELSE
-						addr2decB <= instr(7 DOWNTO 0); -- addr2decB <= constant in assembly instruction
-					END IF;
-				ELSIF instr(15 DOWNTO 14) = "10" THEN	--DISPLAY
-					IF instr(13) = '0' THEN
-						addr2decB <= instr(7 DOWNTO 0);
-					END IF;
-					
-				END IF;
-				
+				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
+					addr2decB <= x"0" & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
+				ELSE							--the role of i differs when it is 0
+					CASE instr(15 DOWNTO 14) IS
+						WHEN "00" 	=> addr2decB <= "000" & instr(4 DOWNTO 0); 	-- ARITHMATIC 	--addr2decB <= constant in assembly instruction
+						WHEN "01" 	=> addr2decB <= instr(7 DOWNTO 0);				-- MEMORY		--addr2decB <= constant in assembly instruction
+						WHEN "10" 	=> null;													-- DISPLAY		
+						WHEN OTHERS => null;													-- branch/sethi
+					END CASE;
+				END IF;				
 			ELSE
 				addr2decB <= "000" & micro_addrB;
 			END IF;
@@ -288,34 +271,37 @@ BEGIN
 	--DISPLAY
 	Display:PROCESS (clk, reset)
 		VARIABLE OP3 : std_logic_vector(1 DOWNTO 0);
+		VARIABLE Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
+		VARIABLE Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
 	BEGIN
 
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			OP3  := instr(12 DOWNTO 11);
+			
 			IF instr(15 DOWNTO 14) = "10" THEN
 				IF instr(13) = '0' THEN 
 					IF instr(8) = '0' THEN
 					--Bregister split it up in 16 bits and set those with a + '0' so that they are 5 long
 					--put them in seg1, seg2, seg3 and seg4
-						Seg1<='0'& Bbus(3 DOWNTO 0);
-						Seg2<='0'& Bbus(7 DOWNTO 4);
-						Seg3<='0'& Bbus(11 DOWNTO 8);
-						Seg4<='0'& Bbus(15 DOWNTO 12);
+						Seg1 := '0' & Bbus(3 DOWNTO 0);
+						Seg2 := '0' & Bbus(7 DOWNTO 4);
+						Seg3 := '0' & Bbus(11 DOWNTO 8);
+						Seg4 := '0' & Bbus(15 DOWNTO 12);
 					ELSE
-						Seg1<=Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
-						Seg2<=Bbus(9 DOWNTO 5);
+						Seg1 := Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
+						Seg2 := Bbus(9 DOWNTO 5);
 					END IF;
 			
 				ELSE
-					Seg1 <= instr(9 DOWNTO 5);
-               Seg2 <= instr(4 DOWNTO 0);
+					Seg1 := instr(9 DOWNTO 5);
+               Seg2 := instr(4 DOWNTO 0);
 				END IF;
 				
 				CASE OP3 IS
-					WHEN "00" => Digi0 <= hex2display(Seg1); Digi1 <= hex2display(Seg2);Digi2 <= hex2display(Seg3);Digi3 <= hex2display(Seg4);
-					WHEN "01" => Digi2 <= hex2display(Seg1); Digi3 <= hex2display(Seg2);Digi4 <= hex2display(Seg3);Digi5 <= hex2display(Seg4);
-					WHEN "10" => Digi4 <= hex2display(Seg1); Digi5 <= hex2display(Seg2);
+					WHEN "00" => Digi0 := hex2display(Seg1); Digi1 := hex2display(Seg2);Digi2 := hex2display(Seg3);Digi3 := hex2display(Seg4);
+					WHEN "01" => Digi2 := hex2display(Seg1); Digi3 := hex2display(Seg2);Digi4 := hex2display(Seg3);Digi5 := hex2display(Seg4);
+					WHEN "10" => Digi4 := hex2display(Seg1); Digi5 := hex2display(Seg2);
 					WHEN OTHERS => null;
 				END CASE;
 			
