@@ -9,7 +9,7 @@ ENTITY data_path IS
 		clk			: IN 	std_logic;
 		reset			: IN 	std_logic;
 	-- From the controller
-		micro_inst 	: IN 	std_logic_vector(29 DOWNTO 0);	
+		micro_inst 	: IN 	std_logic_vector(32 DOWNTO 0);	
 	-- To the controller
 		statusN		: OUT std_logic;
 		statusZ		: OUT std_logic;
@@ -32,16 +32,16 @@ ARCHITECTURE bhv OF data_path IS
 									
 -- Split up the micro instruction									
 
-	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(29 DOWNTO 25);
-	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(23 DOWNTO 19);
-	SIGNAL muxA		: std_logic 									:= micro_inst(24);			-- 0 then take MIR A or 1 take from %r 
-	SIGNAL muxB		: std_logic 									:= micro_inst(18);
-	SIGNAL muxC		: std_logic 									:= micro_inst(17);			-- !! To either get data from the ALU or MM
-	SIGNAL rd		: std_logic 									:= micro_inst(16);
-	SIGNAL wr		: std_logic 									:= micro_inst(15);
-	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(14 DOWNTO 11);
-	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(10 DOWNTO 8);
-	SIGNAL jump		: std_logic_vector(7 DOWNTO 0) 			:= micro_inst(7 DOWNTO 0);
+	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(32 DOWNTO 28);
+	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(26 DOWNTO 22);
+	SIGNAL muxA		: std_logic 									:= micro_inst(27);			-- 0 then take MIR A or 1 take from %r 
+	SIGNAL muxB		: std_logic 									:= micro_inst(21);
+	SIGNAL muxC		: std_logic 									:= micro_inst(20);			-- !! To either get data from the ALU or MM
+	SIGNAL rd		: std_logic 									:= micro_inst(19);
+	SIGNAL wr		: std_logic 									:= micro_inst(18);
+	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(17 DOWNTO 14);
+	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(13 DOWNTO 11);
+	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= micro_inst(10 DOWNTO 0);
 --	
 	SIGNAL instr	: std_logic_vector(15 DOWNTO 0) 	:= reg(31);
 --busses	
