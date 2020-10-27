@@ -56,25 +56,13 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL addr2decB : std_logic_vector(7 DOWNTO 0) := x"00";
 
 -- from alu & memory to register
-<<<<<<< HEAD
-	SIGNAL ALUout	: signed(17 DOWNTO 0);
-	SIGNAL ALUbool	: boolean;
-	SIGNAL Big_temp_reg: std_logic_vector(15 DOWNTO 0):= x"0000";
-	SIGNAL temp_reg: std_logic_vector(7 DOWNTO 0)	:= x"00";
-
+	SIGNAL ALUout	: signed(15 DOWNTO 0);
 --Display
 	SIGNAL Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
 	SIGNAL OP3	: std_logic_vector (1 DOWNTO 0);
    SIGNAL Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
 	SIGNAL DIS	: std_logic;
-	
-	
---status bits
-	
-	--SIGNAL status	: std_logic_vector(1 DOWNTO 0); --vector of status bits ZN
-=======
-	SIGNAL ALUout	: signed(15 DOWNTO 0);
->>>>>>> 535d1d2f71eb2decd187ce55d186c9736a96ce4f
+
 	
 --look up table for display port
 	FUNCTION hex2display(nib:std_logic_vector(4 DOWNTO 0)) RETURN std_logic_vector IS
@@ -147,7 +135,7 @@ BEGIN
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "10" THEN			-- DISP
-<<<<<<< HEAD
+
 				   OP3  <= instr(12 DOWNTO 11);
 					IF instr(13) = '0' THEN 
 						  IF instr(8) = '0' THEN
@@ -166,24 +154,6 @@ BEGIN
                     Seg1 <= instr(9 DOWNTO 5);
                     Seg2 <= instr(4 DOWNTO 0);
 					END IF;
-					
-				ELSIF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
-					IF instr(13) = '0' THEN							-- Branch
-						-- PC needs to be updated?
-					ELSE													-- Set-hi/low
-						IF instr(8) = '0' THEN						-- high
-							big_temp_reg <= reg(to_integer(unsigned(addr2decA)));
-							temp_reg <= big_temp_reg(7 DOWNTO 0);
-							reg(to_integer(unsigned(addr2decA))) <= instr & temp_reg;
-						ELSE												-- low
-							big_temp_reg <= reg(to_integer(unsigned(addr2decA)));
-							temp_reg <= big_temp_reg(15 DOWNTO 8);
-							reg(to_integer(unsigned(addr2decA))) <= temp_reg & instr;
-						END IF;
-					END IF;
-=======
-					
->>>>>>> 535d1d2f71eb2decd187ce55d186c9736a96ce4f
 				END IF;
 				
 			ELSE
