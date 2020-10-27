@@ -39,7 +39,7 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(23 DOWNTO 19);
 	SIGNAL muxA		: std_logic 							:= micro_inst(24);			-- 0 then take MIR A or 1 take from %r 
 	SIGNAL muxB		: std_logic 							:= micro_inst(18);
-	SIGNAL muxC		: std_logic 							:= micro_inst(17);			-- To either store in registers or mm
+	SIGNAL muxC		: std_logic 							:= micro_inst(17);			-- !! To either get data from the ALU or MM
 	SIGNAL rd		: std_logic 							:= micro_inst(16);
 	SIGNAL wr		: std_logic 							:= micro_inst(15);
 	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)	:= micro_inst(14 DOWNTO 11);
@@ -50,13 +50,13 @@ ARCHITECTURE bhv OF data_path IS
 	
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
-	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
-	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
+	SIGNAL Cbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	
 -- MUX DECODER
 	SIGNAL mux2decA: std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL mux2decB: std_logic_vector(4 DOWNTO 0)	:= "00000";
-
+	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
+	SIGNAL addr2decB : std_logic_vector(7 DOWNTO 0) := x"00";
 
 -- from alu & memory to register
 	SIGNAL ALUout	: signed(17 DOWNTO 0);
@@ -92,16 +92,16 @@ BEGIN
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(15 DOWNTO 14) = "00" THEN				-- ARITHMATIC
 					IF instr(13) = '0' THEN
-						addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
+						addr2decB <= x"0" & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
 					ELSE
-						Bbus <= "00000000000" & instr(4 DOWNTO 0); -- Bbus <= constant in assembly instruction
+						addr2decB <= "000" & instr(4 DOWNTO 0); -- addr2decB <= constant in assembly instruction
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "01" THEN			-- MEMORY
 					IF instr(13) = '0' THEN
-						addr2decB <= "0" & instr(3 DOWNTO 0);	-- addr2decB <= B adress of the assemby instruction
+						addr2decB <= x"0" & instr(3 DOWNTO 0);	-- addr2decB <= B adress of the assemby instruction
 					ELSE
-						Bbus <= x"00" & instr(7 DOWNTO 0); -- addr2decB <= constant in assembly instruction
+						addr2decB <= instr(7 DOWNTO 0); -- addr2decB <= constant in assembly instruction
 					END IF;
 					
 				ELSIF instr(15 DOWNTO 14) = "10" THEN			-- DISP
@@ -112,7 +112,7 @@ BEGIN
 						-- PC needs to be updated?
 					ELSE													-- Set-hi/low
 						IF instr(8) = '0' THEN						-- high
-							big_temp_reg <= reg(to_integer(unsigned(addr2decA))); -- can be optimised with RESIZE(vector, 8)
+							big_temp_reg <= reg(to_integer(unsigned(addr2decA)));
 							temp_reg <= big_temp_reg(7 DOWNTO 0);
 							reg(to_integer(unsigned(addr2decA))) <= instr & temp_reg;
 						ELSE												-- low
@@ -124,7 +124,13 @@ BEGIN
 				END IF;
 				
 			ELSE
-				addr2decB <= micro_addrB;
+				addr2decB <= "000" & micro_addrB;
+			END IF;
+			-- MUX C
+			IF (muxc = '1') THEN		-- From ALU
+				Cbus <= std_logic_vector(ALUout(15 DOWNTO 0));
+			ELSE					-- From MM
+				Cbus <= mmI;
 			END IF;
 		END IF;
 	END PROCESS MUX;
@@ -135,16 +141,20 @@ BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
-			IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001") THEN
+			IF (instr(15 DOWNTO 13) = "011") OR (instr(15 DOWNTO 13) = "001") THEN		-- For ALU and MEM when i '1'
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-			ELSE
+				Bbus <= reg(to_integer(unsigned(addr2decA))); --Bbus<=reg(B)
+			ELSIF (instr(15 DOWNTO 14) = "000") OR (instr(15 DOWNTO 14) = "010") THEN	-- For ALU and MEM when i '0'
 				Abus <= reg(to_integer(unsigned(addr2decA)));
 				Bbus <= reg(to_integer(unsigned(addr2decB)));
 			END IF;
+			
+			reg(to_integer(unsigned(addr2decA))) <= Cbus;
 		END IF;
 	END PROCESS DECODER;
 		
 	--THE ALU	
+
 	Maths:PROCESS(clk,reset)
 		CONSTANT	max_value				: integer := 1024;
 		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
@@ -214,7 +224,6 @@ BEGIN
 				END IF;
 		END IF;
 	END PROCESS Maths;
-	
 	
 	--pseudo random generator (ALU ="F")
 	RANDO:PROCESS (clk, reset)

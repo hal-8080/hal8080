@@ -1,0 +1,211 @@
+--------
+Kernel code
+	If debug switch is on, jump to debug code
+	LUT for Display
+--------
+User code
+--------
+MMIO
+	Display
+	LED's
+	Switches
+	Buttons
+--------
+Debug code
+--------
+
+
+
+--------------------------------
+
+Switches for debug mode
+	1: Debug on/off
+	2: Step mode / memory mode
+		Step mode
+			Display: User Program Counter (instructionline in user assembly program)
+			Button 1 = execute instruction
+		Memory mode
+			Registry mode
+				Begin op r0
+				Display left 2: 0-31 (decimal)
+				Display laatste 4: value at register
+				Button 1 = previous register
+				Button 2 = next register
+			Main Memory mode
+				Begin op address van program counter
+				Address mode
+					Show current address, move through addresses
+				Value mode
+					Show value at selected address 
+	3: Registry mode / Main memory mode
+	4: Address / Value mode
+		Only useful in main memory mode
+			Address mode
+				Show current address on display 
+				Button 1 = previous register
+				Button 2 = next register
+			Value mode
+				See value at current address on display	
+
+------------------------------------------------
+HalAssembly Pseudocode
+
+Memory Addresses:
+	USERMEM:	00100000 00000000: Start of user memory
+	SWMEM:		11100000 00001000: Switches 0-9 and 6 zeroes
+	BTNMEM:		11100000 00001010: Buttons 0-3 and 12 zeroes
+	
+	
+SETHI %rd, CONST	SetHigh
+	Set upper 8 bits of %rd to CONST
+SETLO %rd, CONST	SetLow
+	Set lower 8 bits of %rd to CONST
+
+LD %rd, %rs			Load
+	%rs contains an address of a word in main memory, the value at that address is loaded into registry %rd
+ST %rd, %rs			Store
+	%rd contains an address of a word in main memory, the value at %rs is written into that address
+LDC %rd, CONST		Load Constant
+	%rd contains an address of a word in main memory, the CONST is written into that address
+
+AND %rd, %rs		Bitwise AND 
+	Bitwise and between registries %rd and %rs, store result in %rd
+	Set ZEROFLAG to true if result is 0
+CP %rd, %rs			Copy
+	Copy the contents in %rs to %rd
+
+
+BZERO %rd			Branch if zero
+	Jump to address stored in %rd if ZEROFLAG is true
+CALL %rd			Call subroutine
+	%RetAddr <- PC, PC <- $rd
+RET					Return from subroutine 
+	PC <- %RetAddr + 2
+
+------------------------------------------------
+
+	#
+	#	FIX THE DEBUG/USER STATUS BIT ISSUE
+	#
+
+
+	#Store address of start of user program in dbgPC (can only do 8 bits at a time)
+SETHI %dbgPC, USERMEM
+SETLO %dbgPC, USERMEM
+
+	#Store first user program instruction in dbgIR
+LD %dbgIR, %dbgPC
+
+
+STARTJUMP
+		#Load state of levers in dbgLeverState (can only do 8 bits at a time)
+	SETHI %TempAddr, SWMEM
+	SETLO %TempAddr, SWMEM
+	LD %LeverState, %TempAddr
+	
+		#Check if lever 8 is on
+		#	if off 	jump to MEMORYMODE
+		#	else 	jump to STEPMODE
+	SETHI %TempVal, x00
+	SETLO %TempVal, x80
+	AND %TempVal, %LeverState
+	BZERO MEMORYMODE
+	BA STEPMODE
+
+
+STEPMODE
+		#Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
+	CP %dbgAddr, %dbgPC
+	CP %dbgValue, %dbgIR
+
+	#
+	#	IMPORT BUTTONS
+	#	
+	#	CHECK IF BUTTON3 IS HIGH, IF YES EXECUTE INSTRUCTION
+	#
+
+		#Check if lever 7 is on
+		#	if off 	write the user PC to display
+		#	else	write the user IR to display
+	SETHI %TempVal, x01
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO DISPADDR
+	BA DISPVAL
+	
+
+DISPADDR
+	#
+	#	DISPLAY VALUE IN dbgAddr ONTO DISPLAY
+	#	
+	BA STARTJUMP
+	
+DISPVAL
+	#
+	#	DISPLAY VALUE IN dbgValue ONTO DISPLAY
+	#	
+	BA STARTJUMP
+
+
+
+MEMORYMODE
+	If lever 6 == on		(Registry/MainMemory)
+		Set DBG addr = DBG PC
+		Set DBG value = value at DBG PC
+		Jump MAINMEM
+	If lever 6 == off 		(Registry/MainMemory)
+		Set DBG addr = r0
+		Set DBG value = value at r0
+		Jump REGISTRY
+
+REGISTRY
+	Load leverstate in DBG LeverState
+	Load buttonstate in DBG ButtonState
+	
+	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
+	
+	Write to leftmost 2 displays the DBG Addr in decimal (0-31)
+	Write to rightmost 4 displays the DBG Value in Hex
+	If button 3 == HIGH
+		If DBG addr != 0
+			DBG addr -= 1
+	If button 2 == HIGH
+		If DBG addr != 31
+			DBG addr += 1
+	DBG value = value at register DBG addr
+	Jump REGISTRY
+
+MAINMEM
+	Load leverstate in DBG LeverState
+	Load buttonstate in DBG ButtonState
+	
+	CHECK LEVERS AND JUMP TO CORRECT MODE IF NEEDED
+	
+	If lever 7 == on 		(Write Address/Value to display)
+		Write DBG:ProgramCounter to display
+	If lever 7 == off 		(Write Address/Value to display)
+		Write DBG:InstructionRegister to display
+	
+	
+	If lever 0 == on 		(Move = 2)
+		DBG:TempVal = 2
+	If lever 1 == on 		(Move = 20)
+		DBG:TempVal = 20
+	If lever 2 == on 		(Move = 200)
+		DBG:TempVal = 200
+	If lever 3 == on 		(Move = 2 000)
+		DBG:TempVal = 2 000
+	If lever 4 == on		(Move = 20 000)
+		DBG:TempVal = 20 000
+	
+	If button 3 == HIGH
+		DBG:Addr -= DBG:TempVal (CHECK IF NOT BELOW 0)
+	If button 2 == HIGH
+		DBG:Addr += DBG:TempVal (CHECK IF NOT ABOVE MAXVAL)
+	
+	Jump MAINMEM
+
+
+
+
+
