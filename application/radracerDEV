@@ -118,11 +118,11 @@ LOOP
 	CALL UPDATEFIRSTDISPLAY
 	CALL COLLISION
 	CALL UPDATEDISPLAYS
+	CALL WRITEDISPLAYS
 	
 
 UPDATEPLAYER
 	LD %buttonState, BUTTONSTATE
-	
 checkUP	
 	SETLO %TempVal1, x00
 	SETHI %TempVal1, x10
@@ -144,44 +144,162 @@ checkDOWN
 	RETURN
 
 setMIDDLE
-	SETHI %playerState, 00000001
-	SETLO %playerState, 00000000
+	SETHI %playerState, x01
+	SETLO %playerState, x00
 	RETURN
 
 
 UPDATEFIRSTDISPLAY
 		#Create superposition of player and first display
 	INV %tempVar, %dispL
-	OR %tempVar, %playerState
+	OR %TempVal1, %playerState
 	INV %Comb, %tempVar
 	ST DISPLEFT, %Comb
 	RETURN
 
 COLLISION
-	INV %TempVar1, %dispL
-	AND %TempVar1, %playerState
+	INV %TempVal1, %dispL
+	AND %TempVal1, %playerState
 	BZERO RETURNFLAG
 	CALL DEAD
 
-	
 UPDATEDISPLAYS
 	LD %Timer, TIMER1
+	CP %TempVal1, %maxTimer
+	SUB %TempVal1, %Timer
+	BNEG MOVEDISPLAYS
+	RETURN
+
+MOVEDISPLAYS
+	ST TIMER0, %r0
+	SUB %maxTimer, 10
+	ADD $score, 1
+
+		# seg5 = seg4
+	LSHIFT %dispL, 8
+		# seg4 = seg3
+	CP %TempVal1, %dispM
+	SHIFTR %TempVal1, 8
+	SETHI %TempVal1, x00
+	OR %dispL, %TempVal1
+		# seg3 = seg2
+	LSHIFT %dispM, 8
+		# seg2 = seg1 
+	CP %TempVal1, %dispR
+	SHIFTR %TempVal1, 8
+	SETHI %TempVal1, x00
+	OR %dispM, %TempVal1
+		# seg1 = seg0 
+	LSHIFT %dispR, 8
+
+	ST TIMER0, %r1 		# Start the timer
 	
+		# if seg3 == EMPTY
+		# 	seg0 = EMPTY
+	CP %TempVal1, %dispM
+	INV %TempVal1
+	SHIFTR %TempVal1, 7
+	SETHI %TempVal1, x00
+	SHIFTL %TempVal1, 7
+	OR %TempVal1, %r0 
+	BZERO addNothing
+
+		# if seg2 == EMPTY
+		# 	seg0 = seg1
+
+	CP %TempVal1, %dispM
+	INV %TempVal1
+	SHIFTL %TempVal1, 1
+	SETHI %TempVal1, x00
+	SHIFTR %TempVal1, 1
+	OR %TempVal1, %r0 
+	BZERO addPrevious
+
+		# else
+		# 	seg0 = RAND VAL
+	BZERO addRandom
+
+addNothing
+	SETLO %dispR, 0111 1111
+	RETURN
+
+addPrevious
+	CP %TempVal1, %dispR
+	SHIFTR %TempVal1, 8
+	SETLO %dispR, x00
+	SETHI %TempVal1, x00
+	OR %dispR, %TempVal1
+	RETURN
+
+addRandom
+	RAND %TempVal1
+	SETHI %TempVal2, x00
+	SETLO %TempVal2, 0100 1001
+	AND %TempVal1, TempVal2		# Check if not all 3 positions are 0
+	BZERO addRandom
+	CP %TempVal2, %TempVal1
+	SETHI %TempVal3, x00 
+	SETLO %TempVal3, 0100 1001
+	SUB %TempVal2, %TempVal3	# Check if not all 3 positions are 1
+	BZERO addRandom
+
+	LSHIFT %TempVal1, 1
+	SETHI %TempVal1, xFF
+	LSHIFT %TempVal1, 1
+	SETHI %TempVal1, x00
+	INV %TempVal1, %TempVal1
+	SETLO %dispR, x00
+	OR %dispR, %TempVal1
+	RETURN
 
 
+WRITEDISPLAYS
+	INV %tempVar, %dispL
+	OR %tempVar, %playerState
+	INV %Comb, %tempVar
+	
+	ST DISPLEFT, %Comb
+	ST DISPMIDDLE, %dispM
+	ST DISPRIGHT, %dispR
+
+
+DEAD
+	# set timer0 = 0
+	# write score to display
+	# check for user input
+	# if both buttons pressed, jump INIT
+
+	ST TIMER0, %r0
+	DISPRHR %score
+
+	LD %buttonState, BUTTONSTATE
+	SETHI %TempVal1, x20
+	SETLO %TempVal1, x00
+	AND %TempVal1, %buttonState
+	BZERO DEAD
+	SETHI %TempVal1, x10
+	SETLO %TempVal1, x00
+	AND %TempVal1, %buttonState
+	BZERO DEAD
+
+	BA INIT
 
 
 RETURNFLAG
 	RETURN
-	
-
-	
-	
-	check if enough time passed
-	if yes, jump to MOVE_OBJECTS
-	jump LOOP
 
 
+---------------------
+BA label
 
+label:
+	AND %r0, %r0
+---------------------
 
+0000 0000 0000 0002: SETHI %r15, <0000 0000>
+0000 0000 0000 0004: SETLO %r15, <0000 1110>
+0000 0000 0000 0006: BA $r15
 
+0000 0000 0000 1110: AND %r0, %r0
+
+---------------------

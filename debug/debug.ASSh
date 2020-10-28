@@ -22,9 +22,9 @@ STARTJUMP
 		#Check if lever 8 is HIGH
 		#	if off 	jump to MEMORYMODE
 		#	else 	jump to STEPMODE
-	SETHI %TempVal, x00
-	SETLO %TempVal, x80
-	AND %TempVal, %LeverState
+	SETHI %TempVal1, x00
+	SETLO %TempVal1, x80
+	AND %TempVal1, %LeverState
 	BZERO MEMORYMODE
 	BA STEPMODE
 
@@ -36,9 +36,9 @@ STEPMODE
 	
 		#Check which button went from 0 to 1, store results in %tempVal 
 	LD %ButtonState, BUTTONSTATE
-	LD %TempVal, PREVBUTTONSTATE
-	INV %TempVal
-	AND %TempVal, %ButtonState
+	LD %TempVal1, PREVBUTTONSTATE
+	INV %TempVal1, %TempVal1
+	AND %TempVal1, %ButtonState
 	ST PREVBUTTONSTATE, %ButtonState
 	
 	
@@ -160,7 +160,7 @@ REGISTRY
 		#Check which button went from 0 to 1, store results in %tempVal 
 	LD %ButtonState, BUTTONSTATE
 	LD %TempVal1, PREVBUTTONSTATE
-	INV %TempVal1
+	INV %TempVal1, %TempVal1
 	AND %TempVal1, %ButtonState
 	ST PREVBUTTONSTATE, %ButtonState
 	
@@ -239,7 +239,7 @@ MAINMEM
 		#Check which button went from 0 to 1, store results in %tempVal 
 	LD %ButtonState, BUTTONSTATE
 	LD %TempVal1, PREVBUTTONSTATE
-	INV %TempVal1
+	INV %TempVal1, %TempVal1
 	AND %TempVal1, %ButtonState
 	ST PREVBUTTONSTATE, %ButtonState
 	
