@@ -1,0 +1,485 @@
+--------
+Kernel code
+	If debug switch is on, jump to debug code
+	LUT for Display
+--------
+User code
+--------
+MMIO
+	Display
+	LED's
+	Switches
+	Buttons
+--------
+Debug code
+--------
+
+
+
+--------------------------------
+
+Switches for debug mode
+	1: Debug on/off
+	2: Step mode / memory mode
+		Step mode
+			Display: User Program Counter (instructionline in user assembly program)
+			Button 1 = execute instruction
+		Memory mode
+			Registry mode
+				Begin op r0
+				Display left 2: 0-31 (decimal)
+				Display laatste 4: value at register
+				Button 1 = previous register
+				Button 2 = next register
+			Main Memory mode
+				Begin op address van program counter
+				Address mode
+					Show current address, move through addresses
+				Value mode
+					Show value at selected address 
+	3: Registry mode / Main memory mode
+	4: Address / Value mode
+		Only useful in main memory mode
+			Address mode
+				Show current address on display 
+				Button 1 = previous register
+				Button 2 = next register
+			Value mode
+				See value at current address on display	
+
+------------------------------------------------
+Memory Addresses:
+	USERMEM:	00100000 00000000: Start of user memory
+	SWMEM:		11100000 00001000: Switches 0-9 and 6 zeroes
+	BTNMEM:		11100000 00001010: Buttons 0-3 and 12 zeroes
+	
+	
+SETHI %rd, CONST	SetHigh
+	Set upper 8 bits of %rd to CONST
+SETLO %rd, CONST	SetLow
+	Set lower 8 bits of %rd to CONST
+
+LD %rd, %rs			Load
+	%rs contains an address of a word in main memory, the value at that address is loaded into registry %rd
+ST %rd, %rs			Store
+	%rd contains an address of a word in main memory, the value at %rs is written into that address
+LDC(H/L) %rd, CONST		Load Constant
+	%rd contains an address of a word in main memory, the CONST is written into (HIGH/LOW) byte at that address
+
+AND %rd, %rs		Bitwise AND 
+	Bitwise AND between registries %rd and %rs, store result in %rd
+	Set ZEROFLAG to true if result is 0
+AND %rd, CONST 		Bitwise AND 
+	Bitwise AND between a register and a 5 bit const. First const bit determines if first 12 bits are 0 or 1, last 4 bits are custom
+
+
+CP %rd, %rs			Copy
+	Copy the contents in %rs to %rd
+
+
+BZERO %rd			Branch if zero
+	Jump to address stored in %rd if ZEROFLAG is true
+CALL %rd			Call subroutine
+	%RetAddr <- PC, PC <- $rd
+RET					Return from subroutine 
+	PC <- %RetAddr + 2
+
+DISP(L/M/R) CONST, CONST
+	L/M/R determines left 2, middle 2 or right 2
+	Const are value in lookup table. First Const is displayed on left display, second const on right display
+DISP %rs
+	Value in %rs is displayed on last 4 segments
+
+------------------------------------------------
+
+
+DISP
+	R(EGISTER)
+		C(ONST) 2 X 5 BITS -> 000LLLLL000RRRRR
+			L/M/R
+		H(HEX REGVAL) 4 X 4 BITS -> 1111222233334444
+			L/R
+	C(ONST)
+		L/M/R
+
+DISPRCL %rs 	# Display on left 2 displays the constants found in %rs
+DISPRCM %rs		# Display on middle 2 displays the constants found in %rs
+DISPRCR %rs		# Display on right 2 displays the constants found in %rs
+
+DIPSRHL %rs		# Display the value in %rs on left 4 displays
+DISPRHR %rs		# Display the value in %rs on right 4 displays
+
+DIPSCL const, const		# Display const,const on left 2 displays
+DIPSCM const, const		# Display const,const on middle 2 displays
+DISPCR const, const		# Display const,const on right 2 displays
+
+------------------------------------------------
+
+
+
+# (PNS) = "(Possibly needs seperation)"
+#	When loading/storing a value at a dedicated, pre-known memory address I use "LD %reg, MEMADDR". 
+#	If the assembler doesn't work out, this needs to be hardcoded and put into a %TempReg with SETHI and SETLO, 
+#	and then LD from the address stored in %TempReg into a new registry.
+
+
+SET DBGREGISTRIES TO 1
+SET DBGFLAGS TO 1
+
+	#Store address of start of user program in dbgPC
+LD %dbgPC, USERMEM 					
+
+	#Store first user program instruction in dbgIR
+LD %dbgIR, %dbgPC					
+
+LD %ButtonState, BUTTONSTATE
+ST PREVBUTTONSTATE, %ButtonStatE
+
+
+STARTJUMP
+	
+	SET DBGREGISTRIES TO 1
+	SET DBGFLAGS TO 1
+
+		#Load state of levers in dbgLeverState
+	LD %LeverState, LEVERSTATE	
+	
+		#Check if lever 8 is HIGH
+		#	if off 	jump to MEMORYMODE
+		#	else 	jump to STEPMODE
+	SETHI %TempVal, x00
+	SETLO %TempVal, x80
+	AND %TempVal, %LeverState
+	BZERO MEMORYMODE
+	BA STEPMODE
+
+
+STEPMODE
+		#Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
+	CP %dbgAddr, %dbgPC
+	CP %dbgValue, %dbgIR	
+	
+		#Check which button went from 0 to 1, store results in %tempVal 
+	LD %ButtonState, BUTTONSTATE
+	LD %TempVal, PREVBUTTONSTATE
+	INV %TempVal
+	AND %TempVal, %ButtonState
+	ST PREVBUTTONSTATE, %ButtonState
+	
+	
+		#Check if button 3 is HIGH
+		#	If LOW, display value
+		#	If HIGH, execute instruction
+	SETHI %TempVal2, x10
+	SETLO %TempVal2, x00
+	AND %TempVal, %TempVal2
+	BZERO ADDRESVALUEDISPLAY
+	
+
+	##### EXECUTE USER INSTRUCTION #####
+	
+	LD %dbgIR, %dbgPC		# Should not be needed, but doesn't hurt to put here anyways
+	CP %TempVal1, %dbgIR
+	SETHI %TempVal2, xC0
+	SETLO %TempVal2, x00	# %TempVal2 = 1100 0000 00000 0000
+	
+	SHIFTR %TempVal1, 6
+	SETLO %TempVal1, x00
+	SHIFTL %TempVal1, 6
+	
+	SUB %TempVal1, %TempVal2 	#Check if its a branch instruction
+	BZERO PANICITSABRANCHINSTRUCTION
+	BA NOTBRANCHINSTR
+	
+	
+PANICITSABRANCHINSTRUCTION
+	
+	CP %TempVal1, %dbgIR
+	SHIFTL %TempVal1, 3
+	SETLO %TempVal1, x00
+	SHIFTL %TempVal1, 4 	# COND 0000 0000 0000
+	
+	SETLO %TempVal2, x00
+	SETHI %TempVal2, x40
+	SUB %TempVal2, %TempVal1
+	BZERO USERCALLINSTRUCTION 	#Check if the instruction is a call instruction = 0100
+	
+	SETLO %TempVal2, x00
+	SETHI %TempVal2, x50
+	SUB %TempVal2, %TempVal1
+	BZERO USERRETURNINSTRUCTION 	#Check if the instruction is a return instruction = 0101
+	
+	SETLO %TempVal2, x00
+	SETHI %TempVal2, x00
+	SUB %TempVal2, %TempVal1
+	BZERO BNEGCHECK 	#Check if the instruction is a BNEG instruction = 0000
+	
+	SETLO %TempVal2, x00
+	SETHI %TempVal2, x10
+	SUB %TempVal2, %TempVal1
+	BZERO BZEROCHECK 	#Check if the instruction is a BZERO instruction = 0001
+	
+	BA HOP	# If its a branch instruction and not call, return, bneg, bzero, it must be a branch always
+	
+
+USERCALLINSTRUCTION
+	CP %RetAddr, %dbgPC
+	BA HOP
+
+USERRETURNINSTRUCTION
+	CP %userPC, %RetAddr
+	LD %dbgIR, %dbgPC
+	BA STARTJUMP
+	
+BNEGCHECK
+	SET DBGFLAGS TO 0
+	BNEG HOP
+	BA NOHOP
+	
+BZEROCHECK
+	SET DBGFLAGS TO 0
+	BZERO HOP
+	BA NOHOP
+
+HOP
+	SET DBGFLAGS TO 1
+	#
+	# Get jump address and put in PC 	DEPENDS ON HOW FLAGS WORK
+	#
+	LD %dbgIR, %dbgPC
+	BA STARTJUMP
+	
+NOHOP
+	SET DBGFLAGS TO 1
+	ADD %dbgPC, 2
+	LD %dbgIR, %dbgPC
+	BA STARTJUMP
+	
+NOTBRANCHINSTR
+	SET DBGFLAGS TO 0
+	ST instr, %dbgIR
+	SET DBGREGISTRIES TO 0
+instr:
+	#dummy instruction#
+	>wait a bit?<
+	SET DBGFLAGS TO 1
+	SET DBGREGISTRIES TO 1
+	ADD %dbgPC, 2
+	LD %dbgIR, %dbgPC
+	BA STARTJUMP
+
+
+MEMORYMODE
+		#Check if lever 6 is HIGH
+		#	if off 	jump to REGISTRY (UserRegistryReader)
+		#	else 	jump to MAINMEM (MainMemoryReader)
+	SETHI %TempVal, x02
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO REGISTRY
+	BA MAINMEM
+
+REGISTRY
+		#Change X in "Display register X" to correct value, switch DBGREGISTRIES off, execute instruction, switch DBGREGISTRIES on
+	
+		#Check which button went from 0 to 1, store results in %tempVal 
+	LD %ButtonState, BUTTONSTATE
+	LD %TempVal1, PREVBUTTONSTATE
+	INV %TempVal1
+	AND %TempVal1, %ButtonState
+	ST PREVBUTTONSTATE, %ButtonState
+	
+		#Check if button 3 and/or 2 is HIGH
+			#If both LOW, jump to REGISTRYSTATIC
+			#If either HIGH, jump to REGISTRYMOVE
+	SETHI %TempVal2, x30
+	SETLO %TempVal2, x00
+	AND %TempVal1, %TempVal2
+	BZERO REGISTRYSTATIC
+	BA REGISTRYMOVE
+
+
+REGISTRYMOVE
+		#If button 3 or 2 is pressed, increment/decrement the XXXX in "Display Register XXXX" 
+
+	LD %TempAddr, LBL 		
+	CP %TempVal2, TempAddr
+	AND %TempVal2, 01111		#%TempVal2 = 0..0 XXXX
+	
+	# In use: TempAddr: LBL("Display registry XXXX")
+	# 		TempVal1: Changed buttons
+	# 		TempVal2: 0..0 XXXX
+	
+	CP %TempAddr, %TempVal2
+	SHIFTL %TempVal1, 3
+	BZERO REGISTRYMOVEADD
+	BA REGISTRYMOVESUB
+	
+REGISTRYMOVESUB
+	SUB %TempAddr, 1
+	BA REGISTRYMOVESET
+
+REGISTRYMOVEADD
+	ADD %TempAddr, 1
+	BA REGISTRYMOVESET
+
+REGISTRYMOVESET
+	AND %TempAddr, 01111
+	CP %TempVal1, %TempAddr 	
+	LD %TempAddr, LBL
+	AND %TempAddr, 10000
+	OR %TempAddr, %TempVal1
+	ST LBL, %TempAddr
+	
+	LSHIFT %TempVal1, 4
+	OR %TempVal1, 00001
+	LSHIFT %TempVal1, 4
+	OR %TempVal1, 01111		# %TempVal1 = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
+	DISPRCL %TempVal 		# DISP Register number + empty on left 2 displays
+
+	BA REGISTRYREADOUTPUT
+
+
+REGISTRYSTATIC
+	LD %TempVal1, LBL
+	AND %TempVal1, 01111
+	
+	LSHIFT %TempVal1, 4
+	OR %TempVal1, 00001
+	LSHIFT %TempVal1, 4
+	OR %TempVal1, 01111		# %TempVal1 = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
+	DISPRCL %TempVal 		# DISP Register number + empty on left 2 displays
+	
+	BA REGISTRYREADOUTPUT
+
+REGISTRYREADOUTPUT
+	set DEBGREGISTRIES to 0
+LBL:	
+	DISPRHR %r0		#%r0 IS A DUMMY VALUE, WILL BE CHANGED BY CODE ABOVE
+	set DEBGREGISTRIES to 1
+	BA STARTJUMP
+
+
+MAINMEM	
+		#Check which button went from 0 to 1, store results in %tempVal 
+	LD %ButtonState, BUTTONSTATE
+	LD %TempVal1, PREVBUTTONSTATE
+	INV %TempVal1
+	AND %TempVal1, %ButtonState
+	ST PREVBUTTONSTATE, %ButtonState
+	
+		#Check if button 3 and/or 2 is HIGH
+				#If both LOW, jump to REGISTRYSTATIC
+				#If either HIGH, jump to REGISTRYMOVE
+	SETHI %TempVal2, x30
+	SETLO %TempVal2, x00
+	AND %TempVal1, %TempVal2
+	BZERO ADDRESVALUEDISPLAY
+	BA REGISTRYMOVE
+
+
+MAINMEMSETMOVE
+	CP %TempVal2, %LeverState
+	SHIFTR %TempVal2, 4
+	SETLO %TempVal2, x00
+	SHIFTL %TempVal2, 4		#%TempVal = XXXX 0000 0000 0000
+	BZERO MOVE2
+	SHIFTL %TempVal2, 1
+	BZERO MOVE20
+	SHIFTL %TempVal2, 1
+	BZERO MOVE200
+	SHIFTL %TempVal2, 1
+	BZERO MOVE2000
+	BA MOVE20000			#If its not 0 after 3 lshifts, lever 3 must be on
+	
+MAINMEMMOVE2	
+	SETHI %TempVal2, x00
+	SETLO %TempVal2, x02
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE20
+	SETHI %TempVal2, x00
+	SETLO %TempVal2, x14
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE200
+	SETHI %TempVal2, x00
+	SETLO %TempVal2, x64
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE2000
+	SETHI %TempVal2, x07
+	SETLO %TempVal2, xD0
+	BA MAINMEMCALCMOVE
+MAINMEMMOVE20000
+	SETHI %TempVal2, x4E
+	SETLO %TempVal2, x20
+	BA MAINMEMCALCMOVE
+	
+
+MAINMEMCALCMOVE
+		# %TempVal1 holds changed buttons from 0 to 1	
+	SHIFTL %TempVal1, 3
+	BZERO MAINMEMMOVEADD
+	BA MAINMEMMOVESUB
+	
+MAINMEMMOVESUB
+	SUB %DBGaddr, %TempVal2		
+	#
+	#	ACCOUNT FOR OVERFLOW
+	#	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
+	#
+	BA MAINMEMUPDATE
+
+MAINMEMMOVEADD
+	ADD %DBGaddr, %TempVal2
+	#
+	#	ACCOUNT FOR OVERFLOW
+	#	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
+	#
+	BA MAINMEMUPDATE
+
+MAINMEMUPDATE
+	LD %DBGvalue, %DBGaddr 
+	BA ADDRESVALUEDISPLAY
+	
+
+ADDRESVALUEDISPLAY
+		#Check if lever 7 is HIGH
+		#	if off 	jump to DISPLAYVALUE
+		#	else 	jump to DISPLAYADDRES
+	SETHI %TempVal, x01
+	SETLO %TempVal, x00
+	AND %TempVal, %LeverState
+	BZERO DISPLAYVALUE
+	BA DISPLAYADDRES
+
+
+DISPLAYVALUE
+	DISP %DBGvalue
+	BA STARTJUMP
+
+
+DISPLAYADDRES
+	DISP %DBGaddr
+	BA STARTJUMP
+
+
+
+
+
+-Executing instruction (mainly branch)
+-Overflow protection for Memory-Mode: Main Memory: Move
+
+
+------------------------------------------------
+
+BIOS
+	if lever is set, jump to debug
+	write 0000 to dbgRegMainMemAddress
+
+
+
+DEBUG
+	write 1111 to dbgRegMainMemAddress
+	Het enige moment dat we user registries willen inlezen is wanneer we ze schrijven naar de displays
+	write 0000 to dbgRegMainMemAddress
+
+
