@@ -1,0 +1,33 @@
+{
+    "name": "assemblyhal",
+    "version": "0.0.1",
+    "icon": "hal8080.png",
+    "engines": {
+        "vscode": "^1.22.0"
+    },
+    "publisher": "7kasper",
+    "contributes": {
+        "languages": [{
+            "id": "assemblyhal",
+            "aliases": ["assemblyhal"],
+            "extensions": [
+                ".assh"
+            ],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [
+            {
+                "language": "assemblyhal",
+                "scopeName": "source.assemblyhal",
+                "path": "./syntaxes/assemblyhal.tmLanguage"
+            }
+        ]
+    },
+    "categories": [
+        "Languages"
+    ],
+    "repository": {
+        "url": "https://github.com/hal-8080/hal8080",
+        "type": "git"
+    }
+}
