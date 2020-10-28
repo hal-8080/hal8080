@@ -100,6 +100,10 @@ contexts [] {
       }
    
       # Instructions
+      : pattern { # Special
+         regex \= ((PUT)\s)
+         styles []       = .instruction;
+      }
       : pattern { # Arithmetic
          regex \= ((?:N?AND|ORN?|ADD|MUL|DIV|XOR|SHIFT[LR]|INV|POW|SUB|CP|RAND)\s)
          styles []       = .instruction;

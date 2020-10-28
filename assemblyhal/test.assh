@@ -3,7 +3,7 @@ SET DBGFLAGS TO 1
 
 TEST:
     #Store address of start of user program in dbgPC
-    LD $r1				
+    LD $r1, $dB
 
         #Store first user program instruction in dbgIR
     LD %dbgIR, %dbgPC					

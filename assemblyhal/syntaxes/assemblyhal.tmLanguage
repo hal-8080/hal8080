@@ -46,6 +46,12 @@
         </dict>
         <dict>
           <key>match</key>
+          <string>((PUT)\s)</string>
+          <key>name</key>
+          <string>keyword.assemblyhal</string>
+        </dict>
+        <dict>
+          <key>match</key>
           <string>((?:N?AND|ORN?|ADD|MUL|DIV|XOR|SHIFT[LR]|INV|POW|SUB|CP|RAND)\s)</string>
           <key>name</key>
           <string>keyword.assemblyhal</string>
