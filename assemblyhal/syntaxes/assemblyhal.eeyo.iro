@@ -1,0 +1,154 @@
+#             HAL8080 Processor               #
+# Kasper, Dennis, Tjeerd, Nick, Oussama 2020  #
+#        AssemblyHal Syntax Definition        #
+# This file is run with eeyo.io/iro           #
+# and defines the syntax (highlighting)       #
+# of the AssemblyHal code.                    #
+
+name                   = assemblyhal
+file_extensions []     = assh;
+
+# ========================= #
+#          STYLING          #
+# ========================= #
+
+styles [] {
+   
+   # Comment. Nice green italic.
+   .comment : style {
+      color                 = light_green
+      italic                = true
+      ace_scope             = comment
+      textmate_scope        = comment
+      pygments_scope        = Comment
+   }
+   
+   # Label. (Sort of constant)
+   .label : style {
+      color                 = gold
+      ace_scope             = constant.character
+      textmate_scope        = constant.character
+      pygments_scope        = Name.Constant
+   }
+   
+   # Instruction. AssemblyHal instruction
+   .instruction : style {
+      color                 = orange
+      ace_scope             = keyword
+      textmate_scope        = keyword
+      pygments_scope        = Keyword
+   }
+   
+   # Register (Sort of variable)
+   .register : style {
+      color                 = light_blue
+      ace_scope             = variable
+      textmate_scope        = variable
+      pygments_scope        = Name.Variable
+   }
+   
+   #BIOS Register
+   .bios_register : style {
+      color                 = light_blue
+      bold                  = true
+      ace_scope             = constant.other
+      textmate_scope        = constant.other
+      pygments_scope        = Name.Builtin
+   }
+   
+   
+   # Constant (Numeric)
+   .constant : style {
+      color                 = cyan
+      ace_scope             = constant.numeric
+      textmate_scope        = constant.numeric
+      pygments_scope        = Number
+   }
+   
+   .illegal : style {
+      color                 = white
+      background_color      = red
+      ace_scope             = invalid
+      textmate_scope        = invalid
+      pygments_scope        = Generic.Error
+   }
+   
+}
+   
+# ========================= #
+#          CONTEXT          #
+# ========================= #
+   
+contexts [] {
+
+   main : context {
+   
+      # Comments
+      : pattern {
+         regex          \= (#.*)
+         styles []       = .comment;
+      }
+   
+      # Labels
+      : pattern {
+         regex          \= (\w+:)
+         styles []       = .label;
+      }
+      : pattern {
+         regex          \= (@\w+[<>]?)
+         styles []       = .label;
+      }
+   
+      # Instructions
+      : pattern { # Arithmetic
+         regex \= ((?:N?AND|ORN?|ADD|MUL|DIV|XOR|SHIFT[LR]|INV|POW|SUB|CP|RAND)\s)
+         styles []       = .instruction;
+      }
+      : pattern { # Memory
+         regex \= ((?:LD|ST)\s)
+         styles []       = .instruction;
+      }
+      : pattern { # Display
+         regex \= (DISP(?:RC[LMR]|RH[LR]|C[LMR])\s)
+         styles []       = .instruction;
+      }
+      : pattern { # Branch/Set
+         regex \= ((?:BNEG|BZERO|BA|SETHI|SETLO)\s)
+         styles []       = .instruction;
+      }
+   
+      # Registers
+      : pattern {
+         regex          \= (\$r[0-9B-F])
+         styles []       = .register;
+      }
+   
+      # Debug Registers
+      : pattern {
+         regex  \= (\$(?:RET|m[1-3]|d[B-F]|dAD|dVAL|dPC|dIR|PC|IR))
+         styles []       = .bios_register;
+      }
+      
+      # Constants
+      : pattern { # Decimal
+         regex          \= (\b\d+)
+         styles []       = .constant;
+      }
+      : pattern { # Binary
+         regex          \= ("(?:[01]{1,5}|[01]{8}|[01]{16})")
+         styles []       = .constant;
+      }
+      : pattern { # Hex
+         regex          \= (x"(?:[0-9A-F]{1,2}|[0-9A-F]{4})")
+         styles []       = .constant;
+      }
+   
+      # INVALID THINGS
+      : pattern {
+         regex          \= (\$(?:rA|dA))
+         styles []       = .illegal;
+      }
+      
+   }
+   
+}

@@ -14,8 +14,8 @@ PACKAGE memory_utils IS
     CONSTANT mem_width      : natural :=  8; -- Memory width: 8 bits.
     CONSTANT adr_width      : natural := 16; -- Address width: 16 bits.
     -- INITIAL VALUES     
-    CONSTANT bios_file      : string := "bios.mif"; -- Bin file to populate BIOS rom (Address 0-8191)
-    CONSTANT ram_file       : string := "program.mif"; -- Bin file to populate user RAM (Address 8192-57343)
+    CONSTANT bios_file      : string := "bios.bin"; -- Bin file to populate BIOS rom (Address 0-8191)
+    CONSTANT ram_file       : string := "ram.bin"; -- Bin file to populate user RAM (Address 8192-57343)
     -- MMIO ADDRESSES
     CONSTANT start_bios     : natural :=     0;
     CONSTANT start_ram      : natural :=  8192;

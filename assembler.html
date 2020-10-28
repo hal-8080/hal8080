@@ -94,8 +94,8 @@
     </div>
     <script src="./assembler/halfmoon.min.js"></script>   <!-- Load dark style: Halfmoon JS -->
     <script src="./assembler/ace.min.js"></script>
-    <script src="./assembler/theme-vibrant_ink.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-assembly_x86.min.js"></script>
+    <script src="./assembler/assemblyhaltheme.js"></script>
+    <script src="./assemblyhal/syntaxes/mode-assemblyhal.js"></script>
     <!-- Assembler Script -->
     <script>
 
@@ -104,8 +104,8 @@
         //==========================================\\
 
         const editor = ace.edit("editor");
-        editor.setTheme("ace/theme/vibrant_ink");
-        editor.getSession().setMode("ace/mode/assembly_x86");
+        editor.setTheme("ace/theme/assemblyhaltheme");
+        editor.getSession().setMode("ace/mode/assemblyhal");
 
         //==========================================\\
         //                   UTILS                  \\

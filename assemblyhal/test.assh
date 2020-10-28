@@ -1,22 +1,31 @@
-  
-# -----------------------------------------------------------
-# Title      : Hello World
-# Written by : Kaan Ozcelik
-# Date       : 5.3.2016
-# Description: Hello World Example
-# -----------------------------------------------------------
-===================
-START: ORG    $1000  # first instruction of program
+SET DBGREGISTRIES TO 1
+SET DBGFLAGS TO 1
 
-    LEA MESSAGE
-CR EQU $0D 
-LF EQU $0A
-MESSAGE DC.B 'HELLO WORLD',CR,LF
-        DC.B 'TEST LINE 2',CR,LF,CR,LF
-        DC.B 'TEST SKIP LINE',0
+TEST:
+    #Store address of start of user program in dbgPC
+    LD $r1				
 
-    END    START        ; last line of source
+        #Store first user program instruction in dbgIR
+    LD %dbgIR, %dbgPC					
 
-*~Font name~Courier New~
-*~Font size~10~
-*~Tab type~1~
+LD %ButtonState, BUTTONSTATE
+ST PREVBUTTONSTATE, %ButtonStatE
+
+
+STARTJUMP
+	
+	SET DBGREGISTRIES TO 1
+	SET DBGFLAGS TO 1
+
+		#Load state of levers in dbgLeverState
+	LD %LeverState, LEVERSTATE	
+	
+		#Check if lever 8 is HIGH
+		#	if off 	jump to MEMORYMODE
+		#	else 	jump to STEPMODE
+	SETHI %TempVal, x00
+	SETLO %TempVal, x80
+	AND %TempVal, %LeverState
+	BZERO MEMORYMODE
+	BA STEPMODE
+
