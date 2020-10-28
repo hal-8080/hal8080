@@ -56,7 +56,6 @@ styles [] {
       pygments_scope        = Name.Builtin
    }
    
-   
    # Constant (Numeric)
    .constant : style {
       color                 = cyan

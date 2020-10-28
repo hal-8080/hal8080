@@ -7,9 +7,11 @@ TEST:
 
         #Store first user program instruction in dbgIR
     LD %dbgIR, %dbgPC					
+    $rA
 
 LD %ButtonState, BUTTONSTATE
 ST PREVBUTTONSTATE, %ButtonStatE
+TEST: PUT x"FFFF"
 
 
 STARTJUMP
