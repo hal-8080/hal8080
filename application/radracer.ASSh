@@ -1,4 +1,4 @@
-INIT
+INIT:
 		# Set segments to empty
 		# Top half is left segment, bottom half is right segment
 	SETHI %dispL, 11111111
@@ -11,10 +11,10 @@ INIT
 	SETHI %playerState, 00000001 
 	SETLO %playerState, 00000000
 	
-		#Create superposition of player and first display
-	INV %tempVar, %dispL
-	OR %tempVar, %playerState
-	INV %Comb, %tempVar
+		# Create superposition of player and first display
+	INV %TempVal1, %dispL
+	OR %TempVal1, %playerState
+	INV %Comb, %TempVal1
 	
 	ST DISPLEFT, %Comb
 	ST DISPMIDDLE, %dispM
@@ -28,18 +28,22 @@ INIT
 	
 	ST TIMER0, %r1
 	LD %Timer, TIMER1
-	
-LOOP
+
+
+
+LOOP:
 	CALL UPDATEPLAYER
 	CALL UPDATEFIRSTDISPLAY
 	CALL COLLISION
 	CALL UPDATEDISPLAYS
 	CALL WRITEDISPLAYS
+	BA LOOP
 	
 
-UPDATEPLAYER
+
+UPDATEPLAYER:
 	LD %buttonState, BUTTONSTATE
-checkUP	
+# checkUP:
 	SETLO %TempVal1, x00
 	SETHI %TempVal1, x10
 	AND %TempVal1, %buttonState
@@ -49,7 +53,7 @@ checkUP
 	SETLO %playerState, x00
 	RETURN
 	
-checkDOWN
+checkDOWN:
 	SETHI %TempVal1, x20
 	SETLO %TempVal1, x00
 	AND %TempVal1, %buttonState
@@ -59,34 +63,39 @@ checkDOWN
 	SETLO %playerState, x00
 	RETURN
 
-setMIDDLE
+setMIDDLE:
 	SETHI %playerState, x01
 	SETLO %playerState, x00
 	RETURN
 
 
-UPDATEFIRSTDISPLAY
-		#Create superposition of player and first display
-	INV %tempVar, %dispL
+
+UPDATEFIRSTDISPLAY:
+		# Create superposition of player and first display
+	INV %TempVal1, %dispL
 	OR %TempVal1, %playerState
-	INV %Comb, %tempVar
+	INV %Comb, %TempVal1
 	ST DISPLEFT, %Comb
 	RETURN
 
-COLLISION
+
+
+COLLISION:
 	INV %TempVal1, %dispL
 	AND %TempVal1, %playerState
 	BZERO RETURNFLAG
 	CALL DEAD
 
-UPDATEDISPLAYS
+
+
+UPDATEDISPLAYS:
 	LD %Timer, TIMER1
 	CP %TempVal1, %maxTimer
 	SUB %TempVal1, %Timer
 	BNEG MOVEDISPLAYS
 	RETURN
 
-MOVEDISPLAYS
+MOVEDISPLAYS:
 	ST TIMER0, %r0
 	SUB %maxTimer, 10
 	ADD $score, 1
@@ -122,7 +131,6 @@ MOVEDISPLAYS
 
 		# if seg2 == EMPTY
 		# 	seg0 = seg1
-
 	CP %TempVal1, %dispM
 	INV %TempVal1
 	SHIFTL %TempVal1, 1
@@ -135,11 +143,11 @@ MOVEDISPLAYS
 		# 	seg0 = RAND VAL
 	BZERO addRandom
 
-addNothing
+addNothing:
 	SETLO %dispR, 0111 1111
 	RETURN
 
-addPrevious
+addPrevious:
 	CP %TempVal1, %dispR
 	SHIFTR %TempVal1, 8
 	SETLO %dispR, x00
@@ -147,7 +155,7 @@ addPrevious
 	OR %dispR, %TempVal1
 	RETURN
 
-addRandom
+addRandom:
 	RAND %TempVal1
 	SETHI %TempVal2, x00
 	SETLO %TempVal2, 0100 1001
@@ -169,17 +177,19 @@ addRandom
 	RETURN
 
 
-WRITEDISPLAYS
-	INV %tempVar, %dispL
-	OR %tempVar, %playerState
-	INV %Comb, %tempVar
+
+WRITEDISPLAYS:
+	INV %TempVal1, %dispL
+	OR %TempVal1, %playerState
+	INV %Comb, %TempVal1
 	
 	ST DISPLEFT, %Comb
 	ST DISPMIDDLE, %dispM
 	ST DISPRIGHT, %dispR
 
 
-DEAD
+
+DEAD:
 	# set timer0 = 0
 	# write score to display
 	# check for user input
@@ -201,5 +211,6 @@ DEAD
 	BA INIT
 
 
-RETURNFLAG
+
+RETURNFLAG: 	# For conditional RETURNS
 	RETURN
