@@ -91,14 +91,10 @@ MUX:	PROCESS(clk, reset)
 			WHEN OTHERS =>
 				-- ALU
 				IF OP = "00" THEN		
-					address <= "10" & OP & OPi & OP2 & "00";
+					address <= "10" & OP & '0' & OP2 & "00";
 				-- MEM
 				ELSIF OP = "01" THEN		
-					IF OPi = '0' THEN
-						address <= "10" & OP & OPi & OPLS & "00000";
-					ELSE
-						address <= "10" & OP & OPi & "000000";
-					END IF;
+					address <= "10" & OP & '0' & OPLS & "00000";
 				-- DISP
 				ELSIF OP = "10" THEN		
 					IF OPi = '0' THEN
