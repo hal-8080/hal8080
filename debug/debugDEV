@@ -84,12 +84,6 @@ CALL %rd			Call subroutine
 RET					Return from subroutine 
 	PC <- %RetAddr + 2
 
-DISP(L/M/R) CONST, CONST
-	L/M/R determines left 2, middle 2 or right 2
-	Const are value in lookup table. First Const is displayed on left display, second const on right display
-DISP %rs
-	Value in %rs is displayed on last 4 segments
-
 ------------------------------------------------
 
 
