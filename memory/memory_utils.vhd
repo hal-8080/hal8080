@@ -10,6 +10,7 @@ USE IEEE.numeric_std.ALL;
 USE std.textio.ALL;
 
 PACKAGE memory_utils IS
+
     CONSTANT mem_width      : natural :=  8; -- Memory width: 8 bits.
     CONSTANT adr_width      : natural := 16; -- Address width: 16 bits.
     -- INITIAL VALUES     
