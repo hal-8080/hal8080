@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport" />
+  <meta name="viewport" content="width=device-width" />
+  <link rel="icon" href="hal8080.png">
+  <title>Hal8080 Assembler</title>
+  <link href="./assembler/halfmoon.min.css" rel="stylesheet" />
+</head>
+<body class="with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" data-set-preferred-mode-onload="true">
+    <div class="modal ie-scroll-fix" id="modal-is" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content" style="width: 80vw;">
+                <a href="#" class="close" role="button" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </a>
+                <!-- Explenation of instruction set -->
+                <h1>Hal8080 Instruction Set</h1>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Suspendisse sodales, lacus id laoreet accumsan, <br />
+                    turpis nunc auctor est, eu congue mi orci sed ex. Nam scelerisque fermentum nulla eu suscipit. <br />
+                    Phasellus nunc justo, gravida eu interdum a, varius sit amet odio. Proin sit amet consectetur velit. <br />
+                    Donec non luctus augue, ut viverra massa. Phasellus commodo vel nisi at efficitur. <br />
+                    Cras eu hendrerit leo, nec mollis enim. Vivamus nec enim id dui viverra pretium. <br />
+                    Sed eu nulla est. Vestibulum vitae augue id turpis volutpat scelerisque ut sit amet leo. <br />
+                    Cras facilisis dapibus purus dapibus consectetur. Sed quis congue nisl.<br />
+                    Proin vitae massa eu nunc condimentum ultrices et ac nisi. Proin elit metus, semper vel commodo in, <br />
+                    imperdiet non eros. Aenean ac dapibus ipsum, at ultrices velit. <br />
+                    Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. <br />
+                    Maecenas finibus ac ante eu pretium. Sed euismod pulvinar venenatis. Suspendisse vitae nibh nunc.<br />
+                    Mauris nec feugiat ligula. Phasellus fermentum purus non ante sagittis, eget sagittis urna rhoncus. <br />
+                    Mauris id molestie arcu, in cursus ipsum. Vivamus faucibus mauris ut lectus lacinia accumsan. <br />
+                    Phasellus non ante euismod, volutpat urna laoreet, tempor risus. Proin convallis purus id euismod molestie. <br />
+                    Lorem ipsum dolor sit amet, consectetur adipiscing elit. In feugiat velit nec nisl varius viverra.<br />
+                    Pellentesque ante sapien, facilisis imperdiet elit eu, aliquam faucibus leo. Mauris convallis mi nec mi commodo, <br />
+                    vitae blandit lorem egestas. Cras mi quam, venenatis vitae erat tempor, tempor pulvinar mauris. <br />
+                    Nam sodales consequat ultricies. Sed vestibulum congue hendrerit. Proin eget quam nec elit convallis iaculis. <br />
+                    Sed eleifend orci pulvinar, egestas lorem ornare, egestas enim. Etiam sit amet suscipit mi. <br />
+                    Nulla sit amet lacus tincidunt, fringilla quam sit amet, congue augue. Etiam eget vulputate lacus. <br />
+                    Nulla nibh purus, blandit eu vehicula vel, consequat nec turpis. <br />
+                    Cras dolor mi, mattis in tincidunt ut, tincidunt in augue. <br />
+                    Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. <br />
+                    Pellentesque ut semper mi. Donec tempus orci in massa imperdiet placerat.<br />
+                    Phasellus ornare mauris id enim vestibulum, dictum viverra urna tempor. <br />
+                    Ut varius est vel mi feugiat, sit amet vestibulum justo lacinia. <br />
+                    Duis mollis, tortor vel fringilla varius, nibh nunc porta tellus, ac blandit neque odio in est. <br />
+                    Suspendisse sed pellentesque arcu, a maximus eros. Quisque varius placerat orci et tincidunt. <br />
+                    Proin quis pretium odio, et luctus quam. Aliquam sit amet sodales odio, id mollis mi. <br />
+                    Proin porta vehicula lectus, ut dictum diam luctus in. Vestibulum sapien libero, tristique a viverra nec, dapibus vel sem.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="page-wrapper with-navbar with-sidebar">
+
+        <div class="sticky-alerts"></div>
+
+        <nav class="navbar d-flex justify-content-center">
+            <div class="navbar-content">
+                <img src="hal8080.png" alt="logo" style="width: 4rem; margin-right: 2rem;">
+                <h1>Hal8080 Assembler</h1>
+            </div>
+        </nav>
+
+        <!-- Content wrapper start -->
+        <div class="container" style="margin-top: 6rem; height: calc(100% - 12rem);">
+            <div id="editor" style="height: 100%; border-radius: 1rem; box-shadow: inset;">
+            function foo(items) {
+                var x = "All this is syntax highlighted";
+                return x;
+            }
+            </div>
+            <div class="progress">
+                <div id="pbar" class="progress-bar bg-secondary progress-bar-animated highlight-dark" role="progressbar" style="width: 0%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+            <div class="text-center">
+                <input id="filename" type="text" class="form-control d-inline" style="width: 20rem;" placeholder="filename">
+                <button id="assembleBtn" class="btn btn-success" type="button" style="background-color: #58f00a; color: #25282c; font-weight: bold;">Assemble</button>
+                <a href="#modal-is" class="btn" role="button">Instruction Set</a>
+            </div>
+        </div>
+
+    </div>
+    <script src="./assembler/halfmoon.min.js"></script>   <!-- Load dark style: Halfmoon JS -->
+    <script src="./assembler/ace.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/theme-vibrant_ink.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-assembly_x86.min.js"></script>
+    <script>
+        var editor = ace.edit("editor");
+        editor.setTheme("ace/theme/vibrant_ink");
+        editor.getSession().setMode("ace/mode/assembly_x86");
+    </script>
+    <!-- Assembler Script -->
+    <script>
+        // UTIL FUNCTIONS
+
+        /***
+         * String Enum of status codes.
+         */
+        let status = {
+            "info"   : "primary",
+            "success": "success",
+            "warning": "secondary",
+            "error"  : "danger"
+        }
+        /***
+         * popup - Success popup.
+         * @param {('info'|'success'|'warning'|'error')} type - type of the popup.
+         * @param {string} title - Title of the alert.
+         * @param {string} text - Text of the alert.
+         */
+        function popup(type, title, text) {
+            if (!text) {text = title; title = type.charAt(0).toLocaleUpperCase() + type.slice(1);}
+            halfmoon.initStickyAlert({
+                content: text,
+                title: title,
+                alertType: `alert-${status[type]}`,
+                fillType: "filled-lm"
+            });
+        }
+
+        /***
+         * Set the percentage of the progress bar.
+         * @param {number} percent - The percentage from 0-100.
+         */
+        function setProgress(percent) {
+            document.getElementById("pbar").style.width = `${percent}%`;
+        }
+
+        function testPopup(){
+            popup("warning", "test");
+            setProgress(100);
+            downloadStr("hello");
+        }
+    
+
+        /***
+         * downloadStr - Downloads a string.
+         * @param {string} str - String to download.
+         */
+        function downloadStr(str) {
+            let filename = document.getElementById("filename").value;
+            let hiddenElement = document.createElement('a');
+            hiddenElement.href = 'data:attachment/text,' + encodeURI(str);
+            hiddenElement.target = '_blank';
+            hiddenElement.download = filename;
+            hiddenElement.click();
+        }
+
+        // Run the assembler when the button is pressed.
+        document.getElementById('assembleBtn').addEventListener('click', testPopup);
+        
+    </script>
+</body>
+</html>

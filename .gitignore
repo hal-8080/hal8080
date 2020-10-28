@@ -17,7 +17,6 @@
 *.bak
 *.cmp
 *.jpg
-*.html
 *.bsf
 
 # ignore simulation output of ModelSim
@@ -67,7 +66,6 @@ vsim.dbg
 *.done
 *.eqn
 *.hex
-*.html
 *.jdi
 *.jpg
 # *.mif
