@@ -1,8 +1,7 @@
 --untested
 --
 --
---ir still needs to be outputted
---micro_inst still needs to be read
+--
 --
 --
 
@@ -44,7 +43,6 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL rd		: std_logic 									:= micro_inst(19);
 	SIGNAL wr		: std_logic 									:= micro_inst(18);
 	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(17 DOWNTO 14);
-	--SIGNAL disphigh : std_logic := '0';
 	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(13 DOWNTO 11);
 	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= micro_inst(10 DOWNTO 0);
 --	
@@ -160,6 +158,19 @@ ARCHITECTURE bhv OF data_path IS
 
 -----------------------------------------------------------------------
 BEGIN
+
+micro_addrA <= micro_inst(32 DOWNTO 28);
+micro_addrB	<= micro_inst(26 DOWNTO 22);
+muxA			<= micro_inst(27);
+muxB			<= micro_inst(21);
+muxC			<= micro_inst(20);
+rd				<= micro_inst(19);
+wr				<= micro_inst(18);
+ALU			<= micro_inst(17 DOWNTO 14);
+cond			<= micro_inst(13 DOWNTO 11);
+jump 			<= micro_inst(10 DOWNTO 0);
+
+ir <= reg(31);
 	
 	--A MUX & B MUX
 	MUX:PROCESS(clk, reset)
@@ -195,8 +206,8 @@ BEGIN
 				CASE instr(15 DOWNTO 14) IS
 					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
 					WHEN "01" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> Bbus <= std_logic_vector(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)));													-- DISPLAY		
-					WHEN OTHERS => Bbus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
+					WHEN "10" 	=> Bbus <= std_logic_vector(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)));-- DISPLAY		
+					WHEN OTHERS => Abus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
 				END CASE;
 			ELSE
 				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
@@ -242,10 +253,10 @@ BEGIN
 			WHEN x"4" => solution := to_signed(Abus_int + Bbus_int, 16);		--ADD
 			WHEN x"5" => solution := to_signed(Abus_int * Bbus_int, 16);		--MUL
 			WHEN x"6" => solution := to_signed(Abus_int / Bbus_int, 16);		--DIV
-			WHEN x"7" => null;															--NOP
+			WHEN x"7" => solution := Abus_sign XOR Bbus_sign;						--	xor
 			WHEN x"8" => solution := signed(shift_left(unsigned(Abus), Bbus_shift));			--SHIFTL	
 			WHEN x"9" => solution := shift_right(Abus_sign, Bbus_shift);			--shiftR
-			WHEN x"A" => solution := NOT Abus_sign;									--INV bitwise
+			WHEN x"A" => solution := NOT Bbus_sign;									--INV bitwise
 			
 			WHEN x"B" => 																	--POW B must be positive and can be max 1024 (2^11), A must be positive
 				powTemp := Abus_int;
