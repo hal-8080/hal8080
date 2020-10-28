@@ -8,9 +8,17 @@
   <link rel="icon" href="hal8080.png">
   <title>Hal8080 Assembler</title>
   <link href="./assembler/halfmoon.min.css" rel="stylesheet" />
+  <style>
+    #bigpage {
+        transition: 0.5s;
+    }
+    .highlight {
+        background-color: lightslategray;
+    }
+  </style>
 </head>
 <body class="with-custom-webkit-scrollbars with-custom-css-scrollbars" data-dm-shortcut-enabled="true" data-sidebar-shortcut-enabled="true" data-set-preferred-mode-onload="true">
-    <div class="modal ie-scroll-fix" id="modal-is" tabindex="-1" role="dialog">
+    <div class="modal ie-scroll-fix" id="usage" tabindex="-1" role="dialog">
         <div class="modal-dialog" role="document">
             <div class="modal-content" style="width: 80vw;">
                 <a href="#" class="close" role="button" aria-label="Close">
@@ -52,7 +60,7 @@
             </div>
         </div>
     </div>
-    <div class="page-wrapper with-navbar with-sidebar">
+    <div id="bigpage" class="page-wrapper with-navbar with-sidebar">
 
         <div class="sticky-alerts"></div>
 
@@ -77,23 +85,31 @@
             <div class="text-center">
                 <input id="filename" type="text" class="form-control d-inline" style="width: 20rem;" placeholder="filename">
                 <button id="assembleBtn" class="btn btn-success" type="button" style="background-color: #58f00a; color: #25282c; font-weight: bold;">Assemble</button>
-                <a href="#modal-is" class="btn" role="button">Instruction Set</a>
+                <a href="#usage" class="btn" role="button">Usage</a>
+                <button id="saveBtn" class="btn btn-primary" type="button">Save</button>
+                <!-- <button id="loadBtn" class="btn btn-primary" type="button">Load</button> -->
             </div>
         </div>
 
     </div>
     <script src="./assembler/halfmoon.min.js"></script>   <!-- Load dark style: Halfmoon JS -->
     <script src="./assembler/ace.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/theme-vibrant_ink.min.js"></script>
+    <script src="./assembler/theme-vibrant_ink.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/mode-assembly_x86.min.js"></script>
-    <script>
-        var editor = ace.edit("editor");
-        editor.setTheme("ace/theme/vibrant_ink");
-        editor.getSession().setMode("ace/mode/assembly_x86");
-    </script>
     <!-- Assembler Script -->
     <script>
-        // UTIL FUNCTIONS
+
+        //==========================================\\
+        //                  EDITOR                  \\
+        //==========================================\\
+
+        const editor = ace.edit("editor");
+        editor.setTheme("ace/theme/vibrant_ink");
+        editor.getSession().setMode("ace/mode/assembly_x86");
+
+        //==========================================\\
+        //                   UTILS                  \\
+        //==========================================\\
 
         /***
          * String Enum of status codes.
@@ -128,25 +144,73 @@
             document.getElementById("pbar").style.width = `${percent}%`;
         }
 
+        /***
+         * Gets the file name with extension for saving / assembling.
+         * @param {string} extension - The extension to use.
+         */
+        function getFileName(extension) {
+            return `${document.getElementById("filename").value || 'ram'}.${extension}`;
+        }
+
         function testPopup(){
             popup("warning", "test");
             setProgress(100);
-            downloadStr("hello");
+            downloadStr("hello", getFileName('bin'));
         }
     
 
         /***
          * downloadStr - Downloads a string.
          * @param {string} str - String to download.
+         * @param {string} filename - filename to use.
          */
-        function downloadStr(str) {
-            let filename = document.getElementById("filename").value;
+        function downloadStr(str, filename) {
             let hiddenElement = document.createElement('a');
             hiddenElement.href = 'data:attachment/text,' + encodeURI(str);
             hiddenElement.target = '_blank';
             hiddenElement.download = filename;
             hiddenElement.click();
         }
+
+        //==========================================\\
+        //               SAVE/LOAD FILE             \\
+        //==========================================\\
+        const bigpage = document.getElementById('bigpage');
+        function highlight(e) {
+            bigpage.classList.add('highlight')
+        }
+        function unhighlight(e) {
+            bigpage.classList.remove('highlight')
+        }
+        ;['dragenter', 'dragover'].forEach(eventName => {
+            bigpage.addEventListener(eventName, highlight, false)
+        })
+        ;['dragleave', 'drop'].forEach(eventName => {
+            bigpage.addEventListener(eventName, unhighlight, false)
+        })
+        // On file load, replace contents of the screen.
+        function loadFile(e) {
+            e.preventDefault();
+            let fr = new FileReader();
+            fr.onload=function(){
+                editor.setValue(fr.result);
+            }
+            fr.readAsText(e.dataTransfer.files[0]);
+        }
+        // Load the code when file is dropped on screen.
+        bigpage.addEventListener('drop', loadFile, false);
+        window.addEventListener('dragover', function(e){e.preventDefault()}, false);
+        // On file save, download .assh file with the contents of the screen.
+        function saveFile() {
+            downloadStr(editor.getValue(), getFileName('assh'));
+        }
+        // Save the code when the button is pressed.
+        document.getElementById('saveBtn').addEventListener('click', saveFile);
+
+
+        //==========================================\\
+        //                ASSEMBLER                 \\
+        //==========================================\\
 
         // Run the assembler when the button is pressed.
         document.getElementById('assembleBtn').addEventListener('click', testPopup);
