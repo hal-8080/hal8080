@@ -88,13 +88,32 @@ MUX:	PROCESS(clk, reset)
 			-- JUMP
 			WHEN "01" => address <= JmpA;
 			-- DECODE
-			WHEN OTHERS => IF OP = "00" THEN		-- ALU
-							address <= "10000" & OP & OP2;
-						 ELSIF OP = "01" THEN		-- MEM
-							address <= "10000" & OP & "000" & OPLS;
-						 ELSIF OP = "10" THEN		-- BR SH
-							address <= "10000" & OP & "000" & OPi;
-						 END IF;
+			WHEN OTHERS =>
+				-- ALU
+				IF OP = "00" THEN		
+					address <= "10" & OP & OPi & OP2 & "00";
+				-- MEM
+				ELSIF OP = "01" THEN		
+					IF OPi = '0' THEN
+						address <= "10" & OP & OPi & OPLS & "00000";
+					ELSE
+						address <= "10" & OP & OPi & "000000";
+					END IF;
+				-- DISP
+				ELSIF OP = "10" THEN		
+					IF OPi = '0' THEN
+						address <= "10" & OP & OPi & OP3 & OPLS & "000";
+					ELSE
+						address <= "10" & OP & OPi & OP3 & "0000";
+					END IF;
+				-- SETHI BRANCH
+				ELSIF OP = "11" THEN		
+					IF OPi = '1' THEN
+						address <= "10" & OP & OPi & OPLS & "00000";
+					ELSE
+						address <= "10" & OP & OPi & "000000";
+					END IF;
+				END IF;
 		END CASE;
 	END IF;
 	END PROCESS;

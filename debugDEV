@@ -1,3 +1,128 @@
+--------
+Kernel code
+	If debug switch is on, jump to debug code
+	LUT for Display
+--------
+User code
+--------
+MMIO
+	Display
+	LED's
+	Switches
+	Buttons
+--------
+Debug code
+--------
+
+
+
+--------------------------------
+
+Switches for debug mode
+	1: Debug on/off
+	2: Step mode / memory mode
+		Step mode
+			Display: User Program Counter (instructionline in user assembly program)
+			Button 1 = execute instruction
+		Memory mode
+			Registry mode
+				Begin op r0
+				Display left 2: 0-31 (decimal)
+				Display laatste 4: value at register
+				Button 1 = previous register
+				Button 2 = next register
+			Main Memory mode
+				Begin op address van program counter
+				Address mode
+					Show current address, move through addresses
+				Value mode
+					Show value at selected address 
+	3: Registry mode / Main memory mode
+	4: Address / Value mode
+		Only useful in main memory mode
+			Address mode
+				Show current address on display 
+				Button 1 = previous register
+				Button 2 = next register
+			Value mode
+				See value at current address on display	
+
+------------------------------------------------
+Memory Addresses:
+	USERMEM:	00100000 00000000: Start of user memory
+	SWMEM:		11100000 00001000: Switches 0-9 and 6 zeroes
+	BTNMEM:		11100000 00001010: Buttons 0-3 and 12 zeroes
+	
+	
+SETHI %rd, CONST	SetHigh
+	Set upper 8 bits of %rd to CONST
+SETLO %rd, CONST	SetLow
+	Set lower 8 bits of %rd to CONST
+
+LD %rd, %rs			Load
+	%rs contains an address of a word in main memory, the value at that address is loaded into registry %rd
+ST %rd, %rs			Store
+	%rd contains an address of a word in main memory, the value at %rs is written into that address
+LDC(H/L) %rd, CONST		Load Constant
+	%rd contains an address of a word in main memory, the CONST is written into (HIGH/LOW) byte at that address
+
+AND %rd, %rs		Bitwise AND 
+	Bitwise AND between registries %rd and %rs, store result in %rd
+	Set ZEROFLAG to true if result is 0
+AND %rd, CONST 		Bitwise AND 
+	Bitwise AND between a register and a 5 bit const. First const bit determines if first 12 bits are 0 or 1, last 4 bits are custom
+
+
+CP %rd, %rs			Copy
+	Copy the contents in %rs to %rd
+
+
+BZERO %rd			Branch if zero
+	Jump to address stored in %rd if ZEROFLAG is true
+CALL %rd			Call subroutine
+	%RetAddr <- PC, PC <- $rd
+RET					Return from subroutine 
+	PC <- %RetAddr + 2
+
+DISP(L/M/R) CONST, CONST
+	L/M/R determines left 2, middle 2 or right 2
+	Const are value in lookup table. First Const is displayed on left display, second const on right display
+DISP %rs
+	Value in %rs is displayed on last 4 segments
+
+------------------------------------------------
+
+
+DISP
+	R(EGISTER)
+		C(ONST) 2 X 5 BITS -> 000LLLLL000RRRRR
+			L/M/R
+		H(HEX REGVAL) 4 X 4 BITS -> 1111222233334444
+			L/R
+	C(ONST)
+		L/M/R
+
+DISPRCL %rs 	# Display on left 2 displays the constants found in %rs
+DISPRCM %rs		# Display on middle 2 displays the constants found in %rs
+DISPRCR %rs		# Display on right 2 displays the constants found in %rs
+
+DIPSRHL %rs		# Display the value in %rs on left 4 displays
+DISPRHR %rs		# Display the value in %rs on right 4 displays
+
+DIPSCL const, const		# Display const,const on left 2 displays
+DIPSCM const, const		# Display const,const on middle 2 displays
+DISPCR const, const		# Display const,const on right 2 displays
+
+------------------------------------------------
+
+
+
+# (PNS) = "(Possibly needs seperation)"
+#	When loading/storing a value at a dedicated, pre-known memory address I use "LD %reg, MEMADDR". 
+#	If the assembler doesn't work out, this needs to be hardcoded and put into a %TempReg with SETHI and SETLO, 
+#	and then LD from the address stored in %TempReg into a new registry.
+
+
 SET DBGREGISTRIES TO 1
 SET DBGFLAGS TO 1
 
@@ -335,3 +460,26 @@ DISPLAYVALUE
 DISPLAYADDRES
 	DISP %DBGaddr
 	BA STARTJUMP
+
+
+
+
+
+-Executing instruction (mainly branch)
+-Overflow protection for Memory-Mode: Main Memory: Move
+
+
+------------------------------------------------
+
+BIOS
+	if lever is set, jump to debug
+	write 0000 to dbgRegMainMemAddress
+
+
+
+DEBUG
+	write 1111 to dbgRegMainMemAddress
+	Het enige moment dat we user registries willen inlezen is wanneer we ze schrijven naar de displays
+	write 0000 to dbgRegMainMemAddress
+
+

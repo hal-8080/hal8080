@@ -23,11 +23,17 @@ PACKAGE memory_utils IS
     CONSTANT start_leds     : natural := 57350;
     CONSTANT start_switches : natural := 57352;
     CONSTANT start_buttons  : natural := 57354;
+    CONSTANT start_millis   : natural := 57356;
+    CONSTANT start_debug    : natural := 57358;
     -- SIZES
-    CONSTANT size_total     : natural := 57356;
+    CONSTANT size_total     : natural := 57360;
 
+    -- mbyte consists of size bits
+    SUBTYPE mbyte IS std_logic_vector(mem_width-1 DOWNTO 0);
+    -- Words consist of two bytes
+    SUBTYPE  word IS std_logic_vector(adr_width-1 DOWNTO 0);
     -- All IO and memory are accessed as memory tables. Which are arrays of arbitrary length of logic vectors.
-    TYPE memory_table IS ARRAY (natural range <>) OF std_logic_vector(7 DOWNTO 0);
+    TYPE memory_table IS ARRAY (natural range <>) OF mbyte;
 
     -- str2num Converts a string to a (natural) number.
     -- Inspired by hex2dec from ARC (E. Molenkamp)
@@ -39,6 +45,30 @@ PACKAGE memory_utils IS
     -- @param inp  : string - The input string to convert.
     -- @return res : std_logic_vector
     FUNCTION str2ulv(inp: string; size: natural) RETURN std_logic_vector;
+
+    -- write_mem Writes a word to a certain address in a specified memory table.
+    -- @param mem     : memory_table - The memory to write to.
+    -- @param address : natural      - The address to write to.
+    -- @param value   : word         - The word to write.
+    PROCEDURE write_mem(SIGNAL mem: INOUT memory_table; address: IN natural; value: IN word);
+
+    -- write_mem_a Writes a word to a certain address_bus in a specified memory table.
+    -- @param mem         : memory_table - The memory to write to.
+    -- @param address_bus : word         - The address to write to.
+    -- @param value       : word         - The word to write.
+    PROCEDURE write_mem_a(SIGNAL mem: INOUT memory_table; address_bus: IN word; value: IN word);
+
+    -- read_mem Reads a word from a certain address in a specified memory table.
+    -- @param mem     : memory_table - The memory to read from.
+    -- @param address : natural      - The address to read from.
+    -- @return value  : word         - The read word.
+    FUNCTION read_mem(mem: memory_table; address: natural) RETURN word;
+
+    -- read_mem_a Reads a word with a certain address_bus in a specified memory table.
+    -- @param mem         : memory_table - The memory to read from.
+    -- @param address_bus : word         - The address to read from.
+    -- @return value      : word         - The read word.
+    FUNCTION read_mem_a(mem: memory_table; address_bus: word) RETURN word;
 
     -- fill_memory_table Fills a memory table with contents of a file.
     -- Inspired by fill_memory from ARC (E. Molenkamp)
@@ -84,6 +114,30 @@ PACKAGE BODY memory_utils IS
     BEGIN
         RETURN std_logic_vector(to_unsigned(str2num(inp), size));
     END str2ulv;
+
+    PROCEDURE write_mem(SIGNAL mem: INOUT memory_table; address: IN natural; value: IN word) IS
+    BEGIN
+        mem(address+1) <= value(adr_width-1 DOWNTO mem_width);
+        mem(address)   <= value(mem_width-1 DOWNTO 0);
+    END write_mem;
+
+    PROCEDURE write_mem_a(SIGNAL mem: INOUT memory_table; address_bus: IN word; value: IN word) IS
+    BEGIN
+        write_mem(mem, to_integer(unsigned(address_bus)), value);
+    END write_mem_a;
+
+    FUNCTION read_mem(mem: memory_table; address: natural) RETURN word IS
+        VARIABLE ret_val: word := (OTHERS => '-');
+    BEGIN
+        ret_val(adr_width-1 DOWNTO mem_width) := mem(address+1);
+        ret_val(mem_width-1 DOWNTO 0)         := mem(address);
+        RETURN ret_val;
+    END read_mem;
+
+    FUNCTION read_mem_a(mem: memory_table; address_bus: word) RETURN word IS 
+    BEGIN
+        RETURN read_mem(mem, to_integer(unsigned(address_bus)));
+    END read_mem_a;
 
     -- ANALYSIS ONLY FUNCTION!
     IMPURE FUNCTION fill_memory_table(filename: string; start_address: natural; end_address: natural) RETURN memory_table IS

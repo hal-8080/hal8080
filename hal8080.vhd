@@ -26,13 +26,12 @@ ARCHITECTURE structure OF hal8080 IS
     -- INTERNALS
     SIGNAL reset : std_logic := '1';
     -- CONTROLL
-    SIGNAL address_bus  : std_logic_vector(15 DOWNTO 0) := x"0000";
-    SIGNAL data_bus_in  : std_logic_vector(15 DOWNTO 0) := x"0000";
-    SIGNAL data_bus_out : std_logic_vector(15 DOWNTO 0) := x"0000";
-    SIGNAL do_read      : std_logic := '0';
-    SIGNAL do_write     : std_logic := '0';
+    SIGNAL address_bus       : std_logic_vector(15 DOWNTO 0) := x"0000";
+    SIGNAL data_bus_to_mem   : std_logic_vector(15 DOWNTO 0) := x"0000";
+    SIGNAL data_bus_from_mem : std_logic_vector(15 DOWNTO 0) := x"0000";
+    SIGNAL do_read           : std_logic := '0';
+    SIGNAL do_write          : std_logic := '0';
 
-    SIGNAL fake_leds : std_logic_vector(9 DOWNTO 0); -- leds
 BEGIN
 
     -- setup, used to burn the main memory and setup.
@@ -40,7 +39,11 @@ BEGIN
     setup: ENTITY work.setup PORT MAP(
         clk => clk,
         reset => reset,
-        leds => fake_leds
+        address_bus => address_bus,
+        data_bus_out => data_bus_to_mem,
+        data_bus_in => data_bus_from_mem,
+        do_write => do_write,
+        do_read => do_read
     );
     -- memory, the main memory and mapped IO.
     memory:ENTITY work.memory PORT MAP(
@@ -49,10 +52,10 @@ BEGIN
         reset => reset,
         -- CONTROL
         address_bus  => address_bus,
-        data_bus_in  => data_bus_in,
+        data_bus_in  => data_bus_to_mem,
         do_read      => do_read,
         do_write     => do_write,
-        data_bus_out => data_bus_out,
+        data_bus_out => data_bus_from_mem,
         -- INPUT / OUTPUT
         o_seg0 => seg0, o_seg1 => seg1,
         o_seg2 => seg2, o_seg3 => seg3,
