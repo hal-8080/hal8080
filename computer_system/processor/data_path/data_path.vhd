@@ -1,22 +1,10 @@
 --untested
---branch instruction needs to be computed in the controller
---the controller has to send a copy (ALU) instruction to copy
---the contents of the assembly instruction's target register
---to reg(PC) when the relevent status bit is active
 --
 --
 --ir still needs to be outputted
+--micro_inst still needs to be read
 --
 --
---
---
---
---
---
---
---fix display constant segment mode
---
---set up Bbus_shift in shiftL and shiftR
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -72,8 +60,6 @@ ARCHITECTURE bhv OF data_path IS
 
 -- from alu & memory to register
 	SIGNAL ALUout	: signed(15 DOWNTO 0);
---display
-	SIGNAL pair0, pair1, pair2 : std_logic_vector(15 DOWNTO 0);
 	
 --look up table for display port
 	FUNCTION hex2display(nib:std_logic_vector(4 DOWNTO 0)) RETURN std_logic_vector IS
@@ -99,21 +85,78 @@ ARCHITECTURE bhv OF data_path IS
         WHEN "10000" => RETURN NOT "1110110"; --H
         WHEN "10001" => RETURN NOT "0111000"; --L
         WHEN "10010" => RETURN NOT "1101110"; --Y
-        WHEN "10011" => RETURN NOT "0011110"; --J
+        WHEN "10011" => RETURN NOT "1001001"; --upmidbot
         WHEN "10100" => RETURN NOT "1010100"; --n
         WHEN "10101" => RETURN NOT "1110011"; --p
-        WHEN "10110" => RETURN NOT "1100111"; --q
-        WHEN "10111" => RETURN NOT "1111000"; --t
+        WHEN "10110" => RETURN NOT "1000001"; --upmid
+        WHEN "10111" => RETURN NOT "0001001"; --upbot
         WHEN "11000" => RETURN NOT "0111110"; --u
         WHEN "11001" => RETURN NOT "0111101"; --G
         WHEN "11010" => RETURN NOT "0000001"; --UP
         WHEN "11011" => RETURN NOT "1000000"; --MID
         WHEN "11100" => RETURN NOT "0001000"; --BOT
         WHEN "11101" => RETURN NOT "0000110"; --LEFT
-        WHEN "11110" => RETURN NOT "0110000"; --RIGHT
-        WHEN OTHERS => RETURN NOT "0000000";  --EMPTY
+        WHEN "11110" => RETURN NOT "1001000"; --midbot
+        WHEN OTHERS 	=> RETURN NOT "0000000";  --EMPTY
         END CASE;
     END hex2display;
+	 
+--look up table for shiftL/R
+--	FUNCTION shiftLR(busB:integer RANGE -32768 TO 32767; busA:std_logic_vector(15 DOWNTO 0); ALUf:std_logic_vector(3 DOWNTO 0)) RETURN signed IS
+--		variable shift_vector	: std_logic_vector(15 DOWNTO 0) := x"0000";
+--		VARIABLE Bbus_shift		: integer RANGE 0 TO 15;
+--		VARIABLE sol : std_logic_vector(31 DOWNTO 0);
+--	BEGIN
+--		IF busB < 1 THEN
+--			Bbus_shift := 0;
+--		ELSIF busB > 15 THEN
+--			Bbus_shift := 16;
+--		ELSE
+--			Bbus_shift := busB;
+--		END IF;		
+--		IF ALUf = x"8" THEN --SHIFTL and 0 extend right
+--			sol := busA	& shift_vector;
+--			CASE Bbus_shift IS
+--				WHEN 1 	=> RETURN signed(sol(30 DOWNTO 15));
+--				WHEN 2 	=> RETURN signed(sol(29 DOWNTO 14));		
+--				WHEN 3 	=> RETURN signed(sol(28 DOWNTO 13));
+--				WHEN 4 	=> RETURN signed(sol(27 DOWNTO 12));
+--				WHEN 5 	=> RETURN signed(sol(26 DOWNTO 11));
+--				WHEN 6 	=> RETURN signed(sol(25 DOWNTO 10));
+--				WHEN 7 	=> RETURN signed(sol(24 DOWNTO 9));
+--				WHEN 8 	=> RETURN signed(sol(23 DOWNTO 8));
+--				WHEN 9 	=> RETURN signed(sol(22 DOWNTO 7));
+--				WHEN 10 	=> RETURN signed(sol(21 DOWNTO 6));
+--				WHEN 11 	=> RETURN signed(sol(20 DOWNTO 5));
+--				WHEN 12 	=> RETURN signed(sol(19 DOWNTO 4));
+--				WHEN 13 	=> RETURN signed(sol(18 DOWNTO 3));
+--				WHEN 14 	=> RETURN signed(sol(17 DOWNTO 2));
+--				WHEN 15 	=> RETURN signed(sol(16 DOWNTO 1));
+--				WHEN 16 	=> RETURN signed(sol(15 DOWNTO 0));
+--				WHEN OTHERS => RETURN signed(sol(31 DOWNTO 16));
+--			END CASE;
+--		ELSIF ALUf = x"9" THEN --shiftR and sign extend left for sign bit is 0
+--			CASE Bbus_shift IS --SHIFT_LEFT
+--				WHEN 1 	=> RETURN resize(signed(busA(15 DOWNTO 1)), 16);
+--				WHEN 2 	=> RETURN resize(signed(busA(15 DOWNTO 2)), 16);
+--				WHEN 3 	=> RETURN resize(signed(busA(15 DOWNTO 3)), 16);
+--				WHEN 4 	=> RETURN resize(signed(busA(15 DOWNTO 4)), 16);
+--				WHEN 5 	=> RETURN resize(signed(busA(15 DOWNTO 5)), 16);
+--				WHEN 6 	=> RETURN resize(signed(busA(15 DOWNTO 6)), 16);
+--				WHEN 7 	=> RETURN resize(signed(busA(15 DOWNTO 7)), 16);
+--				WHEN 8 	=> RETURN resize(signed(busA(15 DOWNTO 8)), 16);
+--				WHEN 9 	=> RETURN resize(signed(busA(15 DOWNTO 9)), 16);
+--				WHEN 10 	=> RETURN resize(signed(busA(15 DOWNTO 10)), 16);
+--				WHEN 11 	=> RETURN resize(signed(busA(15 DOWNTO 11)), 16);
+--				WHEN 12 	=> RETURN resize(signed(busA(15 DOWNTO 12)), 16);
+--				WHEN 13 	=> RETURN resize(signed(busA(15 DOWNTO 13)), 16);
+--				WHEN 14 	=> RETURN resize(signed(busA(15 DOWNTO 14)), 16);
+--				WHEN 15 	=> RETURN resize(signed(busA(15 DOWNTO 15)), 16);
+--				WHEN 16 	=> RETURN resize(signed(busA(15 DOWNTO 15)), 16);
+--				WHEN OTHERS => RETURN signed(busA(15 DOWNTO 0));
+--			END CASE;
+--		END IF;
+--	END shiftLR;
 
 -----------------------------------------------------------------------
 BEGIN
@@ -148,14 +191,15 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
 			IF muxB = '1'AND instr(13) = '1' THEN
-				CASE instr(15 DOWNTO 14) IS --make this properly!!!!!!!!!!!!!!!!!!!!!!!
-					WHEN "00" 	=> Bbus <= RESIZE(instr(4 DOWNTO 0), 16); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
-					WHEN "01" 	=> Bbus <= RESIZE(instr(7 DOWNTO 0), 16);			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> null;													-- DISPLAY		
+				CASE instr(15 DOWNTO 14) IS
+					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
+					WHEN "01" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
+					WHEN "10" 	=> Bbus <= std_logic_vector(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)));													-- DISPLAY		
 					WHEN OTHERS => Bbus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
 				END CASE;
+			ELSE
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
 			END IF;
 		END IF;
 	END PROCESS DECODER;
@@ -163,15 +207,16 @@ BEGIN
 	--THE ALU	
 	Maths:PROCESS(clk,reset)
 		CONSTANT	max_value				: integer := 1024;
-		CONSTANT shift_vector			: std_logic_vector(15 DOWNTO 0) := x"0000"; 
+ 
 		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
-		VARIABLE abus_int, Bbus_int	: integer RANGE -32768 TO 32767;
-		VARIABLE Bbus_shift				: integer RANGE 0 TO 15;
+		VARIABLE Abus_int, Bbus_int	: integer RANGE -32768 TO 32767;		
 		VARIABLE powTemp					: integer RANGE 0 TO 32767;
 		VARIABLE solution					: signed(15 DOWNTO 0);
 		--random gen
 		CONSTANT seed 			: unsigned(15 DOWNTO 0) := x"ABCD";	--starting seed 
 		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
+		--shift
+		VARIABLE Bbus_shift		: integer RANGE 0 TO 16;
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
@@ -179,6 +224,15 @@ BEGIN
 			Bbus_sign 	:= signed(Bbus);
 			Abus_int 	:= to_integer(Abus_sign);
 			Bbus_int		:= to_integer(Bbus_sign);
+			
+			IF Bbus_int < 1 THEN
+				Bbus_shift := 0;
+			ELSIF Bbus_int > 15 THEN
+				Bbus_shift := 16;
+			ELSE
+				Bbus_shift := Bbus_int;
+			END IF;
+			
 			
 			CASE ALU IS
 			WHEN x"0" => solution := Abus_sign AND Bbus_sign;						--AND bitwise
@@ -189,15 +243,8 @@ BEGIN
 			WHEN x"5" => solution := to_signed(Abus_int * Bbus_int, 16);		--MUL
 			WHEN x"6" => solution := to_signed(Abus_int / Bbus_int, 16);		--DIV
 			WHEN x"7" => null;															--NOP
-			WHEN x"8" => solution := signed(Abus((15-Bbus_shift) DOWNTO 0) & shift_vector((Bbus_shift-1) DOWNTO 0));	--SHIFTL
-			
-			WHEN x"9" => 
-				IF Abus(15) = '0' THEN
-					solution := signed(shift_vector((Bbus_shift-1) DOWNTO 0) & Abus(15 DOWNTO Bbus_shift));		--SHIFTR when sign bit is 0
-				ELSE
-					solution := signed((NOT shift_vector((Bbus_shift-1) DOWNTO 0)) & Abus(15 DOWNTO Bbus_shift));		--SHIFTR when sign bit is 1
-				END IF;			
-			
+			WHEN x"8" => solution := signed(shift_left(unsigned(Abus), Bbus_shift));			--SHIFTL	
+			WHEN x"9" => solution := shift_right(Abus_sign, Bbus_shift);			--shiftR
 			WHEN x"A" => solution := NOT Abus_sign;									--INV bitwise
 			
 			WHEN x"B" => 																	--POW B must be positive and can be max 1024 (2^11), A must be positive
@@ -213,8 +260,7 @@ BEGIN
 				
 			WHEN x"C" => solution := to_signed(Abus_int - Bbus_int, 16);			--SUB
 
-				
-			WHEN x"D" => ALUout <= '0' & hex2display(Bbus(4 DOWNTO 0)) & '0' & hex2display(Bbus(12 DOWNTO 8))	--DISP																	--DISPLAY
+			WHEN x"D" => ALUout <= signed('0' & hex2display(Bbus(4 DOWNTO 0))) & signed('0' & hex2display(Bbus(12 DOWNTO 8)));	--DISP																	--DISPLAY
 				
 			WHEN x"E" =>	ALUout <= Bbus_sign;										--COPY
 			
@@ -267,7 +313,13 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			reg(0) <= x"0000";-- make sure reg(0) is always 0
 			IF wr = '0' THEN
-				reg(to_integer(unsigned(addr2decA))) <= Cbus;
+				IF muxC = muxA THEN
+					reg(to_integer(unsigned(addr2decA))) <= Cbus;
+				ELSIF muxC = '1' THEN
+					reg(to_integer(unsigned('0' & instr(12 DOWNTO 9)))) <= Cbus;
+				ELSE
+					reg(to_integer(unsigned(micro_addrA))) <= Cbus;
+				END IF;
 			END IF;
 		END IF;
 	END PROCESS CTOREG;
