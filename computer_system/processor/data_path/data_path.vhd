@@ -4,13 +4,19 @@
 --the contents of the assembly instruction's target register
 --to reg(PC) when the relevent status bit is active
 --
---still need to add main memory store (from register to memory)
+--
 --ir still needs to be outputted
---change display process such that it's output 7-segment codes go to specific mm adresses
---
---change it such that the status bits don't update at a copy instruction
 --
 --
+--
+--
+--
+--
+--
+--
+--fix display constant segment mode
+--
+--set up Bbus_shift in shiftL and shiftR
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
@@ -27,8 +33,7 @@ ENTITY data_path IS
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
-		ir				: OUT std_logic_vector(15 DOWNTO 0);
-		Dig0, dig1, dig2, dig3, dig4, dig5	: OUT std_logic_vector(6 DOWNTO 0)
+		ir				: OUT std_logic_vector(15 DOWNTO 0)
 	);
 END ENTITY data_path;
 
@@ -51,6 +56,7 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL rd		: std_logic 									:= micro_inst(19);
 	SIGNAL wr		: std_logic 									:= micro_inst(18);
 	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(17 DOWNTO 14);
+	--SIGNAL disphigh : std_logic := '0';
 	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(13 DOWNTO 11);
 	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= micro_inst(10 DOWNTO 0);
 --	
@@ -62,10 +68,12 @@ ARCHITECTURE bhv OF data_path IS
 	
 -- MUX DECODER
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
-	SIGNAL addr2decB : std_logic_vector(7 DOWNTO 0) := x"00";
+	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
 
 -- from alu & memory to register
 	SIGNAL ALUout	: signed(15 DOWNTO 0);
+--display
+	SIGNAL pair0, pair1, pair2 : std_logic_vector(15 DOWNTO 0);
 	
 --look up table for display port
 	FUNCTION hex2display(nib:std_logic_vector(4 DOWNTO 0)) RETURN std_logic_vector IS
@@ -125,17 +133,10 @@ BEGIN
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
-					addr2decB <= x"0" & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
-				ELSE							--the role of i differs when it is 0
-					CASE instr(15 DOWNTO 14) IS
-						WHEN "00" 	=> addr2decB <= "000" & instr(4 DOWNTO 0); 	-- ARITHMATIC 	--addr2decB <= constant in assembly instruction
-						WHEN "01" 	=> addr2decB <= instr(7 DOWNTO 0);				-- MEMORY		--addr2decB <= constant in assembly instruction
-						WHEN "10" 	=> null;													-- DISPLAY		
-						WHEN OTHERS => null;													-- branch/sethi
-					END CASE;
+					addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
 				END IF;				
 			ELSE
-				addr2decB <= "000" & micro_addrB;
+				addr2decB <= micro_addrB;
 			END IF;
 		END IF;
 	END PROCESS MUX;
@@ -147,15 +148,25 @@ BEGIN
 		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)			
+				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
+			IF muxB = '1'AND instr(13) = '1' THEN
+				CASE instr(15 DOWNTO 14) IS --make this properly!!!!!!!!!!!!!!!!!!!!!!!
+					WHEN "00" 	=> Bbus <= RESIZE(instr(4 DOWNTO 0), 16); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
+					WHEN "01" 	=> Bbus <= RESIZE(instr(7 DOWNTO 0), 16);			-- MEMORY		--Bbus <= constant in assembly instruction
+					WHEN "10" 	=> null;													-- DISPLAY		
+					WHEN OTHERS => Bbus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
+				END CASE;
+			END IF;
 		END IF;
 	END PROCESS DECODER;
 		
 	--THE ALU	
 	Maths:PROCESS(clk,reset)
 		CONSTANT	max_value				: integer := 1024;
+		CONSTANT shift_vector			: std_logic_vector(15 DOWNTO 0) := x"0000"; 
 		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
 		VARIABLE abus_int, Bbus_int	: integer RANGE -32768 TO 32767;
+		VARIABLE Bbus_shift				: integer RANGE 0 TO 15;
 		VARIABLE powTemp					: integer RANGE 0 TO 32767;
 		VARIABLE solution					: signed(15 DOWNTO 0);
 		--random gen
@@ -170,17 +181,24 @@ BEGIN
 			Bbus_int		:= to_integer(Bbus_sign);
 			
 			CASE ALU IS
-			WHEN x"0" => solution := Abus_sign AND Bbus_sign;						--AND
-			WHEN x"1" => solution := Abus_sign NAND Bbus_sign;					--NAND
-			WHEN x"2" => solution := Abus_sign OR Bbus_sign;						--OR
-			WHEN x"3" => solution := Abus_sign OR NOT Bbus_sign;					--ORN
+			WHEN x"0" => solution := Abus_sign AND Bbus_sign;						--AND bitwise
+			WHEN x"1" => solution := Abus_sign NAND Bbus_sign;					--NAND bitwise
+			WHEN x"2" => solution := Abus_sign OR Bbus_sign;						--OR bitwise
+			WHEN x"3" => solution := Abus_sign OR NOT Bbus_sign;					--ORN bitwise
 			WHEN x"4" => solution := to_signed(Abus_int + Bbus_int, 16);		--ADD
 			WHEN x"5" => solution := to_signed(Abus_int * Bbus_int, 16);		--MUL
 			WHEN x"6" => solution := to_signed(Abus_int / Bbus_int, 16);		--DIV
 			WHEN x"7" => null;															--NOP
-			WHEN x"8" => solution := signed(Abus(14 DOWNTO 0) & '0');			--SHIFTL
-			WHEN x"9" => solution := signed(Abus(15) & Abus(15 DOWNTO 1));	--SHIFTR
-			WHEN x"A" => solution := NOT Abus_sign;									--INV
+			WHEN x"8" => solution := signed(Abus((15-Bbus_shift) DOWNTO 0) & shift_vector((Bbus_shift-1) DOWNTO 0));	--SHIFTL
+			
+			WHEN x"9" => 
+				IF Abus(15) = '0' THEN
+					solution := signed(shift_vector((Bbus_shift-1) DOWNTO 0) & Abus(15 DOWNTO Bbus_shift));		--SHIFTR when sign bit is 0
+				ELSE
+					solution := signed((NOT shift_vector((Bbus_shift-1) DOWNTO 0)) & Abus(15 DOWNTO Bbus_shift));		--SHIFTR when sign bit is 1
+				END IF;			
+			
+			WHEN x"A" => solution := NOT Abus_sign;									--INV bitwise
 			
 			WHEN x"B" => 																	--POW B must be positive and can be max 1024 (2^11), A must be positive
 				powTemp := Abus_int;
@@ -193,21 +211,12 @@ BEGIN
 					END IF;
 				END LOOP;
 				
-			WHEN x"C" => 																	--EQL true is denoted as hex FFFF and false as hex 0000
-				IF Abus = Bbus THEN
-					ALUout <= x"FFFF";
-				ELSE
-					ALUout <= x"0000";
-				END IF;
+			WHEN x"C" => solution := to_signed(Abus_int - Bbus_int, 16);			--SUB
+
 				
-			WHEN x"D" =>																	--GT  true is denoted as hex FFFF and false as hex 0000
-				IF Abus > Bbus THEN
-					ALUout <= x"FFFF";
-				ELSE
-					ALUout <= x"0000";
-				END IF;
+			WHEN x"D" => ALUout <= '0' & hex2display(Bbus(4 DOWNTO 0)) & '0' & hex2display(Bbus(12 DOWNTO 8))	--DISP																	--DISPLAY
 				
-			WHEN x"E" =>	solution := Bbus_sign;										--COPY
+			WHEN x"E" =>	ALUout <= Bbus_sign;										--COPY
 			
 			WHEN x"F" => ALUout <= signed(random);											-- RAND (SEPERATE in the process)
 			WHEN OTHERS => null;
@@ -243,21 +252,10 @@ BEGIN
 	BEGIN
 	IF reset = '0' THEN
 	ELSIF rising_edge(clk) THEN
-		
-		IF instr(15 DOWNTO 14) = "11" THEN			-- BRANCH/SETHI
-			IF instr(13) = '0' THEN							-- Branch
-				--!!!!!!!!branch instruction has to be changed to a different micro instruction in the controller
-			ELSE													-- Set-hi/lo
-				IF instr(8) = '0' THEN						-- high
-					Cbus <= instr(7 DOWNTO 0) & Abus(7 DOWNTO 0);
-				ELSE												-- low
-					Cbus <= Abus(15 DOWNTO 8) & instr(7 DOWNTO 0);
-				END IF;
-			END IF;
 			--store ALU/MM in Cbus
-		ELSIF instr(15 DOWNTO 14) = "00" THEN
+		IF rd = '0' AND wr = '0' THEN
 			Cbus <= std_logic_vector(ALUout);
-		ELSIF instr(15 DOWNTO 14) = "01" THEN
+		ELSIF rd = '1' THEN
 			Cbus <= mmI;
 		END IF;
 	END IF;
@@ -268,73 +266,20 @@ BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			reg(0) <= x"0000";-- make sure reg(0) is always 0
-			IF (instr(15 DOWNTO 14) = "01" XOR instr(8) = '1') AND (instr(15 DOWNTO 14) /= "10") AND (instr(15 DOWNTO 13) /= "110")THEN
+			IF wr = '0' THEN
 				reg(to_integer(unsigned(addr2decA))) <= Cbus;
 			END IF;
 		END IF;
 	END PROCESS CTOREG;
-	
-	
-	
-	--DISPLAY
-	Display:PROCESS (clk, reset)
-		VARIABLE OP3 : std_logic_vector(1 DOWNTO 0);
-		VARIABLE Digi0, digi1, digi2, digi3, digi4, digi5	:std_logic_vector(6 DOWNTO 0);
-		VARIABLE Seg1, Seg2, Seg3, Seg4	: std_logic_vector(4 DOWNTO 0):= "00000";
-	BEGIN
-
-		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
-			OP3  := instr(12 DOWNTO 11);
-			
-			IF instr(15 DOWNTO 14) = "10" THEN
-				IF instr(13) = '0' THEN 
-					IF instr(8) = '0' THEN
-					--Bregister split it up in 16 bits and set those with a + '0' so that they are 5 long
-					--put them in seg1, seg2, seg3 and seg4
-						Seg1 := '0' & Bbus(3 DOWNTO 0);
-						Seg2 := '0' & Bbus(7 DOWNTO 4);
-						Seg3 := '0' & Bbus(11 DOWNTO 8);
-						Seg4 := '0' & Bbus(15 DOWNTO 12);
-					ELSE
-						Seg1 := Bbus(4 DOWNTO 0);-- 2 seg ments display used with the 10 lowest bits of B register
-						Seg2 := Bbus(9 DOWNTO 5);
-					END IF;
-			
-				ELSE
-					Seg1 := instr(9 DOWNTO 5);
-               Seg2 := instr(4 DOWNTO 0);
-				END IF;
-				
-				CASE OP3 IS
-					WHEN "00" => Digi0 := hex2display(Seg1); Digi1 := hex2display(Seg2);Digi2 := hex2display(Seg3);Digi3 := hex2display(Seg4);
-					WHEN "01" => Digi2 := hex2display(Seg1); Digi3 := hex2display(Seg2);Digi4 := hex2display(Seg3);Digi5 := hex2display(Seg4);
-					WHEN "10" => Digi4 := hex2display(Seg1); Digi5 := hex2display(Seg2);
-					WHEN OTHERS => null;
-				END CASE;
-			
-			END IF;
-			Dig0 <= Digi0;
-			Dig1 <= Digi1;
-			Dig2 <= Digi2;
-			Dig3 <= Digi3;
-			Dig4 <= Digi4;
-			Dig5 <= Digi5;
-		END IF;
-	END PROCESS Display;
 	
 		--Memory
 		MEMORY:PROCESS(clk, reset)
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
-			IF instr(8) ='0' and instr(15 DOWNTO 14) = "01" THEN			-- loading something 
-				mmAdrres <= Bbus;
-
-				
-			ELSIF instr(8) ='1' and instr(15 DOWNTO 14) = "01" THEN							--store something				
-				mmAdrres <= Bbus;
-				mmdata <= Abus;
+			IF wr = '1' THEN	
+				mmAdress <= Bbus;
+				mmData <= Abus;			
 			END IF;
 		END IF;
 	END PROCESS MEMORY;
