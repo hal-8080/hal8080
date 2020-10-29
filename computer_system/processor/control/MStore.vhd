@@ -3,9 +3,12 @@ USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
 ENTITY MStore IS
-	PORT(	address 		: IN	std_logic_vector(10 DOWNTO 0);		-- 11 bit 2048 addr DECODE format
-			microcode 	: OUT std_logic_vector(32 DOWNTO 0);			-- 29 bit word to datapath 
-			microcode2contr: OUT std_logic_vector(32 DOWNTO 0)		-- to control
+	PORT(	
+		clk			: IN 	std_logic;
+		reset			: IN 	std_logic;
+		address 		: IN	std_logic_vector(10 DOWNTO 0);		-- 11 bit 2048 addr DECODE format
+		microcode 	: OUT std_logic_vector(32 DOWNTO 0);			-- 29 bit word to datapath 
+		microcode2contr: OUT std_logic_vector(32 DOWNTO 0)		-- to control
 			);		-- 
 END ENTITY MStore;
 
@@ -1039,7 +1042,7 @@ ARCHITECTURE bhv OF MStore IS
 	 1021 	 => "---------------------------------",
 	 1022 	 => "---------------------------------",
 	 1023 	 => "---------------------------------",
-    	--			 "210987654321098----32109876543210"	-- ALU
+    	--	    "210987654321098----32109876543210"	-- ALU
 	 1024 	 => "000001000001100000001111111111100",	-- AND
 	 1025 	 => "---------------------------------",
 	 1026 	 => "---------------------------------",
@@ -2060,7 +2063,7 @@ ARCHITECTURE bhv OF MStore IS
 	 2041 	 => "---------------------------------",
 	 2042 	 => "---------------------------------",
 	 2043 	 => "---------------------------------",
-	 --			 "210987654321098765432109876543210"
+	 --	    "210987654321098765432109876543210"
 	 2044 	 => "100100000000000010100000000000000", -- R[temp1] R[0] MUL NEXT
 	 2045 	 => "100100000010000010000000000000000", -- R[temp1] R[1] ADD NEXT
 	 2046 	 => "100100000010000100000000000000000", -- R[temp1] R[1] LSHFT NEXT
@@ -2068,4 +2071,5 @@ ARCHITECTURE bhv OF MStore IS
 	 );
 BEGIN
 	microcode <= MStore(to_integer(unsigned(address)));
+	microcode2contr <= MStore(to_integer(unsigned(address)));
 END;
