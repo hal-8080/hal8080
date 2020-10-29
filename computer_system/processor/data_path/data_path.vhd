@@ -20,7 +20,7 @@ ENTITY data_path IS
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
-		ir				: OUT std_logic_vector(15 DOWNTO 0)
+		ir				: OUT std_logic_vector(15 DOWNTO 0) := x"0000"
 	);
 END ENTITY data_path;
 
@@ -55,8 +55,8 @@ ARCHITECTURE bhv OF data_path IS
 -- MUX DECODER
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
-	SIGNAL mux2busA : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
-	SIGNAL mux2busB : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
+	--SIGNAL mux2busA : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
+	--SIGNAL mux2busB : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
 
 -- from alu & memory to register
 	SIGNAL ALUout	: std_logic_vector(15 DOWNTO 0) := x"0001";
@@ -197,8 +197,12 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
-					addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
-					Bbus <= reg(to_integer(unsigned('0' & instr(3 DOWNTO 0))));
+					IF insrt(15 DOWNTO 14) = "11" THEN
+						Bbus <= std_logic_vector(RESIZE(unsigned(instr(10 DOWNTO 0)), 16));
+					ELSE
+						addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
+						Bbus <= reg(to_integer(unsigned('0' & instr(3 DOWNTO 0))));
+					END IF;
 				ELSIF instr(13) = '1' THEN
 					CASE instr(15 DOWNTO 14) IS
 					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
