@@ -172,17 +172,20 @@ ALU			<= micro_inst(17 DOWNTO 14);
 cond			<= micro_inst(13 DOWNTO 11);
 jump 			<= micro_inst(10 DOWNTO 0);
 
-	instruction:PROCESS(reg(31))
+	instruction:PROCESS(clk, reset)
 	BEGIN
-		ir <= reg(31);
-		instr <= reg(31);
+		IF reset= '0' THEN
+		ELSIF rising_edge(clk) THEN
+			ir <= reg(31);
+			instr <= reg(31);
+		END IF;
 	END PROCESS instruction;
 	
 	--A MUX & B MUX
-	MUX:PROCESS(micro_addrA, micro_addrB)
+	MUX:PROCESS(clk, reset)
 	BEGIN
-		--IF reset = '0' THEN
-		--ELSIF rising_edge(clk) THEN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
 			IF muxA = '1' THEN
 				addr2decA <= '0' & instr(12 DOWNTO 9);
 			ELSE
@@ -204,12 +207,14 @@ jump 			<= micro_inst(10 DOWNTO 0);
 			ELSE
 				addr2decB <= micro_addrB;
 			END IF;
-		--END IF;
+		END IF;
 	END PROCESS MUX;
 
 	--THE DECODERS
-	DECODER:PROCESS(addr2decA, addr2decB, mux2busA, mux2busB)
+	DECODER:PROCESS(clk, reset)
 		BEGIN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
 			-- DECODER	set binary addr to integer that points to register
 				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
 			IF muxB = '1'AND instr(13) = '1' THEN
@@ -222,6 +227,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 			ELSE
 				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
 			END IF;
+		END IF;
 	END PROCESS DECODER;
 		
 	--THE ALU	
@@ -337,24 +343,24 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	
 	
 	--move the ALU output or mm data to the Cbus
-	CMUX:PROCESS (ALUout, mmI)	
+	CMUX:PROCESS (clk, reset)	
 		VARIABLE temp_reg			: std_logic_vector(15 DOWNTO 0);
 	BEGIN
-	--IF reset = '0' THEN
-	--ELSIF rising_edge(clk) THEN
+	IF reset = '0' THEN
+	ELSIF rising_edge(clk) THEN
 			--store ALU/MM in Cbus
 		IF rd = '0' AND wr = '0' THEN
 			Cbus <= std_logic_vector(ALUout);
 		ELSIF rd = '1' THEN
 			Cbus <= mmI;
 		END IF;
-	--END IF;
+	END IF;
 	END PROCESS CMUX;
 	
-	CTOREG:PROCESS(Cbus)
+	CTOREG:PROCESS(Clk, reset)
 	BEGIN
-		--IF reset = '0' THEN
-		--ELSIF rising_edge(clk) THEN
+		IF reset = '0' THEN
+		ELSIF rising_edge(clk) THEN
 			
 			IF wr = '0' THEN
 				IF (muxC = muxA) AND (addr2decA /= "00000") AND (addr2decA /= "00001") THEN
@@ -367,7 +373,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 			END IF;
 			reg(0) <= x"0000";-- make sure reg(0) is always 0
 			reg(1) <= x"0001";
-		--END IF;
+		END IF;
 	END PROCESS CTOREG;
 	
 		--Memory
