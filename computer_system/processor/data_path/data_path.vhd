@@ -55,8 +55,8 @@ ARCHITECTURE bhv OF data_path IS
 -- MUX DECODER
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
 	SIGNAL addr2decB : std_logic_vector(4 DOWNTO 0) := "00000";
-	SIGNAL mux2busA : std_logic_vector(15 DOWNTO 0) := x"0000";
-	SIGNAL mux2busB : std_logic_vector(15 DOWNTO 0) := x"0000";
+	SIGNAL mux2busA : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
+	SIGNAL mux2busB : std_logic_vector(15 DOWNTO 0) := x"0000"; --can go
 
 -- from alu & memory to register
 	SIGNAL ALUout	: std_logic_vector(15 DOWNTO 0) := x"0001";
@@ -181,54 +181,58 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		END IF;
 	END PROCESS instruction;
 	
-	--A MUX & B MUX
+	--A MUX & B MUX & decoder
 	MUX:PROCESS(clk, reset)
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) THEN
 			IF muxA = '1' THEN
 				addr2decA <= '0' & instr(12 DOWNTO 9);
+				Abus <= reg(to_integer(unsigned('0' & instr(12 DOWNTO 9))));
 			ELSE
 				addr2decA <= micro_addrA;
+				Abus <= reg(to_integer(unsigned(micro_addrA)));
 			END IF;
 			
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
 					addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
+					Bbus <= reg(to_integer(unsigned('0' & instr(3 DOWNTO 0))));
 				ELSIF instr(13) = '1' THEN
 					CASE instr(15 DOWNTO 14) IS
-					WHEN "00" 	=> mux2busB <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
-					WHEN "01" 	=> mux2busB <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> mux2busB <= std_logic_vector(RESIZE(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)), 16));-- DISPLAY		
-					WHEN OTHERS => mux2busA <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
+					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
+					WHEN "01" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
+					WHEN "10" 	=> Bbus <= std_logic_vector(RESIZE(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)), 16));-- DISPLAY		
+					WHEN OTHERS => Bbus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
 				END CASE;
 				END IF;				
 			ELSE
 				addr2decB <= micro_addrB;
+				Bbus <= reg(to_integer(unsigned(micro_addrB)));
 			END IF;
 		END IF;
 	END PROCESS MUX;
 
 	--THE DECODERS
-	DECODER:PROCESS(clk, reset)
-		BEGIN
-		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
-			-- DECODER	set binary addr to integer that points to register
-				Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
-			IF muxB = '1'AND instr(13) = '1' THEN
-				CASE instr(15 DOWNTO 14) IS
-					WHEN "00" 	=> Bbus <= mux2busB; 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
-					WHEN "01" 	=> Bbus <= mux2busB;			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> Bbus <= mux2busB;-- DISPLAY		
-					WHEN OTHERS => Abus <= mux2busA;			-- sethi/low
-				END CASE;
-			ELSE
-				Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
-			END IF;
-		END IF;
-	END PROCESS DECODER;
+	--DECODER:PROCESS(clk, reset)
+	--	BEGIN
+	--	IF reset = '0' THEN
+	--	ELSIF rising_edge(clk) THEN
+	--		-- DECODER	set binary addr to integer that points to register
+	--			Abus <= reg(to_integer(unsigned(addr2decA))); --Abus<=reg(A)
+	--		IF muxB = '1'AND instr(13) = '1' THEN
+	--			CASE instr(15 DOWNTO 14) IS
+	--				WHEN "00" 	=> Bbus <= mux2busB; 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
+	--				WHEN "01" 	=> Bbus <= mux2busB;			-- MEMORY		--Bbus <= constant in assembly instruction
+	--				WHEN "10" 	=> Bbus <= mux2busB;-- DISPLAY		
+	--				WHEN OTHERS => Bbus <= mux2busB;			-- sethi/low
+	--			END CASE;
+	--		ELSE
+	--			Bbus <= reg(to_integer(unsigned(addr2decB))); --Bbus<=reg(B)
+	--		END IF;
+	--	END IF;
+	--END PROCESS DECODER;
 		
 	--THE ALU	
 	Maths:PROCESS(clk,reset)
@@ -345,36 +349,54 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	--move the ALU output or mm data to the Cbus
 	CMUX:PROCESS (clk, reset)	
 		VARIABLE temp_reg			: std_logic_vector(15 DOWNTO 0);
+		VARIABLE Cbusi				: std_logic_vector(15 DOWNTO 0);
 	BEGIN
 	IF reset = '0' THEN
 	ELSIF rising_edge(clk) THEN
 			--store ALU/MM in Cbus
 		IF rd = '0' AND wr = '0' THEN
-			Cbus <= std_logic_vector(ALUout);
+			Cbusi := std_logic_vector(ALUout);
 		ELSIF rd = '1' THEN
-			Cbus <= mmI;
+			Cbusi := mmI;
 		END IF;
+		
+		Cbus <= Cbusi;
+		
+		--CbusMux
+		IF wr = '0' THEN
+		
+			IF muxC = '1' AND ('0' & instr(12 DOWNTO 9)) /= "00000" AND ('0' & instr(12 DOWNTO 9)) /= "00001" THEN
+				reg(to_integer(unsigned('0' & instr(12 DOWNTO 9)))) <= Cbusi;
+			ELSIF muxC ='0' AND micro_addrA /= "00000" AND micro_addrA /= "00001" THEN
+				reg(to_integer(unsigned(micro_addrA))) <= Cbusi;
+			END IF;
+		END IF;
+		
+		reg(0) <= x"0000";-- make sure reg(0) is always 0
+		reg(1) <= x"0001";
+		
+		
 	END IF;
 	END PROCESS CMUX;
 	
-	CTOREG:PROCESS(Clk, reset)
-	BEGIN
-		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
-			
-			IF wr = '0' THEN
-				IF (muxC = muxA) AND (addr2decA /= "00000") AND (addr2decA /= "00001") THEN
-					reg(to_integer(unsigned(addr2decA))) <= Cbus;
-				ELSIF muxC = '1' AND ('0' & instr(12 DOWNTO 9)) /= "00000" AND ('0' & instr(12 DOWNTO 9)) /= "00001" THEN
-					reg(to_integer(unsigned('0' & instr(12 DOWNTO 9)))) <= Cbus;
-				ELSIF muxC ='0' AND micro_addrA /= "00000" AND micro_addrA /= "00001" THEN
-					reg(to_integer(unsigned(micro_addrA))) <= Cbus;
-				END IF;
-			END IF;
-			reg(0) <= x"0000";-- make sure reg(0) is always 0
-			reg(1) <= x"0001";
-		END IF;
-	END PROCESS CTOREG;
+--	CTOREG:PROCESS(Clk, reset)
+--	BEGIN
+--		IF reset = '0' THEN
+--		ELSIF rising_edge(clk) THEN
+--			
+--			IF wr = '0' THEN
+--				IF (muxC = muxA) AND (addr2decA /= "00000") AND (addr2decA /= "00001") THEN
+--					reg(to_integer(unsigned(addr2decA))) <= Cbus;
+--				ELSIF muxC = '1' AND ('0' & instr(12 DOWNTO 9)) /= "00000" AND ('0' & instr(12 DOWNTO 9)) /= "00001" THEN
+--					reg(to_integer(unsigned('0' & instr(12 DOWNTO 9)))) <= Cbus;
+--				ELSIF muxC ='0' AND micro_addrA /= "00000" AND micro_addrA /= "00001" THEN
+--					reg(to_integer(unsigned(micro_addrA))) <= Cbus;
+--				END IF;
+--			END IF;
+--			reg(0) <= x"0000";-- make sure reg(0) is always 0
+--			reg(1) <= x"0001";
+--		END IF;
+--	END PROCESS CTOREG;
 	
 		--Memory
 		MEMORY:PROCESS(Abus, Bbus)
