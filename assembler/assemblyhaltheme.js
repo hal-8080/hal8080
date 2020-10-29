@@ -23,8 +23,8 @@ define("ace/theme/assemblyhaltheme", ["require", "exports", "module", "ace/lib/d
         /* Language Colors */
         .ace-vibrant-ink .ace_keyword,.ace-vibrant-ink .ace_meta {color: #FF6600}
         .ace-vibrant-ink .ace_constant,.ace-vibrant-ink .ace_constant.ace_character,.ace-vibrant-ink .ace_constant.ace_character.ace_escape,.ace-vibrant-ink .ace_constant.ace_other {color: #339999}
-        .ace_constant.ace_other {color: #FFCC00 !important; font-weight: bold}
-        .ace-vibrant-ink .ace_constant.ace_numeric {color: #99CC99}
+        .ace_constant.ace_other {color: #FFCC00 !important}
+        .ace-vibrant-ink .ace_constant.ace_numeric {color: #B5CEA8}
         .ace-vibrant-ink .ace_invalid,.ace-vibrant-ink .ace_invalid.ace_deprecated {color: #fc032c}
         .ace-vibrant-ink .ace_fold {background-color: #FFCC00;border-color: #FFFFFF}
         .ace-vibrant-ink .ace_entity.ace_name.ace_function,.ace-vibrant-ink .ace_support.ace_function,.ace-vibrant-ink .ace_variable {color: #FFCC00}

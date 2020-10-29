@@ -35,9 +35,9 @@
 			<key>settings</key>
 			<dict>
 				<key>background</key>
-				<string>#0F0F0F</string>
+				<string>#1E1E1E</string>
 				<key>foreground</key>
-				<string>#FFFFFF</string>
+				<string>#D4D4D4</string>
 			</dict>
 		</dict>
 		<dict>
@@ -48,14 +48,14 @@
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
-				<string>#66FF00</string>
+				<string>#6A9955</string>
 			</dict>
 		</dict>
 		<dict>
 			<key>name</key>
 			<string>Label</string>
 			<key>scope</key>
-			<string>constant.character</string>
+			<string>entity.name.function</string>
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
@@ -66,11 +66,11 @@
 			<key>name</key>
 			<string>Instruction</string>
 			<key>scope</key>
-			<string>keyword</string>
+			<string>string</string>
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
-				<string>#FF9F21</string>
+				<string>#CE9178</string>
 			</dict>
 		</dict>
 		<dict>
@@ -81,20 +81,20 @@
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
-				<string>#0077FF</string>
+				<string>#9CDCFE</string>
 			</dict>
 		</dict>
 		<dict>
 			<key>name</key>
 			<string>Bios Register</string>
 			<key>scope</key>
-			<string>constant.other</string>
+			<string>variable.other.constant</string>
 			<key>settings</key>
 			<dict>
 				<key>fontStyle</key>
 				<string> bold</string>
 				<key>foreground</key>
-				<string>#0077FF</string>
+				<string>#4FC1FF</string>
 			</dict>
 		</dict>
 		<dict>
@@ -105,7 +105,7 @@
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
-				<string>#00D5FF</string>
+				<string>#B5CEA8</string>
 			</dict>
 		</dict>
 		<dict>
@@ -116,7 +116,7 @@
 			<key>settings</key>
 			<dict>
 				<key>foreground</key>
-				<string>#E61C34</string>
+				<string>#F44747</string>
 			</dict>
 		</dict>
 	</array>

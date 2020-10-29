@@ -26,17 +26,17 @@ styles [] {
    # Label. (Sort of constant)
    .label : style {
       color                 = gold
-      ace_scope             = constant.character
-      textmate_scope        = constant.character
-      pygments_scope        = Name.Constant
+      ace_scope             = entity.name.function
+      textmate_scope        = entity.name.function
+      pygments_scope        = Name.Function
    }
    
    # Instruction. AssemblyHal instruction
    .instruction : style {
       color                 = orange
-      ace_scope             = keyword
-      textmate_scope        = keyword
-      pygments_scope        = Keyword
+      ace_scope             = string
+      textmate_scope        = string
+      pygments_scope        = String
    }
    
    # Register (Sort of variable)
@@ -51,10 +51,11 @@ styles [] {
    .bios_register : style {
       color                 = light_blue
       bold                  = true
-      ace_scope             = constant.other
-      textmate_scope        = constant.other
+      ace_scope             = variable.other.constant
+      textmate_scope        = variable.other.constant
       pygments_scope        = Name.Builtin
    }
+   
    
    # Constant (Numeric)
    .constant : style {
