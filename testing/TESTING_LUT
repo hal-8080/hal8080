@@ -5,7 +5,6 @@
 #     - BRANCH 
 #     - SET 
 
-
 testDISP
     - ST
     - DISPCL, DISPCR (Display CONST on left/right 2 displays)
@@ -24,5 +23,10 @@ testALU
     - AND, NAND, OR, ORN, ADD, MUL, DIV, XOR, SHIFTL, SHIFTR, INV, POW, SUB, CP, RAND
     - LD, ST 
     - DISPRHR (Display register on right 4 displays)
-    - BZERO, BA, CALL, RETURN
+    - BZERO, BA, CALL, RET
     - SETHI, SETLO 
+
+testDEBUG
+    Used to test debug mode with ADD and BA instruction
+    - CP, ADD
+    - BA

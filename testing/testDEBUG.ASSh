@@ -1,0 +1,35 @@
+CP $r2, $r0
+START:
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1
+    ADD $r2, $r1 # $r2 = 32 = x20
+    BA @START
