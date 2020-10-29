@@ -1,3 +1,5 @@
+##############lower 2 nibbles
+##put 1111 at the right of temp0
 --1 copy reg(1) (always  x"0001") to temp0	: (temp0="0000 0000 0000 0001")
 --2 Lshift temp0 by reg(1) 			: (temp0="0000 0000 0000 0010")
 --3 copy temp0 to temp1				: (temp1="0000 0000 0000 0010")(dec 2)
@@ -5,17 +7,31 @@
 --5 copy temp0 to temp2				: (temp2="0000 0000 0000 0011")
 --4 Lshift temp0 by temp1(x"0002") 		: (temp0="0000 0000 0000 1100")
 --5 temp0 OR temp2 => temp0			: (temp0="0000 0000 0000 1111")
+
+##make temp1 decimal 4 to use it for easy shifting
 --6 Lshift temp1 by reg(1)			: (temp1="0000 0000 0000 0100")(dec 4)
+
+##use 1111 in temp0 to crop the second nibble
 --7 copy reg(B) to temp2			: (temp2="VVVV DDDD TTTT EEEE") (V,D,T and E are only there to differentiate the nibbles for readibility sake)
 --8 Rshift temp2 by temp1			: (temp2="---- VVVV DDDD TTTT")
 --9 temp2 AND temp0 => temp2			: (temp2="0000 0000 0000 TTTT")
+
+##shift second nibble to the third nibble and add the first nibble back
 --10 Lshift temp2 by temp1			: (temp2="0000 0000 TTTT 0000")
 --11 Lshift temp2 by temp1			: (temp2="0000 TTTT 0000 0000")
+
+##different shit happens
 --12 temp2 OR temp0 => temp2			: (temp2="0000 TTTT 0000 1111")
---13 temp2 AND reg(B) => temp2			: (temp2="0000 TTTT 0000 EEEE") 
+--13 temp2 AND reg(B) => temp2			: (temp2="0000 TTTT 0000 EEEE")!!!!!!!!!!!!!! 
+
+##Disp the computed 16 bits 
 --14 DISP (in alu) temp2 => temp2		: (temp2="0ttt tttt 0eee eeee") (v,d,t and e are the segment equivelent of their nibble in reg(b)
--- JUMP TO 40 IF LOWER FOUR SEGMENTS ARE TARGET
--- JUMP TO 41 IF UPPER FOUR SEGMENTS ARE TARGER
+
+##put the target adress on temp0 and store at that adress in mm
+
+
+
+#############upper two nibbles
 --15 copy reg(B) to temp2			: (temp2="VVVV DDDD TTTT EEEE")
 --16 Rshift temp2 by temp1			: (temp2="---- VVVV DDDD TTTT")
 --17 Rshift temp2 by temp1			: (temp2="---- ---- VVVV DDDD")
@@ -35,12 +51,3 @@
 --31 temp0 AND temp1 => temp0			: (temp0="0000 0000 0000 DDDD")
 --32 temp0 OR temp2 => temp2			: (temp0="0000 VVVV 0000 DDDD")
 --33 DISP temp2 => temp2			: (temp0="0vvv vvvv 0ddd dddd")
--- JUMP TO 41 IF LOWER FOUR SEGMENTS ARE TARGET
--- JUMP TO 42 IF UPPER FOUR SEGMENTS ARE TARGET
---40 mm store temp2 => address(segment 0&1)
--- JUMP TO 15
---41 mm store temp2 => adress(segment 2&3)
--- JUMP TO 15 IF UPPER FOUR SEGMENTS ARE TARGET
--- JUMP TO STOP INSTRUCTIONS IF LOWER FOUR SGMENTS ARE TARGET
---42 mm store temp2 => adress(segment 4&5)
--- JUMP TO STOP INSTRUCTIONS

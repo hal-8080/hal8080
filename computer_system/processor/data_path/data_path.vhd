@@ -16,6 +16,7 @@ ENTITY data_path IS
 	-- To the controller
 		statusN		: OUT std_logic := '0';
 		statusZ		: OUT std_logic := '0';
+	--to and from memory
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
 		mmData		: OUT std_logic_vector(15 DOWNTO 0);
@@ -170,6 +171,7 @@ wr				<= micro_inst(18);
 ALU			<= micro_inst(17 DOWNTO 14);
 cond			<= micro_inst(13 DOWNTO 11);
 jump 			<= micro_inst(10 DOWNTO 0);
+
 	instruction:PROCESS(reg(31))
 	BEGIN
 		ir <= reg(31);
@@ -195,7 +197,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 					CASE instr(15 DOWNTO 14) IS
 					WHEN "00" 	=> mux2busB <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
 					WHEN "01" 	=> mux2busB <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> mux2busB <= std_logic_vector(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)));-- DISPLAY		
+					WHEN "10" 	=> mux2busB <= std_logic_vector(RESIZE(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)), 16));-- DISPLAY		
 					WHEN OTHERS => mux2busA <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
 				END CASE;
 				END IF;				
