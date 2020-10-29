@@ -1,0 +1,16 @@
+CP $r2, $r1
+GETINPUT:    
+    LD %ButtonState, @BUTTONSTATE
+    LD %ChangedButtons, @PREVBUTTONSTATE
+    INV %ChangedButtons, %ChangedButtons
+    AND %ChangedButtons, %ButtonState
+    ST @PREVBUTTONSTATE, %ButtonState
+
+    SETHI %TempVal, x10
+    SETLO %TempVal, x00
+    AND %TempVal, %ChangedButtons
+    BZERO @GETINPUT
+    
+    ADD $r2, $r1
+    DISPRHR $r2
+    BA @GETINPUT
