@@ -13,7 +13,8 @@ define("ace/theme/assemblyhal", ["require", "exports", "module", "ace/lib/dom"],
     .ace-assemblyhal .ace_gutter-active-line {background-color: #333333}
     .ace-assemblyhal .ace_marker-layer .ace_selected-word {border: 1px solid #6699CC}
     .ace-assemblyhal .ace_invisible {color: #404040}
-    /* Language Colors */
+    /* Language Colors */ /* entity.name.tag */
+    .ace-assemblyhal .ace_tag {color: #569CD6}
     .ace-assemblyhal .ace_invalid {color: #F44747}.ace-assemblyhal .ace_string {color: #CE9178}
     .ace-assemblyhal .ace_comment {color: #6A9955}.ace-assemblyhal .ace_variable {color: #9CDCFE}
     .ace-assemblyhal .ace_constant.ace_numeric {color: #99CC99}

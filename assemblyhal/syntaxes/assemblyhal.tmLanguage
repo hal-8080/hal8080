@@ -34,6 +34,12 @@
         </dict>
         <dict>
           <key>match</key>
+          <string>(@\w+@[\x{003c}\x{003e}]?)</string>
+          <key>name</key>
+          <string>entity.name.tag.assemblyhal</string>
+        </dict>
+        <dict>
+          <key>match</key>
           <string>(\w+:)</string>
           <key>name</key>
           <string>entity.name.function.assemblyhal</string>
@@ -70,19 +76,25 @@
         </dict>
         <dict>
           <key>match</key>
-          <string>((?:BNEG|BZERO|BA|SETHI|SETLO)\s)</string>
+          <string>((?:BNEG|BZERO|BA|CALL|SETHI|SETLO)\s)</string>
           <key>name</key>
           <string>string.assemblyhal</string>
         </dict>
         <dict>
           <key>match</key>
-          <string>(\$r[0-9B-F])</string>
+          <string>(RET)</string>
+          <key>name</key>
+          <string>string.assemblyhal</string>
+        </dict>
+        <dict>
+          <key>match</key>
+          <string>(\$r[2-9B-F])</string>
           <key>name</key>
           <string>variable.assemblyhal</string>
         </dict>
         <dict>
           <key>match</key>
-          <string>(\$(?:RET|m[1-3]|d[B-F]|dAD|dVAL|dPC|dIR|PC|IR))</string>
+          <string>(\$(?:RET|m[1-3]|d[B-F]|dAD|dVAL|dPC|dIR|PC|IR|r0|r1))</string>
           <key>name</key>
           <string>variable.other.constant.assemblyhal</string>
         </dict>

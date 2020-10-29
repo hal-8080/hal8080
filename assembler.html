@@ -73,12 +73,24 @@
 
         <!-- Content wrapper start -->
         <div class="container" style="margin-top: 6rem; height: calc(100% - 14rem);">
-            <div id="editor" style="height: 100%; border-radius: 1rem; box-shadow: inset;">
-            function foo(items) {
-                var x = "All this is syntax highlighted";
-                return x;
-            }
-            </div>
+            <!-- Editor. Preload hello world. -->
+            <div id="editor" style="height: 100%; border-radius: 1rem; box-shadow: inset;"># Test :D
+BA @start # Jump to start.
+arr1:       PUT x"0001" # First absolute display value
+            PUT x"000F" # Second display value
+            PUT x"000A"
+# End with F for easy program. (Remember we can use last bit as flag since display has 7 bits.)
+            PUT x"FFFF"
+start:      SETHI $r1, @arr1>
+            SETLO $r1, @arr1<
+loop:       LD $r2, $r1
+            CP $r3, $r2
+            SHIFTR $r3, 7
+            BZ $r3, @end
+            ST $r2, @seg0@
+            ADD $r1, 2;
+            BA @loop
+end:        BA @end</div>
             <div class="progress">
                 <div id="pbar" class="progress-bar bg-secondary progress-bar-animated highlight-dark" role="progressbar" style="width: 0%" aria-valuenow="40" aria-valuemin="0" aria-valuemax="100"></div>
             </div>

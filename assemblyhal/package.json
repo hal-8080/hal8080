@@ -1,6 +1,6 @@
 {
     "name": "assemblyhal",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "icon": "hal8080.png",
     "engines": {
         "vscode": "^1.22.0"
