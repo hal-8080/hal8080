@@ -1,7 +1,8 @@
 # Debug program
-# %r0 = 
-# %r1 = 
+# $r0 = %r0 
+# $r1 = %r1
 
+# $RET = Call Return Address
 # $dA = TempAddr
 # $dB = TempVal2
 # $dC = TempVal1 
@@ -24,27 +25,27 @@
 
 
 
-ST %r1, @DBGREGISTRIES@
-ST %r1, @DBGFLAGS@
+ST $r1, @DBGREGISTRIES@
+ST $r1, @DBGFLAGS@
 	# Store address of start of user program in dbgPC
-LD %dbgPC, @USERMEM@ 					
+LD $dPC, @USERMEM@ 					
 	# Store first user program instruction in dbgIR
-LD %dbgIR, %dbgPC				
-LD %ButtonState, @BUTTONSTATE@
-ST %ButtonState, @PREVBUTTONSTATE@
+LD $dIR, $dPC				
+LD $dD, @BUTTONSTATE@
+ST $dD, @PREVBUTTONSTATE@
 
 STARTJUMP:
-	ST %r1, @DBGREGISTRIES@
-	ST %r1, @DBGFLAGS@
+	ST $r1, @DBGREGISTRIES@
+	ST $r1, @DBGFLAGS@
 
-	LD %LeverState, @LEVERSTATE@	
+	LD $dE, @LEVERSTATE@	
 	
 		# Check if lever 8 is HIGH
 		# 	if off 	jump to MEMORYMODE
 		# 	else 	jump to STEPMODE
-	SETHI %TempVal1, x"00"
-	SETLO %TempVal1, x"80"
-	AND %TempVal1, %LeverState
+	SETHI $dC, x"00"
+	SETLO $dC, x"80"
+	AND $dC, $dE
 	BZERO @MEMORYMODE
 	BA @STEPMODE
 
@@ -52,109 +53,109 @@ STARTJUMP:
 
 STEPMODE:
 		# Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
-	CP %dbgAddr, %dbgPC
-	CP %dbgValue, %dbgIR	
+	CP $dAD, $dPC
+	CP $dVal, $dIR	
 	
-		# Check which button went from 0 to 1, store results in %TempVal1
-	LD %ButtonState, @BUTTONSTATE@
-	LD %TempVal1, @PREVBUTTONSTATE@
-	INV %TempVal1, %TempVal1
-	AND %TempVal1, %ButtonState
-	ST %ButtonState, @PREVBUTTONSTATE@
+		# Check which button went from 0 to 1, store results in $dC
+	LD $dD, @BUTTONSTATE@
+	LD $dC, @PREVBUTTONSTATE@
+	INV $dC, $dC
+	AND $dC, $dD
+	ST $dD, @PREVBUTTONSTATE@
 	
 		# Check if button 3 is HIGH
 		# 	If LOW, display value
 		# 	If HIGH, execute instruction
-	SETHI %TempVal2, x"10"
-	SETLO %TempVal2, x"00"
-	AND %TempVal1, %TempVal2
+	SETHI $dB, x"10"
+	SETLO $dB, x"00"
+	AND $dC, $dB
 	BZERO @ADDRESVALUEDISPLAY
 
 			# # # # # EXECUTE USER INSTRUCTION # # # # # 
-	LD %dbgIR, %dbgPC		# Should not be needed, but doesn't hurt to put here anyways
-	CP %TempVal1, %dbgIR
-	SETHI %TempVal2, x"C0"
-	SETLO %TempVal2, x"00"	# %TempVal2 = 1100 0000 00000 0000
+	LD $dIR, $dPC		# Should not be needed, but doesn't hurt to put here anyways
+	CP $dC, $dIR
+	SETHI $dB, x"C0"
+	SETLO $dB, x"00"	# $dB = 1100 0000 00000 0000
 	
-	SHIFTR %TempVal1, 6
-	SETLO %TempVal1, x00
-	SHIFTL %TempVal1, 6
+	SHIFTR $dC, 6
+	SETLO $dC, x"00"
+	SHIFTL $dC, 6
 	
-	SUB %TempVal1, %TempVal2 	# Check if its a branch instruction
+	SUB $dC, $dB 	# Check if its a branch instruction
 	BZERO @PANICITSABRANCHINSTRUCTION
 	BA @NOTBRANCHINSTR
 	
 PANICITSABRANCHINSTRUCTION:
-	CP %TempVal1, %dbgIR
-	SHIFTL %TempVal1, 3
-	SETLO %TempVal1, x"00"
-	SHIFTL %TempVal1, 4 	# COND 0000 0000 0000
+	CP $dC, $dIR
+	SHIFTL $dC, 3
+	SETLO $dC, x"00"
+	SHIFTL $dC, 4 	# COND 0000 0000 0000
 	
-	SETLO %TempVal2, x"00"
-	SETHI %TempVal2, x"40"
-	SUB %TempVal2, %TempVal1
+	SETLO $dB, x"00"
+	SETHI $dB, x"40"
+	SUB $dB, $dC
 	BZERO @USERCALLINSTRUCTION 	# Check if the instruction is a call instruction = 0100
 	
-	SETLO %TempVal2, x"00"
-	SETHI %TempVal2, x"50"
-	SUB %TempVal2, %TempVal1
+	SETLO $dB, x"00"
+	SETHI $dB, x"50"
+	SUB $dB, $dC
 	BZERO @USERRETURNINSTRUCTION 	# Check if the instruction is a return instruction = 0101
 	
-	SETLO %TempVal2, x"00"
-	SETHI %TempVal2, x"00"
-	SUB %TempVal2, %TempVal1
+	SETLO $dB, x"00"
+	SETHI $dB, x"00"
+	SUB $dB, $dC
 	BZERO @BNEGCHECK 	# Check if the instruction is a BNEG instruction = 0000
 	
-	SETLO %TempVal2, x"00"
-	SETHI %TempVal2, x"10"
-	SUB %TempVal2, %TempVal1
+	SETLO $dB, x"00"
+	SETHI $dB, x"10"
+	SUB $dB, $dC
 	BZERO @BZEROCHECK 	# Check if the instruction is a BZERO instruction = 0001
 	
 	BA @HOP	# If its a branch instruction and not call, return, bneg, bzero, it must be a branch always
 	
 USERCALLINSTRUCTION:
-	CP %RetAddr, %dbgPC
+	CP $RET, $dPC
 	BA @HOP
 
 USERRETURNINSTRUCTION:
-	CP %userPC, %RetAddr
-	LD %dbgIR, %dbgPC
+	CP $dPC, $RET
+	LD $dIR, $dPC
 	BA @STARTJUMP
 	
 BNEGCHECK:
-	ST %r0, @DBGFLAGS@
+	ST $r0, @DBGFLAGS@
 	BNEG @HOP
 	BA @NOHOP
 	
 BZEROCHECK:
-	ST %r0, @DBGFLAGS@
+	ST $r0, @DBGFLAGS@
 	BZERO @HOP
 	BA @NOHOP
 
 HOP:
-	ST %r1, @DBGFLAGS@
+	ST $r1, @DBGFLAGS@
 	# 
 	# Get jump address and put in PC 	DEPENDS ON HOW FLAGS WORK
 	# 
-	LD %dbgIR, %dbgPC
+	LD $dIR, $dPC
 	BA @STARTJUMP
 	
 NOHOP:
-	ST %r1, @DBGFLAGS@
-	ADD %dbgPC, "00010"
-	LD %dbgIR, %dbgPC
+	ST $r1, @DBGFLAGS@
+	ADD $dPC, "00010"
+	LD $dIR, $dPC
 	BA @STARTJUMP
 	
 NOTBRANCHINSTR:
-	ST %r0, @DBGFLAGS@
-	ST instr, %dbgIR
-	ST %r0, @DBGREGISTRIES@
+	ST $r0, @DBGFLAGS@
+	ST $dIR, @instr
+	ST $r0, @DBGREGISTRIES@
 instr:
-	AND %r0, %r0 	# DUMMY INSTRUCTION
-	ST %r1, @DBGFLAGS@
-	ST %r1, @DBGREGISTRIES@
-	ADD %dbgPC, "00010"
-	LD %dbgIR, %dbgPC
+	AND $r0, $r0 	# DUMMY INSTRUCTION
+	ST $r1, @DBGFLAGS@
+	ST $r1, @DBGREGISTRIES@
+	ADD $dPC, "00010"
+	LD $dIR, $dPC
 	BA @STARTJUMP
 
 
@@ -163,9 +164,9 @@ MEMORYMODE:
 		# Check if lever 6 is HIGH
 		# 	if off 	jump to REGISTRY (UserRegistryReader)
 		# 	else 	jump to MAINMEM (MainMemoryReader)
-	SETHI %TempVal1, x"02"
-	SETLO %TempVal1, x"00"
-	AND %TempVal1, %LeverState
+	SETHI $dC, x"02"
+	SETLO $dC, x"00"
+	AND $dC, $dE
 	BZERO @REGISTRY
 	BA @MAINMEM
 
@@ -174,143 +175,143 @@ MEMORYMODE:
 REGISTRY:
 		# Change X in "Display register X" to correct value, switch DBGREGISTRIES off, execute instruction, switch DBGREGISTRIES on
 	
-		# Check which button went from 0 to 1, store results in %TempVal1
-	LD %ButtonState, @BUTTONSTATE@
-	LD %TempVal1, @PREVBUTTONSTATE@
-	INV %TempVal1, %TempVal1
-	AND %TempVal1, %ButtonState
-	ST %ButtonState, @PREVBUTTONSTATE@
+		# Check which button went from 0 to 1, store results in $dC
+	LD $dD, @BUTTONSTATE@
+	LD $dC, @PREVBUTTONSTATE@
+	INV $dC, $dC
+	AND $dC, $dD
+	ST $dD, @PREVBUTTONSTATE@
 	
 		# Check if button 3 and/or 2 is HIGH
 			# If both LOW, jump to REGISTRYSTATIC
 			# If either HIGH, jump to REGISTRYMOVE
-	SETHI %TempVal2, x"30"
-	SETLO %TempVal2, x"00"
-	AND %TempVal1, %TempVal2
+	SETHI $dB, x"30"
+	SETLO $dB, x"00"
+	AND $dC, $dB
 	BZERO @REGISTRYSTATIC
 	BA @REGISTRYMOVE
 
 REGISTRYMOVE:
 		# If button 3 or 2 is pressed, increment/decrement the XXXX in "Display Register XXXX" 
 
-	LD %TempAddr, @LBL	
-	CP %TempVal2, %TempAddr
-	AND %TempVal2, "01111"		# %TempVal2 = 0..0 XXXX
+	LD $dA, @LBL	
+	CP $dB, $dA
+	AND $dB, "01111"		# $dB = 0..0 XXXX
 	
-	# In use: TempAddr: LBL("Display registry XXXX")
+	# In use: DA: LBL("Display registry XXXX")
 	# 		TempVal1: Changed buttons
 	# 		TempVal2: 0..0 XXXX
 	
-	CP %TempAddr, %TempVal2
-	SHIFTL %TempVal1, 3
+	CP $dA, $dB
+	SHIFTL $dC, 3
 	BZERO @REGISTRYMOVEADD
 	BA @REGISTRYMOVESUB
 	
 REGISTRYMOVESUB:
-	SUB %TempAddr, %r1
+	SUB $dA, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVEADD:
-	ADD %TempAddr, %r1
+	ADD $dA, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVESET:
-	AND %TempAddr, "01111"
-	CP %TempVal1, %TempAddr 	
-	LD %TempAddr, @LBL
-	AND %TempAddr, "10000"
-	OR %TempAddr, %TempVal1
-	ST %TempAddr, @LBL
+	AND $dA, "01111"
+	CP $dC, $dA 	
+	LD $dA, @LBL
+	AND $dA, "10000"
+	OR $dA, $dC
+	ST $dA, @LBL
 	
-	SHIFTL %TempVal1, 4
-	OR %TempVal1, "00001"
-	SHIFTL %TempVal1, 4
-	OR %TempVal1, "01111"	# %TempVal1 = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
-	DISPRCL %TempVal1 		# DISP Register number + empty on left 2 displays
+	SHIFTL $dC, 4
+	OR $dC, "00001"
+	SHIFTL $dC, 4
+	OR $dC, "01111"	# $dC = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
+	DISPRCL $dC 		# DISP Register number + empty on left 2 displays
 
 	BA @REGISTRYREADOUTPUT
 
 REGISTRYSTATIC:
-	LD %TempVal1, @LBL
-	AND %TempVal1, "01111"
+	LD $dC, @LBL
+	AND $dC, "01111"
 	
-	SHIFTL %TempVal1, 4
-	OR %TempVal1, "00001"
-	SHIFTL %TempVal1, 4
-	OR %TempVal1, "01111"	# %TempVal1 = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
-	DISPRCL %TempVal1 		# DISP Register number + empty on left 2 displays
+	SHIFTL $dC, 4
+	OR $dC, "00001"
+	SHIFTL $dC, 4
+	OR $dC, "01111"	# $dC = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
+	DISPRCL $dC 		# DISP Register number + empty on left 2 displays
 	
 	BA @REGISTRYREADOUTPUT
 
 REGISTRYREADOUTPUT:
-	ST %r0, @DBGREGISTRIES@ 
+	ST $r0, @DBGREGISTRIES@ 
 LBL:	
-	DISPRHR %r0		# %r0 is DUMMY VARIABLE
-	ST %r1, @DBGREGISTRIES@ 
+	DISPRHR x"0000"		# x"0000" is DUMMY VARIABLE
+	ST $r1, @DBGREGISTRIES@ 
 	BA @STARTJUMP
 
 
 
 MAINMEM:
-		# Check which button went from 0 to 1, store results in %TempVal1
-	LD %ButtonState, @BUTTONSTATE@
-	LD %TempVal1, @PREVBUTTONSTATE@
-	INV %TempVal1, %TempVal1
-	AND %TempVal1, %ButtonState
-	ST %ButtonState, @PREVBUTTONSTATE@
+		# Check which button went from 0 to 1, store results in $dC
+	LD $dD, @BUTTONSTATE@
+	LD $dC, @PREVBUTTONSTATE@
+	INV $dC, $dC
+	AND $dC, $dD
+	ST $dD, @PREVBUTTONSTATE@
 	
 		# Check if button 3 and/or 2 is HIGH
 		# 	If both LOW, jump to REGISTRYSTATIC
 		# 	If either HIGH, jump to REGISTRYMOVE
-	SETHI %TempVal2, x"30"
-	SETLO %TempVal2, x"00"
-	AND %TempVal1, %TempVal2
+	SETHI $dB, x"30"
+	SETLO $dB, x"00"
+	AND $dC, $dB
 	BZERO @ADDRESVALUEDISPLAY
 	BA @REGISTRYMOVE
 
 MAINMEMSETMOVE:
-	CP %TempVal2, %LeverState
-	SHIFTR %TempVal2, 4
-	SETLO %TempVal2, x"00"
-	SHIFTL %TempVal2, 4		# %TempVal1 = XXXX 0000 0000 0000
-	BZERO @MOVE2
-	SHIFTL %TempVal2, 1
-	BZERO @MOVE20
-	SHIFTL %TempVal2, 1
-	BZERO @MOVE200
-	SHIFTL %TempVal2, 1
-	BZERO @MOVE2000
-	BA @MOVE20000			# If its not 0 after 3 lshifts, lever 3 must be on
+	CP $dB, $dE
+	SHIFTR $dB, 4
+	SETLO $dB, x"00"
+	SHIFTL $dB, 4		# $dC = XXXX 0000 0000 0000
+	BZERO @MAINMEMMOVE2
+	SHIFTL $dB, 1
+	BZERO @MAINMEMMOVE20
+	SHIFTL $dB, 1
+	BZERO @MAINMEMMOVE200
+	SHIFTL $dB, 1
+	BZERO @MAINMEMMOVE2000
+	BA @MAINMEMMOVE20000			# If its not 0 after 3 lshifts, lever 3 must be on
 	
 MAINMEMMOVE2:
-	SETHI %TempVal2, x"00"
-	SETLO %TempVal2, x"02"
+	SETHI $dB, x"00"
+	SETLO $dB, x"02"
 	BA @MAINMEMCALCMOVE
 MAINMEMMOVE20:
-	SETHI %TempVal2, x"00"
-	SETLO %TempVal2, x"14"
+	SETHI $dB, x"00"
+	SETLO $dB, x"14"
 	BA @MAINMEMCALCMOVE
 MAINMEMMOVE200:
-	SETHI %TempVal2, x"00"
-	SETLO %TempVal2, x"64"
+	SETHI $dB, x"00"
+	SETLO $dB, x"64"
 	BA @MAINMEMCALCMOVE
 MAINMEMMOVE2000:
-	SETHI %TempVal2, x"07"
-	SETLO %TempVal2, x"D0"
+	SETHI $dB, x"07"
+	SETLO $dB, x"D0"
 	BA @MAINMEMCALCMOVE
 MAINMEMMOVE20000:
-	SETHI %TempVal2, x"4E"
-	SETLO %TempVal2, x"20"
+	SETHI $dB, x"4E"
+	SETLO $dB, x"20"
 	BA @MAINMEMCALCMOVE
 
 MAINMEMCALCMOVE:
-		# %TempVal1 holds changed buttons from 0 to 1	
-	SHIFTL %TempVal1, 3
+		# $dC holds changed buttons from 0 to 1	
+	SHIFTL $dC, 3
 	BZERO @MAINMEMMOVEADD
 	BA @MAINMEMMOVESUB
 	
 MAINMEMMOVESUB:
-	SUB %dbgAddr, %TempVal2		
+	SUB $dAD, $dB		
 	# 
 	# 	ACCOUNT FOR OVERFLOW
 	# 	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
@@ -318,7 +319,7 @@ MAINMEMMOVESUB:
 	BA @MAINMEMUPDATE
 
 MAINMEMMOVEADD:
-	ADD %dbgAddr, %TempVal2
+	ADD $dAD, $dB
 	# 
 	# 	ACCOUNT FOR OVERFLOW
 	# 	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
@@ -326,7 +327,7 @@ MAINMEMMOVEADD:
 	BA @MAINMEMUPDATE
 
 MAINMEMUPDATE:
-	LD %dbgValue, %dbgAddr 
+	LD $dVal, $dAD 
 	BA @ADDRESVALUEDISPLAY
 	
 
@@ -335,16 +336,16 @@ ADDRESVALUEDISPLAY:
 		# Check if lever 7 is HIGH
 		# 	if off 	jump to DISPLAYVALUE
 		# 	else 	jump to DISPLAYADDRES
-	SETHI %TempVal1, x"01"
-	SETLO %TempVal1, x"00"
-	AND %TempVal1, %LeverState
+	SETHI $dC, x"01"
+	SETLO $dC, x"00"
+	AND $dC, $dE
 	BZERO @DISPLAYVALUE
 	BA @DISPLAYADDRES
 
 DISPLAYVALUE:
-	DISPRHR %dbgValue
+	DISPRHR $dVal
 	BA @STARTJUMP
 
 DISPLAYADDRES:
-	DISPRHR %dbgAddr
+	DISPRHR $dAD
 	BA @STARTJUMP
