@@ -64,7 +64,7 @@ CLB:PROCESS(reset,clk)
 CSAI:PROCESS(reset,clk)
   BEGIN
     IF reset='0' THEN
-      CSAI_inc <= (OTHERS=>'0');
+      --
     ELSIF rising_edge(clk) THEN
       CSAI_inc <= std_logic_vector(unsigned(address)+1);	
     END IF;
@@ -77,16 +77,18 @@ CSAI:PROCESS(reset,clk)
 	OPi	<= ir(13);
 	jmpA	<= micro_instr(10 DOWNTO 0);
   
-MUX:	PROCESS(clk, reset)
+MUX:	PROCESS(reset, clk, cbl)
+		VARIABLE alternate	: std_logic := '0';
 	BEGIN
 	IF reset = '0' THEN
-	--reset
+	-- reset
 	ELSIF rising_edge(clk) THEN
+	IF alternate = '1' THEN
 		CASE cbl IS
 			-- NEXT ADDR
 			WHEN "00" => address <= CSAI_inc;
 			-- JUMP
-			WHEN "01" => address <= JmpA;
+			WHEN "01" => address <= jmpA;
 			-- DECODE
 			WHEN OTHERS =>
 				-- ALU
@@ -107,10 +109,14 @@ MUX:	PROCESS(clk, reset)
 					IF OPi = '1' THEN
 						address <= "10" & OP & OPi & OPLS & "00000";
 					ELSE
-						address <= "10" & OP & OPi & "000000";
+						address <= "10" & OP & OPi & OP3 & "0000";
 					END IF;
 				END IF;
 		END CASE;
+		alternate := '0';
+	ELSE
+		alternate := '1';
+	END IF;
 	END IF;
 	END PROCESS;
 	

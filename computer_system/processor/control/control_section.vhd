@@ -32,6 +32,8 @@ BEGIN
 	);
 	
 	MS:ENTITY work.MStore PORT MAP(
+		clk => clk,
+		reset => reset,
 		address => wire_address2cs,			-- IN 	address from control
 		microcode => micro_instr,				-- OUT 	instruction to datapath
 		microcode2contr => wire_micro_instr	-- OUT	instruciton to control

@@ -51,7 +51,7 @@ UPDATEPLAYER:
 	
 	SETHI %playerState, 01000000	# Player state = up
 	SETLO %playerState, x00
-	RETURN
+	RET
 	
 checkDOWN:
 	SETHI %TempVal1, x20
@@ -61,12 +61,12 @@ checkDOWN:
 	
 	SETHI %playerState, 0001000 	# Player state = down
 	SETLO %playerState, x00
-	RETURN
+	RET
 
 setMIDDLE:
 	SETHI %playerState, x01
 	SETLO %playerState, x00
-	RETURN
+	RET
 
 
 
@@ -76,14 +76,14 @@ UPDATEFIRSTDISPLAY:
 	OR %TempVal1, %playerState
 	INV %Comb, %TempVal1
 	ST @DISPLEFT, %Comb
-	RETURN
+	RET
 
 
 
 COLLISION:
 	INV %TempVal1, %dispL
 	AND %TempVal1, %playerState
-	BZERO @RETURNFLAG
+	BZERO @RETFLAG
 	CALL @DEAD
 
 
@@ -93,7 +93,7 @@ UPDATEDISPLAYS:
 	CP %TempVal1, %maxTimer
 	SUB %TempVal1, %Timer
 	BNEG @MOVEDISPLAYS
-	RETURN
+	RET
 
 MOVEDISPLAYS:
 	ST @TIMER0, %r0
@@ -145,7 +145,7 @@ MOVEDISPLAYS:
 
 addNothing:
 	SETLO %dispR, 0111 1111
-	RETURN
+	RET
 
 addPrevious:
 	CP %TempVal1, %dispR
@@ -153,7 +153,7 @@ addPrevious:
 	SETLO %dispR, x00
 	SETHI %TempVal1, x00
 	OR %dispR, %TempVal1
-	RETURN
+	RET
 
 addRandom:
 	RAND %TempVal1
@@ -174,7 +174,7 @@ addRandom:
 	INV %TempVal1, %TempVal1
 	SETLO %dispR, x00
 	OR %dispR, %TempVal1
-	RETURN
+	RET
 
 
 
@@ -212,5 +212,5 @@ DEAD:
 
 
 
-RETURNFLAG: 	# For conditional RETURNS
-	RETURN
+RETFLAG: 	# For conditional RETS
+	RET
