@@ -18,6 +18,8 @@ loop:       LD $r2, $IR
             SHIFTR $r3, 7
             BZERO $r3, @end
             ST $r2, @seg0@
-            ADD $r1, 2;
+            ADD $, 2;
             BA @loop
 end:        BA @end
+            RAND 
+            DISPRCM
