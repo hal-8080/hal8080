@@ -16,6 +16,9 @@ ENTITY data_path IS
 	-- To the controller
 		statusN		: OUT std_logic := '0';
 		statusZ		: OUT std_logic := '0';
+		statusD		: IN std_logic := '0';
+		statusND		: OUT std_logic := '0';
+		statusZD		: OUT std_logic := '0';
 	--to and from memory
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
@@ -51,6 +54,9 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Cbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
+	
+-- asynchornous instruction counter
+	SIGNAL counter : integer RANGE 0 TO 3 := 0;
 	
 -- MUX DECODER
 	SIGNAL addr2decA : std_logic_vector(4 DOWNTO 0)	:= "00000";
@@ -172,6 +178,18 @@ ALU			<= micro_inst(17 DOWNTO 14);
 cond			<= micro_inst(13 DOWNTO 11);
 jump 			<= micro_inst(10 DOWNTO 0);
 
+	instrcounter:PROCESS(clk, reset)
+	BEGIN
+		IF reset = '0' THEN
+		ELSIF falling_edge(clk) THEN
+			IF counter < 3 THEN
+				counter <= counter + 1;
+			ELSE
+				counter <= 0;
+			END IF;
+		END IF;
+	END PROCESS instrcounter;
+
 	instruction:PROCESS(clk, reset)
 	BEGIN
 		IF reset= '0' THEN
@@ -183,12 +201,18 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	
 	--A MUX & B MUX & decoder
 	MUX:PROCESS(clk, reset)
+		VARIABLE Aaddr, Baddr : std_logic_vector(4 DOWNTO 0);
 	BEGIN
 		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(clk) AND counter = 0 THEN
 			IF muxA = '1' THEN
-				addr2decA <= '0' & instr(12 DOWNTO 9);
-				Abus <= reg(to_integer(unsigned('0' & instr(12 DOWNTO 9))));
+				IF statusD = '0' THEN	--if debug mode is off, use regular registers
+					Aaddr := '0' & instr(12 DOWNTO 9);
+				ELSE							--if debug mode is on, use register + 16
+					Aaddr := std_logic_vector(to_unsigned((to_integer(unsigned('0' & instr(12 DOWNTO 9)))+16), 5));
+				END IF;
+				addr2decA <= Aaddr;
+				Abus <= reg(to_integer(unsigned(Aaddr)));
 			ELSE
 				addr2decA <= micro_addrA;
 				Abus <= reg(to_integer(unsigned(micro_addrA)));
@@ -197,8 +221,13 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		-- MUX B	
 			IF muxB = '1' THEN	-- The role of i [instr(13)] depents on OP1
 				IF instr(13) = '0' THEN --the role of i is the same when it is 1 for all OP1
-						addr2decB <= '0' & instr(3 DOWNTO 0); -- addr2decB <= '0' + B adress of the assembly instruction
-						Bbus <= reg(to_integer(unsigned('0' & instr(3 DOWNTO 0))));
+					IF statusD = '0' THEN	--if debug mode is off, use regular registers
+						Baddr := '0' & instr(3 DOWNTO 0);
+					ELSE							--if debug mode is on, use register + 16
+						Baddr := std_logic_vector(to_unsigned((to_integer(unsigned('0' & instr(3 DOWNTO 0)))+16), 5));
+					END IF;
+					addr2decB <= Baddr; -- addr2decB <= '0' + B adress of the assembly instruction
+					Bbus <= reg(to_integer(unsigned(Baddr)));
 				ELSIF instr(13) = '1' THEN
 					CASE instr(15 DOWNTO 14) IS
 					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
@@ -249,7 +278,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		VARIABLE Bbus_shift		: integer RANGE 0 TO 16;
 	BEGIN
 		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
+		ELSIF rising_edge(clk) AND counter = 1  THEN
 			Abus_sign 	:= signed(Abus);
 			Bbus_sign 	:= signed(Bbus);
 			Abus_int 	:= to_integer(Abus_sign);
@@ -329,19 +358,30 @@ jump 			<= micro_inst(10 DOWNTO 0);
 				random := RESIZE((random * seed), 16);
 			END IF;
 			
-			
-				
-				
-				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") THEN
+			--status bits:
+			IF statusD = '0' THEN	--if debug is off, update regular status bits
+				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
 					statusZ <= '1'; --statusZ
 					statusN <= '0'; --statusN
-				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") THEN
+				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
 					statusZ <= '0'; --statusZ
 					statusN <= '1'; --statusN
-				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") THEN
+				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
 					statusZ <= '0'; --statusZ
 					statusN <= '0'; --statusN
 				END IF;
+			ELSE --if debug is on, update only the debug status bits
+				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+					statusZD <= '1'; --statusZ
+					statusND <= '0'; --statusN
+				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+					statusZD <= '0'; --statusZ
+					statusND <= '1'; --statusN
+				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+					statusZD <= '0'; --statusZ
+					statusND <= '0'; --statusN
+				END IF;
+			END IF;
 		END IF;
 	END PROCESS Maths;
 	
@@ -350,9 +390,10 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	CMUX:PROCESS (clk, reset)	
 		VARIABLE temp_reg			: std_logic_vector(15 DOWNTO 0);
 		VARIABLE Cbusi				: std_logic_vector(15 DOWNTO 0);
+		VARIABLE caddr 			: std_logic_vector(4 DOWNTO 0);
 	BEGIN
 	IF reset = '0' THEN
-	ELSIF rising_edge(clk) THEN
+	ELSIF rising_edge(clk) AND counter = 2 THEN
 			--store ALU/MM in Cbus
 		IF rd = '0' AND wr = '0' THEN
 			Cbusi := std_logic_vector(ALUout);
@@ -364,9 +405,14 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		
 		--CbusMux
 		IF wr = '0' THEN
-		
-			IF muxC = '1' AND ('0' & instr(12 DOWNTO 9)) /= "00000" AND ('0' & instr(12 DOWNTO 9)) /= "00001" THEN
-				reg(to_integer(unsigned('0' & instr(12 DOWNTO 9)))) <= Cbusi;
+				IF statusD = '0' THEN	--if debug mode is off, use regular registers
+					caddr := '0' & instr(12 DOWNTO 9);
+				ELSE							--if debug mode is on, use register + 16
+					caddr := std_logic_vector(to_unsigned((to_integer(unsigned('0' & instr(12 DOWNTO 9)))+16), 5));
+				END IF;
+			
+			IF muxC = '1' AND (caddr) /= "00000" AND (caddr) /= "00001" THEN
+				reg(to_integer(unsigned(caddr))) <= Cbusi;
 			ELSIF muxC ='0' AND micro_addrA /= "00000" AND micro_addrA /= "00001" THEN
 				reg(to_integer(unsigned(micro_addrA))) <= Cbusi;
 			END IF;
