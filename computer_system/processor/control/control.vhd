@@ -81,12 +81,12 @@ CSAI:PROCESS(reset,clk)
 	jmpA	<= micro_instr(10 DOWNTO 0);
   
 MUX:	PROCESS(reset, clk, cbl)
-		VARIABLE alternate	: std_logic := '0';
+		VARIABLE alternate	: unsigned(1 DOWNTO 0) := "00";
 	BEGIN
 	IF reset = '0' THEN
 	-- reset
 	ELSIF rising_edge(clk) THEN
-	IF alternate = '1' THEN
+	IF alternate = "11" THEN
 		CASE cbl IS
 			-- NEXT ADDR
 			WHEN "00" => address <= CSAI_inc;
@@ -116,9 +116,9 @@ MUX:	PROCESS(reset, clk, cbl)
 					END IF;
 				END IF;
 		END CASE;
-		alternate := '0';
+		alternate := "00";
 	ELSE
-		alternate := '1';
+		alternate := to_unsigned(to_integer(unsigned(alternate)) + 1, 2);
 	END IF;
 	END IF;
 	END PROCESS;

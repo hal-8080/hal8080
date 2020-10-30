@@ -22,6 +22,7 @@ ARCHITECTURE bhv OF computer_system IS
 	SIGNAL mmAdress	:	std_logic_vector(15 DOWNTO 0);
 	SIGNAL mmData		:	std_logic_vector(15 DOWNTO 0);
 	SIGNAL micro_instr: 	std_logic_vector(32 DOWNTO 0);
+	SIGNAL statusD		: 	std_logic;
 BEGIN
 
 	mm:ENTITY work.memory PORT MAP(
@@ -29,10 +30,10 @@ BEGIN
 		reset				=> reset,
 	
 		address_bus 	=> mmAdress,			-- IN
-		data_bus_in 	=> mmI,					-- IN
+		data_bus_in 	=> mmData,				-- IN
 		do_read			=> micro_instr(18),	-- IN
 		do_write			=> micro_instr(19),	-- IN
-		data_bus_out	=> mmData,				-- OUT
+		data_bus_out	=> mmI,					-- OUT
 		
 		o_seg0			=> o_seg0,				-- OUT
 		o_seg1 			=> o_seg1,				-- OUT
@@ -51,10 +52,10 @@ BEGIN
 	processor:ENTITY work.processor PORT MAP(
 		clk			=> clk,
 		reset			=> reset,
-		
-		mmI			=> mmI,				-- OUT
+		statusD		=> statusD,			-- IN
+		mmI			=> mmI,				-- IN
 		mmAdress		=> mmAdress,		-- OUT
-		mmData		=> mmData,			-- IN
+		mmData		=> mmData,			-- OUT
 		
 		micro_instr	=>	micro_instr		-- OUT
 	);

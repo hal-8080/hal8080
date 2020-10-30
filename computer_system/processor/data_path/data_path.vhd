@@ -181,7 +181,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	instrcounter:PROCESS(clk, reset)
 	BEGIN
 		IF reset = '0' THEN
-		ELSIF falling_edge(clk) THEN
+		ELSIF rising_edge(clk) THEN
 			IF counter < 3 THEN
 				counter <= counter + 1;
 			ELSE
