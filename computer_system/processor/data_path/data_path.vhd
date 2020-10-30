@@ -54,7 +54,8 @@ ARCHITECTURE bhv OF data_path IS
 	SIGNAL Abus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Bbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
 	SIGNAL Cbus		: std_logic_vector(15 DOWNTO 0) 	:= x"0000";
--- instruction counter
+	
+-- asynchornous instruction counter
 	SIGNAL counter : integer RANGE 0 TO 3 := 0;
 	
 -- MUX DECODER
@@ -180,7 +181,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	instrcounter:PROCESS(clk, reset)
 	BEGIN
 		IF reset = '0' THEN
-		ELSIF rising_edge(clk) THEN
+		ELSIF falling_edge(clk) THEN
 			IF counter < 3 THEN
 				counter <= counter + 1;
 			ELSE
