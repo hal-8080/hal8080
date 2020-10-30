@@ -1,3 +1,4 @@
+# Script for testing debug mode
 CP $r2, $r0
 START:
     ADD $r2, $r1

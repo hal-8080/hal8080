@@ -1,12 +1,24 @@
+# Testing all the alu operations
+# Assembler issues: 
+#	RET is expected to have a $Rs
+#	RAND is expected to have a $Rs
+ 
+@BUTTONSTATE@ = x"FAAA"
+@PREVBUTTONSTATE@ = x"FAAB"
+
+# $r2 = TempVal
+# $r3 = ButtonState
+# $r4 = ChangedButtons
+
 GETINPUT:    
-    LD %ButtonState, @BUTTONSTATE
-    LD %ChangedButtons, @PREVBUTTONSTATE
-    INV %ChangedButtons, %ChangedButtons
-    AND %ChangedButtons, %ButtonState
-    ST @PREVBUTTONSTATE, %ButtonState
-    SETHI %TempVal, x10
-    SETLO %TempVal, x00
-    AND %TempVal, %ChangedButtons
+    LD $r3, @BUTTONSTATE@
+    LD $r4, @PREVBUTTONSTATE@
+    INV $r4, $r4
+    AND $r4, $r3
+    ST $r3, @PREVBUTTONSTATE@
+    SETHI $r2, x"10"
+    SETLO $r2, x"00"
+    AND $r2, $r4
     BZERO @GETINPUT
     RET
 
@@ -46,11 +58,11 @@ SUB $r3, $r2    # r2 =  1111 1111  1111 1111
 DISPRHR $r3     # r3 =  0000 0000  0000 0000
 CALL @GETINPUT  # DSP=  0000 0000  0000 0000        x0000
 
-ADD $r3, 01111  # r2 =  1111 1111  1111 1111
+ADD $r3, "01111"  # r2 =  1111 1111  1111 1111
 DISPRHR $r3     # r3 =  0000 0000  0000 1111
 CALL @GETINPUT  # DSP=  0000 0000  0000 1111        x000F
 
-SETLO $r2, x00  # r2 =  1111 1111  0000 0000
+SETLO $r2, x"00"# r2 =  1111 1111  0000 0000
 DISPRHR $r2     # r3 =  0000 0000  0000 1111
 CALL @GETINPUT  # DSP=  1111 1111  0000 0000        xFF00
 
@@ -58,10 +70,10 @@ ORN $r2, $r3    # r2 =  1111 1111  1111 0000
 DISPRHR $r2     # r3 =  0000 0000  0000 1111
 CALL @GETINPUT  # DSP=  1111 1111  1111 0000        xFFF0
 
-SETHI $r2, 0000 0000 
-SETLO $r2, 0000 1111
-SETHI $r3, 0000 0001
-SETLO $r3, 0000 0001
+SETHI $r2, x"00" # 00000000 
+SETLO $r2, x"0F" # 00001111
+SETHI $r3, x"01" # 00000001
+SETLO $r3, x"01" # 00000001
 # r2 = 15  = 0000 0000  0000 1111
 # r3 = 257 = 0000 0001  0000 0001
 # r2 * r3 = 15 * 257 = 3855
@@ -76,8 +88,8 @@ DIV $r2, $r3    # r2 =  0000 0000  0000 1111
 DISPRHR $r2     # r3 =  0000 0001  0000 0001
 CALL @GETINPUT  # DSP=  0000 0000  0000 1111        x000F
 
-SETHI $r2, x00
-SETLO $r2, x05
+SETHI $r2, x"00"
+SETLO $r2, x"05"
 # r2 = 5 = 0000 0000  0000 0101
 
 POW $r2, $r2    # r2 =  0000 1100  0011 0101
@@ -88,12 +100,4 @@ RANDOM:
     RAND $r2
     DISPRHR $r2 #                                   x<RANDOM>
     CALL @GETINPUT
-    BA @RANDOM
-
-
-
-
-
-
-
-
+    BA @RANDOM, $r0
