@@ -49,11 +49,17 @@ CLB:PROCESS(reset,clk)
       CASE COND IS
 		-- Next addr
 			WHEN "000" =>	cbl <= "00";
-		-- Jump if n
+		-- Jump if Z
+			WHEN "010" =>	IF psr(0) = '1' THEN
+								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+		-- Jump if N
 			WHEN "001" =>	IF psr(1) = '1' THEN
 								cbl <= "01";    ELSE		cbl <= "00"; END IF;
-		-- Jump if z
-			WHEN "010" =>	IF psr(0) = '1' THEN
+		-- Jump if ZD
+			WHEN "101" =>	IF psr(2) = '1' THEN
+								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+		-- Jump if ND
+			WHEN "100" =>	IF psr(3) = '1' THEN
 								cbl <= "01";    ELSE		cbl <= "00"; END IF;
 		-- jump always
 			WHEN "011" =>	cbl <= "01";
