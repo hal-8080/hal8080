@@ -1,0 +1,243 @@
+# Rad racer program
+
+# $r0 = %r0
+# $r1 = %r1 
+# $r2 = 
+# $r3 = TempVal3
+# $r4 = TempVal2
+# $r5 = Tempval1
+# $r6 = ButtonState
+# $r7 = Timer 
+# $r8 = maxTimer 
+# $r9 = score
+# $rA = ASSEMBLER RESERVED
+# $rB = playerState
+# $rC = dispL
+# $rD = dispM
+# $rE = dispR
+# $rF = Comb
+
+@TIMER0@ = x"AAAA" 
+@TIMER1@ = x"AAAA"
+@BUTTONSTATE@ = x"AAAA"
+@DISPLEFT@ = x"AAAA"
+@DISPMIDDLE@ = x"AAAA"
+@DISPRIGHT@ = x"AAAA"
+
+
+INIT:
+		# Set segments to empty
+		# Top half is left segment, bottom half is right segment
+	SETHI %dispL, "11111111"
+	SETLO %dispL, "11111111"
+	SETHI %dispM, "11111111"
+	SETLO %dispM, "11111111"
+	SETHI %dispR, "11111111"
+	SETLO %dispR, "11111111"
+	
+	SETHI %playerState, "00000001" 
+	SETLO %playerState, "00000000"
+	
+		# Create superposition of player and first display
+	INV %TempVal1, %dispL
+	OR %TempVal1, %playerState
+	INV %Comb, %TempVal1
+	
+	ST %Comb, @DISPLEFT@
+	ST %dispM, @DISPMIDDLE@
+	ST %dispR, @DISPRIGHT@
+
+	SETHI %score, x"00"
+	SETLO %score, x"00"
+	
+	SETHI %maxTimer, "00000011" # Start at 1000 ms per move
+	SETLO %maxTimer, "11101000"
+	
+	ST %r1, @TIMER0@
+	LD %Timer, @TIMER1@
+
+
+
+LOOP:
+	CALL @UPDATEPLAYER
+	CALL @UPDATEFIRSTDISPLAY
+	CALL @COLLISION
+	CALL @UPDATEDISPLAYS
+	CALL @WRITEDISPLAYS
+	BA @LOOP
+	
+
+
+UPDATEPLAYER:
+	LD %ButtonState, @BUTTONSTATE@
+# checkUP:
+	SETLO %TempVal1, x"00"
+	SETHI %TempVal1, x"10"
+	AND %TempVal1, %ButtonState
+	BZERO @checkDOWN
+	
+	SETHI %playerState, "01000000"	# Player state = up
+	SETLO %playerState, x"00"
+	RET
+	
+checkDOWN:
+	SETHI %TempVal1, x"20"
+	SETLO %TempVal1, x"00"
+	AND %TempVal1, %ButtonState
+	BZERO @setMIDDLE
+	
+	SETHI %playerState, "0001000" 	# Player state = down
+	SETLO %playerState, x"00"
+	RET
+
+setMIDDLE:
+	SETHI %playerState, x"01"
+	SETLO %playerState, x"00"
+	RET
+
+
+
+UPDATEFIRSTDISPLAY:
+		# Create superposition of player and first display
+	INV %TempVal1, %dispL
+	OR %TempVal1, %playerState
+	INV %Comb, %TempVal1
+	ST %Comb, @DISPLEFT@
+	RET
+
+
+
+COLLISION:
+	INV %TempVal1, %dispL
+	AND %TempVal1, %playerState
+	BZERO @RETFLAG
+	CALL @DEAD
+
+
+
+UPDATEDISPLAYS:
+	LD %Timer, @TIMER1@
+	CP %TempVal1, %maxTimer
+	SUB %TempVal1, %Timer
+	BNEG @MOVEDISPLAYS
+	RET
+
+MOVEDISPLAYS:
+	ST %r0, @TIMER0@
+	SUB %maxTimer, 10
+	ADD %score, %r1
+
+		# seg5 = seg4
+	SHIFTL %dispL, 8
+		# seg4 = seg3
+	CP %TempVal1, %dispM
+	SHIFTR %TempVal1, 8
+	SETHI %TempVal1, x"00"
+	OR %dispL, %TempVal1
+		# seg3 = seg2
+	SHIFTL %dispM, 8
+		# seg2 = seg1 
+	CP %TempVal1, %dispR
+	SHIFTR %TempVal1, 8
+	SETHI %TempVal1, x"00"
+	OR %dispM, %TempVal1
+		# seg1 = seg0 
+	SHIFTL %dispR, 8
+
+	ST %r1, @TIMER0@  		# Start the timer
+	
+		# if seg3 == EMPTY
+		# 	seg0 = EMPTY
+	CP %TempVal1, %dispM
+	INV %TempVal1
+	SHIFTR %TempVal1, 7
+	SETHI %TempVal1, x"00"
+	SHIFTL %TempVal1, 7
+	OR %TempVal1, %r0 
+	BZERO @addNothing
+
+		# if seg2 == EMPTY
+		# 	seg0 = seg1
+	CP %TempVal1, %dispM
+	INV %TempVal1
+	SHIFTL %TempVal1, 1
+	SETHI %TempVal1, x"00"
+	SHIFTR %TempVal1, 1
+	OR %TempVal1, %r0 
+	BZERO @addPrevious
+
+		# else
+		# 	seg0 = RAND VAL
+	BZERO @addRandom
+
+addNothing:
+	SETLO %dispR, "01111111"
+	RET
+
+addPrevious:
+	CP %TempVal1, %dispR
+	SHIFTR %TempVal1, 8
+	SETLO %dispR, x"00"
+	SETHI %TempVal1, x"00"
+	OR %dispR, %TempVal1
+	RET
+
+addRandom:
+	RAND %TempVal1
+	SETHI %TempVal2, x"00"
+	SETLO %TempVal2, "01001001"
+	AND %TempVal1, %TempVal2		# Check if not all 3 positions are 0
+	BZERO @addRandom
+	CP %TempVal2, %TempVal1
+	SETHI %TempVal3, x"00"
+	SETLO %TempVal3, "01001001"
+	SUB %TempVal2, %TempVal3	# Check if not all 3 positions are 1
+	BZERO @addRandom
+
+	SHIFTL %TempVal1, 1
+	SETHI %TempVal1, x"FF"
+	SHIFTL %TempVal1, 1
+	SETHI %TempVal1, x"00"
+	INV %TempVal1, %TempVal1
+	SETLO %dispR, x"00"
+	OR %dispR, %TempVal1
+	RET
+
+
+
+WRITEDISPLAYS:
+	INV %TempVal1, %dispL
+	OR %TempVal1, %playerState
+	INV %Comb, %TempVal1
+	
+	ST %Comb, @DISPLEFT@
+	ST %dispM, @DISPMIDDLE@
+	ST %dispR, @DISPRIGHT@
+
+
+
+DEAD:
+	# set timer0 = 0
+	# write score to display
+	# check for user input
+	# if both buttons pressed, jump INIT
+
+	ST %r0, @TIMER0@
+	DISPRHR %score
+
+	LD %ButtonState, @BUTTONSTATE@
+	SETHI %TempVal1, x"20"
+	SETLO %TempVal1, x"00"
+	AND %TempVal1, %ButtonState
+	BZERO @DEAD
+	SETHI %TempVal1, x"10"
+	SETLO %TempVal1, x"00"
+	AND %TempVal1, %ButtonState
+	BZERO @DEAD
+
+	BA @INIT
+
+
+
+RETFLAG: 	# For conditional RETS
+	RET
