@@ -6,7 +6,8 @@ ENTITY processor IS
 		reset			: IN 	std_logic;
 		mmI			: IN 	std_logic_vector(15 DOWNTO 0);
 		mmAdress		: OUT std_logic_vector(15 DOWNTO 0);
-		mmData		: OUT std_logic_vector(15 DOWNTO 0)
+		mmData		: OUT std_logic_vector(15 DOWNTO 0);
+		micro_instr	: OUT std_logic_vector(32 DOWNTO 0)
 	);
 END ENTITY processor;
 ARCHITECTURE bhv OF processor IS
@@ -16,7 +17,7 @@ ARCHITECTURE bhv OF processor IS
 	SIGNAL ir			: std_logic_vector(15 DOWNTO 0);
 BEGIN
 
-	cs:ENTITY work.control_section PORT MAP(
+	cs:ENTITY work.control PORT MAP(
 		clk => clk,	--IN
 		reset => reset, --IN
 		ir => ir,	--IN
