@@ -1,5 +1,5 @@
 --             HAL8080 Processor           --
--- Dennis, Kasper, Tjeerd, Nick, Oussama 2020
+-- Kasper, Dennis, Tjeerd, Nick, Oussama 2020
 --                memory
 -- This file describes the hardware end-point
 -- for the memory. This system is also in charge

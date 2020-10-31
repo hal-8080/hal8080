@@ -1,5 +1,5 @@
 --             HAL8080 Processor           --
--- Dennis, Kasper, Tjeerd, Nick, Oussama 2020
+-- Kasper, Dennis, Tjeerd, Nick, Oussama 2020
 --         Main entity discription.
 -- This file should just be used to map ports
 -- to specific subparts of the processor.
@@ -15,16 +15,15 @@ ENTITY hal8080 IS
         seg0, seg1 : OUT std_logic_vector(6 DOWNTO 0); -- first segment display pair
         seg2, seg3 : OUT std_logic_vector(6 DOWNTO 0); -- second segment display piar
         seg4, seg5 : OUT std_logic_vector(6 DOWNTO 0); -- third segment display piar
-        leds : OUT std_logic_vector(9 DOWNTO 0); -- leds
+        leds       : OUT std_logic_vector(9 DOWNTO 0); -- leds
         -- INPUT
         switches : IN std_logic_vector(9 DOWNTO 0); -- user switches
-        buttons : IN std_logic_vector(3 DOWNTO 0) -- user buttons
+        buttons : IN std_logic_vector(3 DOWNTO 0)   -- user buttons
     );
 END ENTITY hal8080;
 
 ARCHITECTURE structure OF hal8080 IS
     -- INTERNALS
-    CONSTANT norst : std_logic := '1'; -- Timer 0 (clock) keeps running after reset.
     SIGNAL   reset : std_logic := '1';
     -- MEMORY CONTROLL
     SIGNAL address_bus       : std_logic_vector(15 DOWNTO 0) := x"0000";
@@ -44,15 +43,16 @@ BEGIN
 
     -- setup, used to burn the main memory and setup.
     -- Currently used to test the setup.
-    setup: ENTITY work.setup PORT MAP(
-        clk => clk,
-        reset => reset,
-        address_bus => address_bus,
-        data_bus_out => data_bus_to_mem,
-        data_bus_in => data_bus_from_mem,
-        do_write => do_write,
-        do_read => do_read
-    );
+    -- TODO REFACTOR / REMOVE
+    -- setup: ENTITY work.setup PORT MAP(
+    --     clk => clk,
+    --     reset => reset,
+    --     address_bus => address_bus,
+    --     data_bus_out => data_bus_to_mem,
+    --     data_bus_in => data_bus_from_mem,
+    --     do_write => do_write,
+    --     do_read => do_read
+    -- );
     -- memory, the main memory and mapped IO.
     memory:ENTITY work.memory PORT MAP(
         -- INTERNALS
@@ -79,15 +79,13 @@ BEGIN
     );
     -- timer0, the millis clock.
     timer0:ENTITY work.timer PORT MAP(
-        -- INTERNALS
         clk => clk,
-        reset => norst,
+        reset => reset,
         activate => a_timer0,
         output => o_timer0
     );
     -- timer1
     timer1:ENTITY work.timer PORT MAP(
-        -- INTERNALS
         clk => clk,
         reset => reset,
         activate => a_timer1,
@@ -95,7 +93,6 @@ BEGIN
     );
     -- timer2
     timer2:ENTITY work.timer PORT MAP(
-        -- INTERNALS
         clk => clk,
         reset => reset,
         activate => a_timer2,
@@ -103,7 +100,16 @@ BEGIN
     );
     -- processor, the alu and stuff inside the processor.
     processor: ENTITY work.processor PORT MAP(
-        clk => clk
+        -- INTERNALS
+        clk => clk,
+        reset => reset,
+        -- CONTROLL
+        address_bus  => address_bus,
+        data_bus_out => data_bus_to_mem,
+        do_read      => do_read,
+        do_write     => do_write,
+        data_bus_in  => data_bus_from_mem,
+        in_debug     => in_debug
     );
 
     -- Async reset when all buttons are pressed at once.
