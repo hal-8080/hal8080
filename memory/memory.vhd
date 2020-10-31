@@ -39,10 +39,10 @@ ENTITY memory IS
         o_seg4, o_seg5 : OUT std_logic_vector(6 DOWNTO 0); -- third segment display piar
         o_leds         : OUT std_logic_vector(9 DOWNTO 0); -- leds
         o_timer1       : OUT std_logic; -- Activation of timer 1
-        o_timer2       : OUT std_logic: -- Activation of timer 2
+        o_timer2       : OUT std_logic; -- Activation of timer 2
+        i_timer0       :  IN std_logic_vector(15 DOWNTO 0); -- Data of timer 0 (millis clock)
         i_timer1       :  IN std_logic_vector(15 DOWNTO 0); -- Data of timer 1
         i_timer2       :  IN std_logic_vector(15 DOWNTO 0); -- Data of timer 2
-        i_millis       :  IN std_logic_vector(15 DOWNTO 0); -- Data of timer 0 (millis clock)
         i_switches     :  IN std_logic_vector(9 DOWNTO 0); -- user switches
         i_buttons      :  IN std_logic_vector(3 DOWNTO 0)  -- user buttons
     );
@@ -76,7 +76,7 @@ ARCHITECTURE bhv OF memory IS
 BEGIN
 
     -- Synchronous write.
-    PROCESS(clk, i_switches, i_buttons)
+    PROCESS(clk)
         VARIABLE address : natural;
     BEGIN
         IF rising_edge(clk) THEN
@@ -90,6 +90,8 @@ BEGIN
             mmio(start_switches+1) <= "000000" & i_switches(9 DOWNTO 8);
             mmio(start_switches) <= i_switches(7 DOWNTO 0);
             mmio(start_buttons) <= x"0" & (NOT i_buttons);
+            mmio(start_millis+1) <= i_timer0(15 DOWNTO 8);
+            mmio(start_millis)   <= i_timer0(7 DOWNTO 0);
             mmio(start_timer1+3) <= i_timer1(15 DOWNTO 8);
             mmio(start_timer1+2) <= i_timer1(7 DOWNTO 0);
             mmio(start_timer2+3) <= i_timer2(15 DOWNTO 8);

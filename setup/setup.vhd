@@ -44,6 +44,7 @@ BEGIN
             -- Read lever data from memory
             ELSIF check_lever >= 499 THEN
                 -- Store lever data in flipflop. Should we count?
+                check_lever <= 0;
                 do_cnt <= data_bus_in(0);
             END IF;
             -- If lever is on, keep counting.
