@@ -21,9 +21,23 @@
 //                 PREVARS                  \\
 //==========================================\\
 
+// Load usefull addresses in for every user.
 let preVars = [
-    ["@_LAST_@", constToNum('x"FFFF"')],
-    ["@_MEEP_@", 55]
+    ["@_BIOS_@",         0],
+    ["@_RAM_@",       8192],
+    ["@_DISPLAY_@",  57344],
+    ["@_SEG01_@",    57344],
+    ["@_SEG23_@",    57346],
+    ["@_SEG45_@",    57348],
+    ["@_LEDS_@",     57350],
+    ["@_SWITCHES_@", 57352],
+    ["@_BUTTONS_@",  57354],
+    ["@_MILLIS_@",   57356],
+    ["@_DEBUG_@",    57358],
+    ["@_ATIMER1_@",  57360],
+    ["@_TIMER1_@",   57362],
+    ["@_ATIMER2_@",  57364],
+    ["@_TIMER2_@",   57366]
 ]
 
 //==========================================\\
@@ -123,8 +137,9 @@ const regexPreamble = /(#(?:.|\n#)*)/m;
 const regexEmptyOrComment = /^\s*(?:#.*)?\s*/g;
 const regexComment = /#.*/g;
 const regexAddress = /(?<address>@(?<aLabel>\w+)(?<aVar>@)?(?<aHiLo>[<>])?)/g;
-const regexConstant = /(?<hex>x"(?<hexval>[0-9A-F]*)")|(?<bin>"(?<binval>[01]*)")|(?<dec>\d*)/;
-const masterRegex = /^(?<label>(?<lLabel>\w+):)?\s*(?<instruction>[A-Z]*)?\s*(?<Rd>\$(?<RdN>\w+))?\s*,?\s*(?<Rs>\$(?<RsN>\w+))?(?<address>@(?<aLabel>\w+)(?<aVar>@)?(?<aHiLo>[<>])?)?\s*(?<cAssign>=)?\s*(?<C>\d+|"(?:[01]{1,5}|[01]{8}|[01]{16})"|x"(?:[0-9A-F]{1,2}|[0-9A-F]{4})")?/
+const regexConstant = /(?<hex>x"(?<hexval>[0-9A-F]+)")|(?<bin>"(?<binval>[01]+)")|(?<dec>\d+)/;
+const regex2Constant = /(?<C1>(?:x"(?:[0-9A-F]+)")|(?:"(?:[01]+)")|(?:\d+))\s*,?\s*(?<C2>(?:x"(?:[0-9A-F]+)")|(?:"(?:[01]+)")|(?:\d+))?/;
+const masterRegex = /^(?<label>(?<lLabel>\w+):)?\s*(?<instruction>[A-Z]*)?\s*(?<Rd>\$(?<RdN>\w+))?\s*,?\s*(?<Rs>\$(?<RsN>\w+))?(?<address>@(?<aLabel>\w+)(?<aVar>@)?(?<aHiLo>[<>])?)?\s*(?<cAssign>=)?\s*(?<C>\d+|"(?:[01]{1,5}|[01]{8}|[01]{16})"|x"(?:[0-9A-F]{1,2}|[0-9A-F]{4})")?/;
 
 /***
  * Converts assemblyhal constant type to a number.
@@ -187,9 +202,10 @@ function sleep(ms) {
  * @param {string} input - The assembly code to assemble. As filestring.
  * @param {number} startAddress - Startaddress to go from (decimal)
  * @param {function} percentDone - Function to call with percentage done.
+ * @param {function} warning - Function to call with warnings.
  * @return {string} - The assembled program in form of hex address -> value.
  */
-async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
+async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning = ()=>{}) {
     // Get the input and start progress.
     console.log('Assembler started!');
     percentDone(1);
@@ -197,7 +213,8 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
     console.log('Step 1: load the preamble and get rid of other comments.');
     // This allows us to inject some instructions more easily.
     let preamble = input.match(regexPreamble);
-    if (preamble.length > 0) preamble = preamble[0];
+    if (preamble && preamble.length > 0) preamble = preamble[0];
+    if (!preamble) preamble = "# User Program";
     console.log('Preamble: \n' + preamble);
     // input = input.replace(regexEmptyOrComment, ''); // Cut line comments and empty lines
     input = input.replace(regexComment, ''); // Cut remaining comments
@@ -224,6 +241,32 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
                 lines[i] = `${l.label || ''} SETHI $rA, ${l.address}> && SETLO $rA, ${l.address}< && ${l.instruction}${(l.Rd ? ` ${l.Rd},` : '')} $rA`;
                 iCnt += 2; // We will add 2 extra instructions.
             }
+            // On display constant instructions we have 2 constants. We cannot have that next run :P
+            // Solution: Comebine them into 1 10 bit constant.
+            if (l.instruction === "DISPCL" || l.instruction === "DISPCM" || l.instruction === "DISPCR") {
+                if (!l.C) throw {
+                    title: "Pre-Parse Error", 
+                    message: `Parse Error on line <b>${i+1}</b> (${l.instruction}). Missing display constant!`
+                };
+                let C12 = regex2Constant.exec(lines[i]).groups;
+                warning( {message: lines[i]});
+                if (!C12.C2) throw {
+                    title: "Pre-Parse Error", 
+                    message: `Parse Error on line <b>${i+1}</b> (${l.instruction}). Missing second display constant!`
+                };
+                let c1 = constToNum(C12.C1, i+1);
+                if (c1 < -16 || c1 > 31) throw {
+                    title: "Constant Error", 
+                    message: `Constant Error on line <b>${i+1}</b> (${l.instruction}). Out of range constant (1): ${l.C} only -16 to 31 is allowed! Try checking your display constants.`
+                };
+                let c2 = constToNum(C12.C2, i+1);
+                if (c2 < -16 || c2 > 31) throw {
+                    title: "Constant Error", 
+                    message: `Constant Error on line <b>${i+1}</b> (${l.instruction}). Out of range constant (2): ${l.C} only -16 to 31 is allowed! Try checking your display constants.`
+                };
+                let correctedC = `${(c1 & 31) << 5 | (c2 & 31)}`;
+                lines[i] = `${l.label || ''} ${l.instruction} ${correctedC}`;
+            }
             iCnt++; // Raise instruction counter.
         }
         percentDone((25/lines.length) * i);
@@ -240,7 +283,8 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
     for (let i = 0; i < lines.length; i++) {
         let l = matches[i];
         // Replace all constants with decimals (makes stuff easier next run)
-        if (l.C) {
+        // Not replace on display because we already did that :P
+        if (l.C && !instDisp[l.instruction]) {
             let num = constToNum(l.C, i+1);
             lines[i] = `${l.label || ''} ${l.instruction || ''} ${(l.Rd ? ` ${l.Rd},` : '')} ${num}`;
             if (l.cAssign) lines[i] = ''; // Remove assignments. No longer useful.
@@ -273,7 +317,7 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
             let l = masterRegex.exec(sublines[j]).groups;
             // Only encode if there is instruction :P
             if (l.instruction) {
-                dataComment.push(` # ${l.instruction}${l.Rd ? ` ${l.Rd},` : ''} ${l.Rs || ''}${l.C != undefined ? l.C : ''}`);
+                dataComment.push(` # ${l.instruction}${l.Rd ? ` ${l.Rd},` : ''} ${l.Rs || ''}${l.C != undefined ? `x"${parseInt(l.C).toString(16)}"` : ''}`);
                 // Perform checks to find instruction type.
                 let nameData = null;
                 // PUT
@@ -308,6 +352,10 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
                         };
                         data.push(`000${registers[l.RdN]}${nameData}${numToBin(l.C, 5)}`); continue;
                     } else {
+                        // Only for random we can have neither.
+                        if (l.instruction === "RAND") {
+                            data.push(`000${registers[l.RdN]}${nameData}00000`); continue;
+                        }
                         throw {
                             title: "Syntax Error", 
                             message: `Arithmatic operation on line <b>${i+1}</b> (${l.instruction}). Expects a register or constant!`
@@ -354,11 +402,12 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
                 nameData = instBranch[l.instruction];
                 if (nameData) {
                     // In this case we only have $Rs but regex only sees the $Rd so ¯\_(ツ)_/¯
-                    if (!l.Rd) throw {
+                    if (!l.Rd && l.instruction !== "RET") throw {
                         title: "Parse Error", 
                         message: `Parse Error on line <b>${i+1}</b> (${l.instruction}). Missing $Rs register!`
                     };
-                    data.push(`1100000${nameData}0${registers[l.RdN]}`); continue;
+                    let rdn = l.instruction == "RET" ? 'r0': l.RdN;
+                    data.push(`1100000${nameData}0${registers[rdn]}`); continue;
                 }
                 // SET
                 nameData = instSet[l.instruction];
@@ -391,9 +440,11 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}) {
     console.dir(data);
     console.log("Comments:");
     console.dir(dataComment);
-    await sleep(200 + Math.random()*300); // Dont judge. This makes the program feel more natural.
+    await sleep(200 + Math.random() * 300); // Dont judge. This makes the program feel more natural.
     console.log("Step 5: fourth pass. Split, convert to hex and add address + comments.");
     let memory = preamble.split('\n'); let address = startAddress;
+    memory.push(`# Compiled on ${new Date().toUTCString()} by Hal8080 Assembler [k]`);
+    memory.push("======="); // Split the preamble from the binary.
     for (let i = 0; i < data.length; i++) {
         let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
         let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 2
