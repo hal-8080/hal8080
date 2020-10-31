@@ -18,7 +18,7 @@ PACKAGE BODY ram IS
 
     IMPURE FUNCTION get_ram_bin RETURN memory_table IS
     BEGIN
-        RETURN fill_memory_table("ram.bin", start_ram, start_display-1);
+        RETURN fill_memory_table(ram_file, start_ram, start_display-1);
     END get_ram_bin;
 
 END PACKAGE BODY ram;

@@ -14,8 +14,8 @@ PACKAGE memory_utils IS
     CONSTANT mem_width      : natural :=  8; -- Memory width: 8 bits.
     CONSTANT adr_width      : natural := 16; -- Address width: 16 bits.
     -- INITIAL VALUES     
-    CONSTANT bios_file      : string := "bios.bin"; -- Bin file to populate BIOS rom (Address 0-8191)
-    CONSTANT ram_file       : string := "ram.bin"; -- Bin file to populate user RAM (Address 8192-57343)
+    CONSTANT bios_file      : string := "bios.heks"; -- Heks file to populate BIOS rom (Address 0-8191)
+    CONSTANT ram_file       : string := "ram.heks"; -- Heks file to populate user RAM (Address 8192-57343)
     -- MMIO ADDRESSES
     CONSTANT start_bios     : natural :=     0;
     CONSTANT start_ram      : natural :=  8192;
@@ -25,8 +25,10 @@ PACKAGE memory_utils IS
     CONSTANT start_buttons  : natural := 57354;
     CONSTANT start_millis   : natural := 57356;
     CONSTANT start_debug    : natural := 57358;
+    CONSTANT start_timer1   : natural := 57360;
+    CONSTANT start_timer2   : natural := 57364;
     -- SIZES
-    CONSTANT size_total     : natural := 57360;
+    CONSTANT size_total     : natural := 57368;
 
     -- mbyte consists of size bits
     SUBTYPE mbyte IS std_logic_vector(mem_width-1 DOWNTO 0);
