@@ -8,7 +8,7 @@ ENTITY control IS
 		ir				: IN	std_logic_vector(15 DOWNTO 0);
 	-- PSR
 		statusN, statusZ	: IN std_logic;
-
+		statusND, statusZD	: IN std_logic;
 	-- CONTROL STORE
 		micro_instr	: IN 	std_logic_vector(32 DOWNTO 0);
 		address2cs	: OUT	std_logic_vector(10 DOWNTO 0)		-- 11 bit from CS address MUX
@@ -29,13 +29,16 @@ ARCHITECTURE bhv OF control IS
 	SIGNAL OPLS		: std_logic := ir(8);				-- load store bit mem format
 	SIGNAL OPi		: std_logic := ir(13);				-- i bit for branch set formats
 -- PROGRAM STATUS REGISTER
-	SIGNAL psr		: std_logic_vector(1 DOWNTO 0)	:= "00";-- psr(1):N and psr(0):z
+	SIGNAL psr		: std_logic_vector(3 DOWNTO 0)	:= "0000";-- psr(3):ND and psr(2):zD psr(1):N and psr(0):z
 -- CONTROL BRANCH LOGIC
 	SIGNAL COND		: std_logic_vector(2 DOWNTO 0)	:= micro_instr(13 DOWNTO 11);
 BEGIN
 
+	psr(3)	<= statusND;
+	psr(2)	<= statusZD;
 	psr(1)	<= statusN;
 	psr(0)	<= statusZ;
+	
 	COND	<= micro_instr(13 DOWNTO 11);
 
 CLB:PROCESS(reset,clk)
@@ -46,11 +49,17 @@ CLB:PROCESS(reset,clk)
       CASE COND IS
 		-- Next addr
 			WHEN "000" =>	cbl <= "00";
-		-- Jump if n
+		-- Jump if Z
+			WHEN "010" =>	IF psr(0) = '1' THEN
+								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+		-- Jump if N
 			WHEN "001" =>	IF psr(1) = '1' THEN
 								cbl <= "01";    ELSE		cbl <= "00"; END IF;
-		-- Jump if z
-			WHEN "010" =>	IF psr(0) = '1' THEN
+		-- Jump if ZD
+			WHEN "101" =>	IF psr(2) = '1' THEN
+								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+		-- Jump if ND
+			WHEN "100" =>	IF psr(3) = '1' THEN
 								cbl <= "01";    ELSE		cbl <= "00"; END IF;
 		-- jump always
 			WHEN "011" =>	cbl <= "01";
@@ -78,12 +87,12 @@ CSAI:PROCESS(reset,clk)
 	jmpA	<= micro_instr(10 DOWNTO 0);
   
 MUX:	PROCESS(reset, clk, cbl)
-		VARIABLE alternate	: std_logic := '0';
+		VARIABLE alternate	: unsigned(1 DOWNTO 0) := "00";
 	BEGIN
 	IF reset = '0' THEN
 	-- reset
 	ELSIF rising_edge(clk) THEN
-	IF alternate = '1' THEN
+	IF alternate = "11" THEN
 		CASE cbl IS
 			-- NEXT ADDR
 			WHEN "00" => address <= CSAI_inc;
@@ -113,9 +122,9 @@ MUX:	PROCESS(reset, clk, cbl)
 					END IF;
 				END IF;
 		END CASE;
-		alternate := '0';
+		alternate := "00";
 	ELSE
-		alternate := '1';
+		alternate := to_unsigned(to_integer(unsigned(alternate)) + 1, 2);
 	END IF;
 	END IF;
 	END PROCESS;

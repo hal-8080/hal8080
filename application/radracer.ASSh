@@ -1,33 +1,60 @@
+# Rad racer program
+
+# $r0 = $r0
+# $r1 = $r1 
+# $r2 = 
+# $r3 = TempVal3
+# $r4 = TempVal2
+# $r5 = Tempval1
+# $r6 = ButtonState
+# $r7 = Timer 
+# $r8 = maxTimer 
+# $r9 = score
+# $rA = ASSEMBLER RESERVED
+# $rB = playerState
+# $rC = dispL
+# $rD = dispM
+# $rE = dispR
+# $rF = Comb
+
+@TIMER0@ = x"AAAA" 
+@TIMER1@ = x"AAAA"
+@BUTTONSTATE@ = x"AAAA"
+@DISPLEFT@ = x"AAAA"
+@DISPMIDDLE@ = x"AAAA"
+@DISPRIGHT@ = x"AAAA"
+
+
 INIT:
 		# Set segments to empty
 		# Top half is left segment, bottom half is right segment
-	SETHI %dispL, 11111111
-	SETLO %dispL, 11111111
-	SETHI %dispM, 11111111
-	SETLO %dispM, 11111111
-	SETHI %dispR, 11111111
-	SETLO %dispR, 11111111
+	SETHI $rC, "11111111"
+	SETLO $rC, "11111111"
+	SETHI $rD, "11111111"
+	SETLO $rD, "11111111"
+	SETHI $rE, "11111111"
+	SETLO $rE, "11111111"
 	
-	SETHI %playerState, 00000001 
-	SETLO %playerState, 00000000
+	SETHI $rB, "00000001" 
+	SETLO $rB, "00000000"
 	
 		# Create superposition of player and first display
-	INV %TempVal1, %dispL
-	OR %TempVal1, %playerState
-	INV %Comb, %TempVal1
+	INV $r5, $rC
+	OR $r5, $rB
+	INV $rF, $r5
 	
-	ST @DISPLEFT, %Comb
-	ST @DISPMIDDLE, %dispM
-	ST @DISPRIGHT, %dispR
+	ST $rF, @DISPLEFT@
+	ST $rD, @DISPMIDDLE@
+	ST $rE, @DISPRIGHT@
 
-	SETHI %score, x00
-	SETLO %score, x00
+	SETHI $r9, x"00"
+	SETLO $r9, x"00"
 	
-	SETHI %maxTimer, 00000011 # Start at 1000 ms per move
-	SETLO %maxTimer, 11101000
+	SETHI $r8, "00000011" # Start at 1000 ms per move
+	SETLO $r8, "11101000"
 	
-	ST @TIMER0, %r1
-	LD %Timer, @TIMER1
+	ST $r1, @TIMER0@
+	LD $r7, @TIMER1@
 
 
 
@@ -42,101 +69,99 @@ LOOP:
 
 
 UPDATEPLAYER:
-	LD %buttonState, @BUTTONSTATE
+	LD $r6, @BUTTONSTATE@
 # checkUP:
-	SETLO %TempVal1, x00
-	SETHI %TempVal1, x10
-	AND %TempVal1, %buttonState
+	SETLO $r5, x"00"
+	SETHI $r5, x"10"
+	AND $r5, $r6
 	BZERO @checkDOWN
 	
-	SETHI %playerState, 01000000	# Player state = up
-	SETLO %playerState, x00
-	RET
+	SETHI $rB, "01000000"	# Player state = up
+	SETLO $rB, x"00"
+	RET $r0
 	
 checkDOWN:
-	SETHI %TempVal1, x20
-	SETLO %TempVal1, x00
-	AND %TempVal1, %buttonState
+	SETHI $r5, x"20"
+	SETLO $r5, x"00"
+	AND $r5, $r6
 	BZERO @setMIDDLE
 	
-	SETHI %playerState, 0001000 	# Player state = down
-	SETLO %playerState, x00
-	RET
+	SETHI $rB, "00001000"	# Player state = down
+	SETLO $rB, x"00"
+	RET $r0
 
 setMIDDLE:
-	SETHI %playerState, x01
-	SETLO %playerState, x00
-	RET
+	SETHI $rB, x"01"
+	SETLO $rB, x"00"
+	RET $r0
 
 
 
 UPDATEFIRSTDISPLAY:
 		# Create superposition of player and first display
-	INV %TempVal1, %dispL
-	OR %TempVal1, %playerState
-	INV %Comb, %TempVal1
-	ST @DISPLEFT, %Comb
-	RET
+	INV $r5, $rC
+	OR $r5, $rB
+	INV $rF, $r5
+	ST $rF, @DISPLEFT@
+	RET $r0
 
 
 
 COLLISION:
-	INV %TempVal1, %dispL
-	AND %TempVal1, %playerState
+	INV $r5, $rC
+	AND $r5, $rB
 	BZERO @RETFLAG
 	CALL @DEAD
 
 
 
 UPDATEDISPLAYS:
-	LD %Timer, @TIMER1
-	CP %TempVal1, %maxTimer
-	SUB %TempVal1, %Timer
+	LD $r7, @TIMER1@
+	CP $r5, $r8
+	SUB $r5, $r7
 	BNEG @MOVEDISPLAYS
-	RET
+	RET $r0
 
 MOVEDISPLAYS:
-	ST @TIMER0, %r0
-	SUB %maxTimer, 10
-	ADD %score, %r1
+	ST $r0, @TIMER0@
+	SUB $r8, 10
+	ADD $r9, $r1
 
 		# seg5 = seg4
-	SHIFTL %dispL, 8
+	SHIFTL $rC, 8
 		# seg4 = seg3
-	CP %TempVal1, %dispM
-	SHIFTR %TempVal1, 8
-	SETHI %TempVal1, x00
-	OR %dispL, %TempVal1
+	CP $r5, $rD
+	SHIFTR $r5, 8
+	SETHI $r5, x"00"
+	OR $rC, $r5
 		# seg3 = seg2
-	SHIFTL %dispM, 8
+	SHIFTL $rD, 8
 		# seg2 = seg1 
-	CP %TempVal1, %dispR
-	SHIFTR %TempVal1, 8
-	SETHI %TempVal1, x00
-	OR %dispM, %TempVal1
+	CP $r5, $rE
+	SHIFTR $r5, 8
+	SETHI $r5, x"00"
+	OR $rD, $r5
 		# seg1 = seg0 
-	SHIFTL %dispR, 8
+	SHIFTL $rE, 8
 
-	ST @TIMER0, %r1 		# Start the timer
+	ST $r1, @TIMER0@  		# Start the timer
 	
 		# if seg3 == EMPTY
 		# 	seg0 = EMPTY
-	CP %TempVal1, %dispM
-	INV %TempVal1
-	SHIFTR %TempVal1, 7
-	SETHI %TempVal1, x00
-	SHIFTL %TempVal1, 7
-	OR %TempVal1, %r0 
+	INV $r5, $rD
+	SHIFTR $r5, 7
+	SETHI $r5, x"00"
+	SHIFTL $r5, 7
+	OR $r5, $r0 
 	BZERO @addNothing
 
 		# if seg2 == EMPTY
 		# 	seg0 = seg1
-	CP %TempVal1, %dispM
-	INV %TempVal1
-	SHIFTL %TempVal1, 1
-	SETHI %TempVal1, x00
-	SHIFTR %TempVal1, 1
-	OR %TempVal1, %r0 
+	INV $r5, $rD
+	SHIFTL $r5, 1
+	SETHI $r5, x"00"
+	SHIFTR $r5, 1
+	OR $r5, $r0 
 	BZERO @addPrevious
 
 		# else
@@ -144,48 +169,48 @@ MOVEDISPLAYS:
 	BZERO @addRandom
 
 addNothing:
-	SETLO %dispR, 0111 1111
-	RET
+	SETLO $rE, "01111111"
+	RET $r0
 
 addPrevious:
-	CP %TempVal1, %dispR
-	SHIFTR %TempVal1, 8
-	SETLO %dispR, x00
-	SETHI %TempVal1, x00
-	OR %dispR, %TempVal1
-	RET
+	CP $r5, $rE
+	SHIFTR $r5, 8
+	SETLO $rE, x"00"
+	SETHI $r5, x"00"
+	OR $rE, $r5
+	RET $r0
 
 addRandom:
-	RAND %TempVal1
-	SETHI %TempVal2, x00
-	SETLO %TempVal2, 0100 1001
-	AND %TempVal1, %TempVal2		# Check if not all 3 positions are 0
+	RAND $r5, $r0
+	SETHI $r4, x"00"
+	SETLO $r4, "01001001"
+	AND $r5, $r4		# Check if not all 3 positions are 0
 	BZERO @addRandom
-	CP %TempVal2, %TempVal1
-	SETHI %TempVal3, x00 
-	SETLO %TempVal3, 0100 1001
-	SUB %TempVal2, %TempVal3	# Check if not all 3 positions are 1
+	CP $r4, $r5
+	SETHI $r3, x"00"
+	SETLO $r3, "01001001"
+	SUB $r4, $r3	# Check if not all 3 positions are 1
 	BZERO @addRandom
 
-	SHIFTL %TempVal1, 1
-	SETHI %TempVal1, xFF
-	SHIFTL %TempVal1, 1
-	SETHI %TempVal1, x00
-	INV %TempVal1, %TempVal1
-	SETLO %dispR, x00
-	OR %dispR, %TempVal1
-	RET
+	SHIFTL $r5, 1
+	SETHI $r5, x"FF"
+	SHIFTL $r5, 1
+	SETHI $r5, x"00"
+	INV $r5, $r5
+	SETLO $rE, x"00"
+	OR $rE, $r5
+	RET $r0
 
 
 
 WRITEDISPLAYS:
-	INV %TempVal1, %dispL
-	OR %TempVal1, %playerState
-	INV %Comb, %TempVal1
+	INV $r5, $rC
+	OR $r5, $rB
+	INV $rF, $r5
 	
-	ST @DISPLEFT, %Comb
-	ST @DISPMIDDLE, %dispM
-	ST @DISPRIGHT, %dispR
+	ST $rF, @DISPLEFT@
+	ST $rD, @DISPMIDDLE@
+	ST $rE, @DISPRIGHT@
 
 
 
@@ -195,17 +220,17 @@ DEAD:
 	# check for user input
 	# if both buttons pressed, jump INIT
 
-	ST @TIMER0, %r0
-	DISPRHR %score
+	ST $r0, @TIMER0@
+	DISPRHR $r9
 
-	LD %buttonState, @BUTTONSTATE
-	SETHI %TempVal1, x20
-	SETLO %TempVal1, x00
-	AND %TempVal1, %buttonState
+	LD $r6, @BUTTONSTATE@
+	SETHI $r5, x"20"
+	SETLO $r5, x"00"
+	AND $r5, $r6
 	BZERO @DEAD
-	SETHI %TempVal1, x10
-	SETLO %TempVal1, x00
-	AND %TempVal1, %buttonState
+	SETHI $r5, x"10"
+	SETLO $r5, x"00"
+	AND $r5, $r6
 	BZERO @DEAD
 
 	BA @INIT
@@ -213,4 +238,4 @@ DEAD:
 
 
 RETFLAG: 	# For conditional RETS
-	RET
+	RET $r0

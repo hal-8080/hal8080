@@ -38,16 +38,16 @@ ARCHITECTURE bhv OF data_path IS
 									
 -- Split up the micro instruction									
 
-	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(32 DOWNTO 28);
-	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= micro_inst(26 DOWNTO 22);
-	SIGNAL muxA		: std_logic 									:= micro_inst(27);			-- 0 then take MIR A or 1 take from %r 
-	SIGNAL muxB		: std_logic 									:= micro_inst(21);
-	SIGNAL muxC		: std_logic 									:= micro_inst(20);			-- !! To either get data from the ALU or MM
-	SIGNAL rd		: std_logic 									:= micro_inst(19);
-	SIGNAL wr		: std_logic 									:= micro_inst(18);
-	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= micro_inst(17 DOWNTO 14);
-	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= micro_inst(13 DOWNTO 11);
-	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= micro_inst(10 DOWNTO 0);
+	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= "00000";
+	SIGNAL micro_addrB	: std_logic_vector(4 DOWNTO 0) 	:= "00000";
+	SIGNAL muxA		: std_logic 									:= '0';			-- 0 then take MIR A or 1 take from %r 
+	SIGNAL muxB		: std_logic 									:= '0';
+	SIGNAL muxC		: std_logic 									:= '0';			-- !! To either get data from the ALU or MM
+	SIGNAL rd		: std_logic 									:= '0';
+	SIGNAL wr		: std_logic 									:= '0';
+	SIGNAL ALU		: std_logic_vector(3 DOWNTO 0)			:= x"E";
+	SIGNAL cond		: std_logic_vector(2 DOWNTO 0) 			:= "000";
+	SIGNAL jump		: std_logic_vector(10 DOWNTO 0) 			:= "00000000000";
 --	
 	SIGNAL instr	: std_logic_vector(15 DOWNTO 0)			:= x"0000";
 --busses	
@@ -181,7 +181,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 	instrcounter:PROCESS(clk, reset)
 	BEGIN
 		IF reset = '0' THEN
-		ELSIF falling_edge(clk) THEN
+		ELSIF rising_edge(clk) THEN
 			IF counter < 3 THEN
 				counter <= counter + 1;
 			ELSE
@@ -265,7 +265,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		
 	--THE ALU	
 	Maths:PROCESS(clk,reset)
-		CONSTANT	max_value				: integer := 1024;
+		CONSTANT	max_value				: integer := 2;
  
 		VARIABLE Abus_sign, Bbus_sign : signed(15 DOWNTO 0);
 		VARIABLE Abus_int, Bbus_int	: integer RANGE -32768 TO 32767;		

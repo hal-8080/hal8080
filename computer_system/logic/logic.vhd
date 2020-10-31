@@ -1,12 +1,12 @@
-LIBRARY IEEE;
-USE IEEE.std_logic_1164.ALL;
-ENTITY logic IS
-	PORT(
-		
-	);
-END ENTITY logic;
-ARCHITECTURE bhv OF logic IS
-
-BEGIN
-
-END;
+-- LIBRARY IEEE;
+-- USE IEEE.std_logic_1164.ALL;
+-- ENTITY logic IS
+-- 	PORT(
+--		
+--	);
+-- END ENTITY logic;
+-- ARCHITECTURE bhv OF logic IS
+--
+-- BEGIN
+--
+-- END;

@@ -1,14 +1,21 @@
-CP $r2, $r1
-GETINPUT:    
-    LD %ButtonState, @BUTTONSTATE
-    LD %ChangedButtons, @PREVBUTTONSTATE
-    INV %ChangedButtons, %ChangedButtons
-    AND %ChangedButtons, %ButtonState
-    ST @PREVBUTTONSTATE, %ButtonState
+# Simple adder program to test user input
+# $r2 = TempVal
+# $r3 = ButtonState
+# $r4 = ChangedButtons
+@BUTTONSTATE@ = x"FAAA"
+@PREVBUTTONSTATE@ = x"FAAB"
 
-    SETHI %TempVal, x10
-    SETLO %TempVal, x00
-    AND %TempVal, %ChangedButtons
+CP $r2, $r1
+GETINPUT:
+    LD $r3, @BUTTONSTATE@
+    LD $r4, @PREVBUTTONSTATE@
+    INV $r4, $r4
+    AND $r4, $r3
+    ST $r3, @PREVBUTTONSTATE@
+
+    SETHI $r2, x"10"
+    SETLO $r2, x"00"
+    AND $r2, $r4
     BZERO @GETINPUT
     
     ADD $r2, $r1
