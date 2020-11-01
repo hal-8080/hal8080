@@ -3,7 +3,7 @@ USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_Std.ALL;
 ENTITY control IS
 	PORT(
-		clk			: IN	std_logic;
+		clk			    : IN    std_logic;
 		reset			: IN 	std_logic;
 		ir				: IN	std_logic_vector(15 DOWNTO 0);
 	-- PSR

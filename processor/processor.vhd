@@ -1,23 +1,26 @@
 --             HAL8080 Processor           --
 -- Kasper, Dennis, Tjeerd, Nick, Oussama 2020
 --                processor
--- This file describes the hardware for the processor.
+-- This file describes the hardware connections 
+-- for the processor. Primarily lickage between
+-- memory control and datapath.
 
 LIBRARY IEEE;
 USE IEEE.std_logic_1164.ALL;
+
 ENTITY processor IS
     PORT(
         -- INTERNALS
         clk   : IN std_logic; -- 50 Mhz Clock
         reset : IN std_logic; -- Async reset
 
-        -- CONTROL
+        -- CONTROL (MEMORY)
         address_bus  :  IN std_logic_vector(15 DOWNTO 0); -- Address bus
         data_bus_in  :  IN std_logic_vector(15 DOWNTO 0); -- Data bus from memory.
         do_read      : OUT std_logic; -- Whether we should read
         do_write     : OUT std_logic; -- Whether we should write
         data_bus_out : OUT std_logic_vector(15 DOWNTO 0); -- Data bus to memory.
-        debug_in     :  IN std_logic; -- Whether we are in debug mode.
+        in_debug     :  IN std_logic; -- Whether we are in debug mode.
     );
 END ENTITY processor;
 
@@ -30,32 +33,37 @@ ARCHITECTURE bhv OF processor IS
     SIGNAL statusZD		: std_logic := '0';              -- Debug Zero status bit.
 BEGIN
 
-    cs:ENTITY work.control PORT MAP(
-        clk => clk,						--IN
-        reset => reset, 				--IN
-        ir => ir,						--IN
-        statusN => statusN, 			--IN
-        statusZ => statusZ, 			--IN
-        statusND => statusND,		--IN
-        statusZD => statusZD,		--IN
-        micro_instr => micro_inst  --OUT
+    control:ENTITY work.control PORT MAP(
+        -- INTERNALS
+        clk => clk,
+        reset => reset,
+        -- CONTROL (CONTROL)
+        ir => ir,
+        micro_inst => micro_inst,
+        statusN  => statusN,
+        statusZ  => statusZ,
+        statusND => statusND,
+        statusZD => statusZD
     );
 
-    dp:ENTITY work.datapath PORT MAP(
-        clk => clk,						--IN
-        reset => reset,				--IN
-        mmI => mmI,						--IN
-        mmAdress => mmAdress,		--OUT
-        mmData => mmData,				--OUT
-        ir => ir,						--OUT
-        micro_inst => micro_inst,	--IN
-        statusD => statusD,			--IN
-        statusN => statusN,			--OUT
-        statusZ => statusZ,			--OUT
-        statusND => statusND,		--OUT
-        statusZD => statusZD			--OUT
+    datapath:ENTITY work.datapath PORT MAP(
+        -- INTERNALS
+        clk => clk,
+        reset => reset,
+        -- CONTROL (MEMORY)
+        address_bus => address_bus,
+        data_bus_in => data_bus_in,
+        do_read =>  micro_inst(18), -- Read directly from microinstruction.
+        do_write => micro_inst(19), -- Read directly from microinstruction.
+        data_bus_out => data_bus_out,
+        in_debug => in_debug,
+        -- CONTROL (CONTROL)
+        ir => ir,
+        micro_inst => micro_inst,
+        statusN  => statusN,
+        statusZ  => statusZ,
+        statusND => statusND,
+        statusZD => statusZD
     );
 
-    
-
-END;
+END bhv;
