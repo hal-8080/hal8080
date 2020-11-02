@@ -43,7 +43,8 @@ BEGIN
         statusN  => statusN,
         statusZ  => statusZ,
         statusND => statusND,
-        statusZD => statusZD
+        statusZD => statusZD,
+        in_debug => in_debug
     );
 
     datapath:ENTITY work.datapath PORT MAP(
