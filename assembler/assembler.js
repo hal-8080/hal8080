@@ -66,13 +66,13 @@ const registers = {
     "m1":     "0001",
     "m2":     "0010",
     "m3":     "0011",
-    "dA":     "0100", // Assembly reserved
+    "dAD":    "0100",
     "dB":     "0101",
     "dC":     "0110",
     "dD":     "0111",
     "dE":     "1000",
     "dF":     "1001",
-    "dAD":    "1010",
+    "dA":     "1010", // Assembly reserved
     "dVAL":   "1011",
     "dPC":    "1100",
     "dIR":    "1101",
@@ -109,11 +109,11 @@ const instDisp = { //10
     "DISPCL":  ["10", "-"],
     "DISPCM":  ["01", "-"],
     "DISPCR":  ["00", "-"],
-    "DISPRCL": ["10", "0"],
-    "DISPRCM": ["01", "0"],
-    "DISPRCR": ["00", "0"],
-    "DISPRHL": ["10", "1"],
-    "DISPRHR": ["00", "1"]
+    "DISPRCL": ["10", "1"],
+    "DISPRCM": ["01", "1"],
+    "DISPRCR": ["00", "1"],
+    "DISPRHL": ["01", "0"],
+    "DISPRHR": ["00", "0"]
 }
 const instBranch = { //11-i0
     //INST    COND
