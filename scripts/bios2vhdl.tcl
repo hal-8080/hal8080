@@ -11,7 +11,7 @@ package require cmdline
 
 post_message "bios2vhdl.tcl"
 
-set fp [open "bios.bin" r]
+set fp [open "bios.heks" r]
 set file_data [read $fp]
 close $fp
 set data [split $file_data "\n"]

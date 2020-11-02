@@ -11,7 +11,7 @@ package require cmdline
 
 post_message "ram2vhdl.tcl"
 
-set fp [open "ram.bin" r]
+set fp [open "ram.heks" r]
 set file_data [read $fp]
 close $fp
 set data [split $file_data "\n"]
