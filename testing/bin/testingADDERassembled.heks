@@ -2,17 +2,19 @@
 # $r2 = TempVal
 # $r3 = ButtonState
 # $r4 = ChangedButtons
+# Compiled on Mon, 02 Nov 2020 09:09:20 GMT by Hal8080 Assembler [k]
+=======
 2000-05 # CP $r2, $r1
 2001-C1
-2002-F5 # SETHI $rA, 250
+2002-F5 # SETHI $rA, x"fa"
 2003-FA
-2004-F4 # SETLO $rA, 170
+2004-F4 # SETLO $rA, x"aa"
 2005-AA
 2006-46 # LD $r3, $rA
 2007-0A
-2008-F5 # SETHI $rA, 250
+2008-F5 # SETHI $rA, x"fa"
 2009-FA
-200A-F4 # SETLO $rA, 171
+200A-F4 # SETLO $rA, x"ab"
 200B-AB
 200C-48 # LD $r4, $rA
 200D-0A
@@ -20,21 +22,21 @@
 200F-44
 2010-08 # AND $r4, $r3
 2011-03
-2012-F5 # SETHI $rA, 250
+2012-F5 # SETHI $rA, x"fa"
 2013-FA
-2014-F4 # SETLO $rA, 171
+2014-F4 # SETLO $rA, x"ab"
 2015-AB
 2016-47 # ST $r3, $rA
 2017-0A
-2018-E5 # SETHI $r2, 16
+2018-E5 # SETHI $r2, x"10"
 2019-10
-201A-E4 # SETLO $r2, 0
+201A-E4 # SETLO $r2, x"0"
 201B-00
 201C-04 # AND $r2, $r4
 201D-04
-201E-F5 # SETHI $rA, 32
+201E-F5 # SETHI $rA, x"20"
 201F-20
-2020-F4 # SETLO $rA, 2
+2020-F4 # SETLO $rA, x"2"
 2021-02
 2022-C0 # BZERO $rA, 
 2023-4A
@@ -42,9 +44,9 @@
 2025-81
 2026-81 # DISPRHR $r2, 
 2027-02
-2028-F5 # SETHI $rA, 32
+2028-F5 # SETHI $rA, x"20"
 2029-20
-202A-F4 # SETLO $rA, 2
+202A-F4 # SETLO $rA, x"2"
 202B-02
 202C-C0 # BA $rA, 
 202D-8A

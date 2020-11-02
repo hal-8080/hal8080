@@ -1,4 +1,6 @@
 # Script for testing debug mode
+# Compiled on Mon, 02 Nov 2020 09:08:17 GMT by Hal8080 Assembler [k]
+=======
 2000-05 # CP $r2, $r0
 2001-C0
 2002-04 # ADD $r2, $r1
@@ -65,9 +67,9 @@
 203F-81
 2040-04 # ADD $r2, $r1
 2041-81
-2042-F5 # SETHI $rA, 32
+2042-F5 # SETHI $rA, x"20"
 2043-20
-2044-F4 # SETLO $rA, 2
+2044-F4 # SETLO $rA, x"2"
 2045-02
 2046-C0 # BA $rA, 
 2047-8A
