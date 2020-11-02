@@ -100,4 +100,4 @@ RANDOM:
     RAND $r2
     DISPRHR $r2 #                                   x<RANDOM>
     CALL @GETINPUT
-    BA @RANDOM, $r0
+    BA @RANDOM

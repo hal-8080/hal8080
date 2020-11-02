@@ -78,7 +78,7 @@ UPDATEPLAYER:
 	
 	SETHI $rB, "01000000"	# Player state = up
 	SETLO $rB, x"00"
-	RET $r0
+	RET
 	
 checkDOWN:
 	SETHI $r5, x"20"
@@ -88,12 +88,12 @@ checkDOWN:
 	
 	SETHI $rB, "00001000"	# Player state = down
 	SETLO $rB, x"00"
-	RET $r0
+	RET
 
 setMIDDLE:
 	SETHI $rB, x"01"
 	SETLO $rB, x"00"
-	RET $r0
+	RET
 
 
 
@@ -103,7 +103,7 @@ UPDATEFIRSTDISPLAY:
 	OR $r5, $rB
 	INV $rF, $r5
 	ST $rF, @DISPLEFT@
-	RET $r0
+	RET
 
 
 
@@ -120,7 +120,7 @@ UPDATEDISPLAYS:
 	CP $r5, $r8
 	SUB $r5, $r7
 	BNEG @MOVEDISPLAYS
-	RET $r0
+	RET
 
 MOVEDISPLAYS:
 	ST $r0, @TIMER0@
@@ -170,18 +170,18 @@ MOVEDISPLAYS:
 
 addNothing:
 	SETLO $rE, "01111111"
-	RET $r0
+	RET
 
-addPrevious:
+addPrevious: 
 	CP $r5, $rE
 	SHIFTR $r5, 8
 	SETLO $rE, x"00"
 	SETHI $r5, x"00"
 	OR $rE, $r5
-	RET $r0
+	RET
 
 addRandom:
-	RAND $r5, $r0
+	RAND $r5
 	SETHI $r4, x"00"
 	SETLO $r4, "01001001"
 	AND $r5, $r4		# Check if not all 3 positions are 0
@@ -199,7 +199,7 @@ addRandom:
 	INV $r5, $r5
 	SETLO $rE, x"00"
 	OR $rE, $r5
-	RET $r0
+	RET
 
 
 
@@ -238,4 +238,4 @@ DEAD:
 
 
 RETFLAG: 	# For conditional RETS
-	RET $r0
+	RET
