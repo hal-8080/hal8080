@@ -31,8 +31,8 @@ BEGIN
 	
 		address_bus 	=> mmAdress,			-- IN
 		data_bus_in 	=> mmData,				-- IN
-		do_read			=> micro_instr(18),	-- IN
-		do_write			=> micro_instr(19),	-- IN
+		do_read			=> micro_instr(19),	-- IN
+		do_write			=> micro_instr(18),	-- IN
 		data_bus_out	=> mmI,					-- OUT
 		
 		o_seg0			=> o_seg0,				-- OUT
