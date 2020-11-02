@@ -35,7 +35,10 @@ ARCHITECTURE bhv OF data_path IS
 
 	SIGNAL reg : reg_vector := (others=>(x"0000")); --32 registers of 16 bits --use example: "reg(2) <= a_16_bit_vector" stores the vector in register 2
 	
-									
+		
+
+
+		
 -- Split up the micro instruction									
 
 	SIGNAL micro_addrA	: std_logic_vector(4 DOWNTO 0) 	:= "00000";
@@ -232,7 +235,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 					CASE instr(15 DOWNTO 14) IS
 					WHEN "00" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(4 DOWNTO 0)), 16)); 	-- ARITHMATIC 	--Bbus <= constant in assembly instruction
 					WHEN "01" 	=> Bbus <= std_logic_vector(RESIZE(signed(instr(7 DOWNTO 0)), 16));			-- MEMORY		--Bbus <= constant in assembly instruction
-					WHEN "10" 	=> Bbus <= std_logic_vector(RESIZE(signed('0' & instr(9 DOWNTO 5)) & signed('0' & instr(4 DOWNTO 0)), 16));-- DISPLAY		
+					WHEN "10" 	=> Bbus <= std_logic_vector(RESIZE(unsigned(instr(9 DOWNTO 5)), 8) & RESIZE(unsigned(instr(4 DOWNTO 0)), 8));-- DISPLAY		
 					WHEN OTHERS => Bbus <= x"00" & instr(7 DOWNTO 0);			-- sethi/low
 				END CASE;
 				END IF;				
@@ -276,6 +279,7 @@ jump 			<= micro_inst(10 DOWNTO 0);
 		VARIABLE random 		: unsigned(15 DOWNTO 0) := seed;
 		--shift
 		VARIABLE Bbus_shift		: integer RANGE 0 TO 16;
+		VARIABLE update 	: std_logic := '0' ;
 	BEGIN
 		IF reset = '0' THEN
 		ELSIF rising_edge(clk) AND counter = 1  THEN
@@ -297,36 +301,47 @@ jump 			<= micro_inst(10 DOWNTO 0);
 			WHEN x"0" => --AND bitwise
 				solution := Abus_sign AND Bbus_sign; 		
 				ALUout <= std_logic_vector(solution);
+				update := '0';
 			WHEN x"1" => --NAND bitwise
 				solution := Abus_sign NAND Bbus_sign;	 	
-				ALUout <= std_logic_vector(solution);				
+				ALUout <= std_logic_vector(solution);
+				update := '0';
 			WHEN x"2" => --OR bitwise
 				solution := Abus_sign OR Bbus_sign;		
-				ALUout <= std_logic_vector(solution);						
+				ALUout <= std_logic_vector(solution);	
+				update := '0';
 			WHEN x"3" => --ORN bitwise
 				solution := Abus_sign OR NOT Bbus_sign;	
-				ALUout <= std_logic_vector(solution);				
+				ALUout <= std_logic_vector(solution);	
+				update := '0';
 			WHEN x"4" => --ADD
 				solution := to_signed(Abus_int + Bbus_int, 16);	
-				ALUout <= std_logic_vector(solution);		
+				ALUout <= std_logic_vector(solution);	
+				update := '1';
 			WHEN x"5" => --MUL
 				solution := to_signed(Abus_int * Bbus_int, 16);	
 				ALUout <= std_logic_vector(solution);	
+				update := '1';
 			WHEN x"6" => --DIV
 				solution := to_signed(Abus_int / Bbus_int, 16);	
-				ALUout <= std_logic_vector(solution);	
-			WHEN x"7" => --	xor
+				ALUout <= std_logic_vector(solution);
+				update := '1';
+			WHEN x"7" => --xor
 				solution := Abus_sign XOR Bbus_sign;					
-				ALUout <= std_logic_vector(solution);				
+				ALUout <= std_logic_vector(solution);
+				update := '0';
 			WHEN x"8" => --SHIFTL
 				solution := signed(shift_left(unsigned(Abus), Bbus_shift));	
-				ALUout <= std_logic_vector(solution);				
+				ALUout <= std_logic_vector(solution);		
+				update := '0';
 			WHEN x"9" => --shiftR
 				solution := shift_right(Abus_sign, Bbus_shift);					
-				ALUout <= std_logic_vector(solution);			
+				ALUout <= std_logic_vector(solution);
+				update := '0';
 			WHEN x"A" => --INV bitwise
 				solution := NOT Bbus_sign;												
-				ALUout <= std_logic_vector(solution);			
+				ALUout <= std_logic_vector(solution);	
+				update := '0';
 			WHEN x"B" => --POW B must be positive and can be max 1024 (2^11), A must be positive
 				powTemp := Abus_int;
 				FOR i IN 1 TO max_value LOOP
@@ -338,17 +353,20 @@ jump 			<= micro_inst(10 DOWNTO 0);
 					END IF;
 				END LOOP;
 				ALUout <= std_logic_vector(solution);
+				update := '1';
 				
 			WHEN x"C" => --SUB
 				solution := to_signed(Abus_int - Bbus_int, 16);		
 				ALUout <= std_logic_vector(solution);		
-
-			WHEN x"D" => ALUout <= ('0' & hex2display(Bbus(12 DOWNTO 8))) & ('0' & hex2display(Bbus(4 DOWNTO 0)));	--DISP																	--DISPLAY
-				
+				update := '1';
+			WHEN x"D" => ALUout <= ('0' & hex2display(Bbus(12 DOWNTO 8))) & ('0' & hex2display(Bbus(4 DOWNTO 0)));	--DISP
+				update := '0';
 			WHEN x"E" => ALUout <= Bbus;--COPY
-			
+				update := '0';
 			WHEN x"F" => ALUout <= std_logic_vector(random); -- RAND (SEPERATE in the process)
+				update := '0';
 			WHEN OTHERS => null;
+				update := '0';
 			
 			END CASE;
 			
@@ -360,24 +378,24 @@ jump 			<= micro_inst(10 DOWNTO 0);
 			
 			--status bits:
 			IF statusD = '0' THEN	--if debug is off, update regular status bits
-				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZ <= '1'; --statusZ
 					statusN <= '0'; --statusN
-				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZ <= '0'; --statusZ
 					statusN <= '1'; --statusN
-				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZ <= '0'; --statusZ
 					statusN <= '0'; --statusN
 				END IF;
 			ELSE --if debug is on, update only the debug status bits
-				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				IF to_integer(solution) = 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZD <= '1'; --statusZ
 					statusND <= '0'; --statusN
-				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				ELSIF to_integer(solution) < 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZD <= '0'; --statusZ
 					statusND <= '1'; --statusN
-				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND (ALU /= x"D" AND ALU /= x"E" AND ALU /= x"F") AND addr2decA /= "11111" THEN
+				ELSIF to_integer(solution) > 0 AND rd='0' AND wr='0' AND update = '1' AND addr2decA /= "11110" THEN
 					statusZD <= '0'; --statusZ
 					statusND <= '0'; --statusN
 				END IF;

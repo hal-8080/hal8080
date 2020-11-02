@@ -6,6 +6,7 @@ ENTITY control IS
 		clk			    : IN    std_logic;
 		reset			: IN 	std_logic;
 		ir				: IN	std_logic_vector(15 DOWNTO 0);
+		statusD		: IN std_logic;
 	-- PSR
 		statusN, statusZ	: IN std_logic;
 		statusND, statusZD	: IN std_logic;
@@ -50,17 +51,17 @@ CLB:PROCESS(reset,clk)
 		-- Next addr
 			WHEN "000" =>	cbl <= "00";
 		-- Jump if Z
-			WHEN "010" =>	IF psr(0) = '1' THEN
-								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+			WHEN "010" =>	IF (statusD = '0' AND psr(0) = '1') OR (statusD = '1' AND psr(2) = '1') THEN
+									cbl <= "01";    
+								ELSE 		
+									cbl <= "00"; 
+								END IF;
 		-- Jump if N
-			WHEN "001" =>	IF psr(1) = '1' THEN
-								cbl <= "01";    ELSE		cbl <= "00"; END IF;
-		-- Jump if ZD
-			WHEN "101" =>	IF psr(2) = '1' THEN
-								cbl <= "01";    ELSE		cbl <= "00"; END IF;
-		-- Jump if ND
-			WHEN "100" =>	IF psr(3) = '1' THEN
-								cbl <= "01";    ELSE		cbl <= "00"; END IF;
+			WHEN "001" =>	IF (statusD = '0' AND psr(1) = '1') OR (statusD = '1' AND psr(3) = '1') THEN
+									cbl <= "01";    
+								ELSE 		
+									cbl <= "00"; 
+								END IF;
 		-- jump always
 			WHEN "011" =>	cbl <= "01";
 		-- DECODE "111"
@@ -118,7 +119,7 @@ MUX:	PROCESS(reset, clk, cbl)
 					IF OPi = '1' THEN
 						address <= "10" & OP & OPi & OPLS & "00000";
 					ELSE
-						address <= "10" & OP & OPi & OP3 & "0000";
+						address <= "10" & OP & OPi & OP2 & "00";
 					END IF;
 				END IF;
 		END CASE;

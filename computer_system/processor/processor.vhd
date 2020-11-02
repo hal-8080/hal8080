@@ -24,6 +24,7 @@ BEGIN
 		clk => clk,						--IN
 		reset => reset, 				--IN
 		ir => ir,						--IN
+		statusD => statusD,
 		statusN => statusN, 			--IN
 		statusZ => statusZ, 			--IN
 		statusND => statusND,		--IN
@@ -46,4 +47,6 @@ BEGIN
 		statusZD => statusZD			--OUT
 	);
 
+micro_instr <= micro_inst;	
+	
 END;

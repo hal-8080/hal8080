@@ -4,7 +4,7 @@ ENTITY control_section IS
 	PORT(
 		clk			: IN	std_logic;
 		reset			: IN 	std_logic;
-		
+		statusD		: IN 	std_logic;
 	-- FROM DATAPATH
 		ir				: IN	std_logic_vector(15 DOWNTO 0);
 		statusN, statusZ	: IN 	std_logic;
@@ -26,6 +26,7 @@ BEGIN
 		clk => clk,
 		reset	=> reset,
 		ir	=> ir,									-- IN		instruction register from datapath
+		statusD => statusD,						-- IN 
 		statusN => statusN,						-- IN		ALU neg flag bit for psr
 		statusZ => statusZ,						-- IN		ALU zero flag bit for psr
 		statusND => statusND,					-- IN		ALU debug neg flag bit for psr

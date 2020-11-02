@@ -129,9 +129,13 @@ PACKAGE BODY memory_utils IS
     FUNCTION read_mem(mem: memory_table; address: natural) RETURN word IS
         VARIABLE ret_val: word := (OTHERS => '-');
     BEGIN
-        ret_val(adr_width-1 DOWNTO mem_width) := mem(address+1);
-        ret_val(mem_width-1 DOWNTO 0)         := mem(address);
-        RETURN ret_val;
+	IF address < size_total THEN
+        	ret_val(adr_width-1 DOWNTO mem_width) := mem(address+1);
+        	ret_val(mem_width-1 DOWNTO 0)         := mem(address);
+        	RETURN ret_val;
+	ELSE
+		RETURN "----------------";
+	END IF;
     END read_mem;
 
     FUNCTION read_mem_a(mem: memory_table; address_bus: word) RETURN word IS 
