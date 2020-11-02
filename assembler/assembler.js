@@ -125,8 +125,8 @@ const instBranch = { //11-i0
 }
 const instSet = { //11-i1
     //INST   H/L
-    "SETHI": "1",
-    "SETLO": "0"
+    "SETHI": "0",
+    "SETLO": "1"
 }
 
 //==========================================\\
@@ -350,7 +350,7 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
                             title: "Constant Error", 
                             message: `Constant Error on line <b>${i+1}</b> (${l.instruction}). Out of range constant: ${l.C} only -16 to 31 is allowed!`
                         };
-                        data.push(`000${registers[l.RdN]}${nameData}${numToBin(l.C, 5)}`); continue;
+                        data.push(`001${registers[l.RdN]}${nameData}${numToBin(l.C, 5)}`); continue;
                     } else {
                         // Only for random we can have neither.
                         if (l.instruction === "RAND") {
@@ -449,8 +449,8 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
         // Memory is in Little Endian.
         let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
         let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 0
-        memory.push(`${numToHex(address+1, 4)}-${low}${dataComment[i]}`);
         memory.push(`${numToHex(address,   4)}-${ hi}`);
+        memory.push(`${numToHex(address+1, 4)}-${low}${dataComment[i]}`);
         address += 2;
         percentDone(75 + (25/data.length) * i);
     }
