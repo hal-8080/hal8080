@@ -12,18 +12,6 @@ USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_Std.ALL;
 
 ENTITY controller IS
-    GENERIC (
-        -- MICRO-LANGUAGE CONSTANTS
-        COND_NextAddress : std_logic_vector(2 DOWNTO 0) := "000";
-        COND_JumpZero    : std_logic_vector(2 DOWNTO 0) := "010";
-        COND_JumpNeg     : std_logic_vector(2 DOWNTO 0) := "001";
-        COND_JumpAlways  : std_logic_vector(2 DOWNTO 0) := "011";
-        COND_Decode      : std_logic_vector(2 DOWNTO 0) := "111";
-        -- CBL
-        CBL_NEXT         : std_logic_vector(1 DOWNTO 0) := "00";
-        CBL_JUMP         : std_logic_vector(1 DOWNTO 0) := "01";
-        CBL_DECODE       : std_logic_vector(1 DOWNTO 0) := "10";
-    );
     PORT (
         -- INTERNALS
         clk   :  IN std_logic;
@@ -50,7 +38,7 @@ ARCHITECTURE bhv OF controller IS
     ALIAS sN  : std_logic IS psr(0);
     ALIAS sZ  : std_logic IS psr(1);
     ALIAS sND : std_logic IS psr(2);
-    ALIAS sNZ : std_logic IS psr(3);
+    ALIAS sZD : std_logic IS psr(3);
     -- INSTRUCTION FORMAT
     ALIAS OP       : std_logic_vector( 1 DOWNTO 0) IS ir(15 DOWNTO 14); -- instruction format
     ALIAS OP2      : std_logic_vector( 3 DOWNTO 0) IS ir(8  DOWNTO 5 ); -- ALU instruction
@@ -60,6 +48,16 @@ ARCHITECTURE bhv OF controller IS
     -- CONTROL BRANCH LOGIC
     ALIAS jmpA     : std_logic_vector(10 DOWNTO 0) IS micro_instr(10 DOWNTO  0);
     ALIAS COND     : std_logic_vector( 2 DOWNTO 0) IS micro_instr(13 DOWNTO 11);
+    -- MICRO-LANGUAGE CONSTANTS
+    CONSTANT COND_NextAddress : std_logic_vector(2 DOWNTO 0) := "000";
+    CONSTANT COND_JumpZero    : std_logic_vector(2 DOWNTO 0) := "010";
+    CONSTANT COND_JumpNeg     : std_logic_vector(2 DOWNTO 0) := "001";
+    CONSTANT COND_JumpAlways  : std_logic_vector(2 DOWNTO 0) := "011";
+    CONSTANT COND_Decode      : std_logic_vector(2 DOWNTO 0) := "111";
+    -- CBL
+    CONSTANT CBL_NEXT         : std_logic_vector(1 DOWNTO 0) := "00";
+    CONSTANT CBL_JUMP         : std_logic_vector(1 DOWNTO 0) := "01";
+    CONSTANT CBL_DECODE       : std_logic_vector(1 DOWNTO 0) := "10";
 BEGIN
 
     --==========================================--
@@ -104,14 +102,14 @@ BEGIN
             WHEN COND_NextAddress => cbl <= CBL_NEXT;
             -- Micro: Zero? Check zero/debugzero status bit.
             WHEN COND_JumpZero => 
-                IF (in_debug = '0' AND sZ = '1') OR (in_debug = '1' AND sDZ = '1') THEN
+                IF (in_debug = '0' AND sZ = '1') OR (in_debug = '1' AND sZD = '1') THEN
                     cbl <= CBL_JUMP; 
                 ELSE
                     cbl <= CBL_NEXT; 
                 END IF;
             -- Micro: Neg? Check neg/debugneg status bit.
             WHEN COND_JumpNeg => 
-                IF (in_debug = '0' AND sN = '1') OR (in_debug = '1' AND sDN = '1') THEN
+                IF (in_debug = '0' AND sN = '1') OR (in_debug = '1' AND sND = '1') THEN
                     cbl <= CBL_JUMP; 
                 ELSE
                     cbl <= CBL_NEXT; 

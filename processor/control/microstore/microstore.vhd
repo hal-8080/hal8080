@@ -13,7 +13,7 @@ USE IEEE.numeric_std.ALL;
 ENTITY microstore IS
     PORT(    
         address   :  IN std_logic_vector(10 DOWNTO 0); -- 11 bit 2048 addr DECODE format
-        microcode : OUT std_logic_vector(32 DOWNTO 0); -- 33 bit word to datapath
+        microcode : OUT std_logic_vector(32 DOWNTO 0)  -- 33 bit word to datapath
     ); 
 END ENTITY microstore;
 
