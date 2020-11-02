@@ -447,8 +447,8 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
     memory.push("======="); // Split the preamble from the binary.
     for (let i = 0; i < data.length; i++) {
         // Memory is in Little Endian.
-        let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 2
-        let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 1
+        let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
+        let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 0
         memory.push(`${numToHex(address+1, 4)}-${low}${dataComment[i]}`);
         memory.push(`${numToHex(address,   4)}-${ hi}`);
         address += 2;
