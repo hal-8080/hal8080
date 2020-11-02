@@ -446,10 +446,11 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
     memory.push(`# Compiled on ${new Date().toUTCString()} by Hal8080 Assembler [k]`);
     memory.push("======="); // Split the preamble from the binary.
     for (let i = 0; i < data.length; i++) {
-        let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
-        let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 2
-        memory.push(`${numToHex(address,   4)}-${low}${dataComment[i]}`);
-        memory.push(`${numToHex(address+1, 4)}-${ hi}`);
+        // Memory is in Little Endian.
+        let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 2
+        let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 1
+        memory.push(`${numToHex(address+1, 4)}-${low}${dataComment[i]}`);
+        memory.push(`${numToHex(address,   4)}-${ hi}`);
         address += 2;
         percentDone(75 + (25/data.length) * i);
     }
