@@ -41,18 +41,6 @@ ARCHITECTURE structure OF hal8080 IS
     SIGNAL o_timer2          : std_logic_vector(15 DOWNTO 0); -- Data of timer 2
 BEGIN
 
-    -- setup, used to burn the main memory and setup.
-    -- Currently used to test the setup.
-    -- TODO REFACTOR / REMOVE
-    -- setup: ENTITY work.setup PORT MAP(
-    --     clk => clk,
-    --     reset => reset,
-    --     address_bus => address_bus,
-    --     data_bus_out => data_bus_to_mem,
-    --     data_bus_in => data_bus_from_mem,
-    --     do_write => do_write,
-    --     do_read => do_read
-    -- );
     -- memory, the main memory and mapped IO.
     memory:ENTITY work.memory_io PORT MAP(
         -- INTERNALS
@@ -77,16 +65,8 @@ BEGIN
         i_timer2 => o_timer2,
         debug_out => in_debug
     );
-    -- memtest:ENTITY work.mem_test PORT MAP(
-    --     clk => clk,
-    --     we => do_write,
-    --     address => address_bus,
-    --     datain => data_bus_to_mem,
-    --     dataout => data_bus_from_mem
-    -- );
-    -- timer0, the millis clock.
     timer0:ENTITY work.timer GENERIC MAP(
-        do_reset = "1"
+        do_reset => '1'
     )
     PORT MAP(
         clk => clk,
