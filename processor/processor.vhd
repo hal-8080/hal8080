@@ -20,7 +20,7 @@ ENTITY processor IS
         do_read      : OUT std_logic; -- Whether we should read
         do_write     : OUT std_logic; -- Whether we should write
         data_bus_out : OUT std_logic_vector(15 DOWNTO 0); -- Data bus to memory.
-        in_debug     :  IN std_logic; -- Whether we are in debug mode.
+        in_debug     :  IN std_logic -- Whether we are in debug mode.
     );
 END ENTITY processor;
 
@@ -29,7 +29,7 @@ ARCHITECTURE bhv OF processor IS
     SIGNAL statusN		: std_logic := '0';              -- Negative status bit.
     SIGNAL statusZ		: std_logic := '0';              -- Zero status bit.
     SIGNAL ir			: std_logic_vector(15 DOWNTO 0); -- The current instruction register.
-    SIGNAL statusND		: std_logic := '0'               -- Debug Negative status bit.
+    SIGNAL statusND		: std_logic := '0';               -- Debug Negative status bit.
     SIGNAL statusZD		: std_logic := '0';              -- Debug Zero status bit.
 BEGIN
 

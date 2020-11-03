@@ -23,7 +23,6 @@
 @PREVBUTTONSTATE@ = x"AAAA"
 
 
-
 ST %r1, @DBGREGISTRIES@
 ST %r1, @DBGFLAGS@
 	# Store address of start of user program in dbgPC

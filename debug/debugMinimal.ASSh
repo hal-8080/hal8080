@@ -1,4 +1,4 @@
-# Debug program for assembler
+# Debug Minimal Version, only step mode
 
 # $RET = Call Return Address
 # $dA = ASSEMBLERBRANCH
@@ -32,7 +32,7 @@
 #     ["@_ATIMER2_@",  2046],
 #     ["@_TIMER2_@",   2048],
 #     ["@_DBGFLAGS_@", 2050],
-#     ["@_DBGREGISTERS_@", 2052],
+#     ["@_DBGREGISTERS_@", 2052]
 # ]
 
 ##### BIOS #####
@@ -44,6 +44,12 @@ AND $dC, $dE
 BZERO @_RAM_@
 
 ##### BIOS #####
+
+	# Set controller to use debug flags and registries
+SETHI $dC, x"00"
+SETLO $dC, x"01"
+ST $dC, @_DBGREGISTERS_@
+ST $dC, @_DBGFLAGS_@
 
 	# Store address of start of user program in dbgPC
 LD $dPC, @_RAM_@ 					
@@ -60,14 +66,6 @@ STARTJUMP:
 	ST $dC, @_DBGFLAGS_@
 
 	LD $dE, @_SWITCHES_@	
-	
-		# Check if lever 8 is HIGH
-		# 	if off 	jump to MEMORYMODE
-		# 	else 	jump to STEPMODE
-	SETHI $dC, x"00"
-	SETLO $dC, x"80"
-	AND $dC, $dE
-	BZERO @MEMORYMODE
 	BA @STEPMODE
 
 
@@ -182,7 +180,7 @@ NOTBRANCHINSTR:
 	ST $dIR, @instr
 	ST $dC, @_DBGREGISTERS_@
 instr:
-	PUT "0000000000000000" # DUMMY INSTRUCTION: AND $r0, $r0
+	PUT 0000000000000000 # DUMMY INSTRUCTION: AND $r0, $r0
 	SETHI $dC, x"00"
 	SETLO $dC, x"01"
 	ST $dC, @_DBGFLAGS_@
@@ -190,180 +188,6 @@ instr:
 	ADD $dPC, "00010"
 	LD $dIR, $dPC
 	BA @STARTJUMP
-
-
-
-MEMORYMODE:
-		# Check if lever 6 is HIGH
-		# 	if off 	jump to REGISTRY (UserRegistryReader)
-		# 	else 	jump to MAINMEM (MainMemoryReader)
-	SETHI $dC, x"02"
-	SETLO $dC, x"00"
-	AND $dC, $dE
-	BZERO @REGISTRY
-	BA @MAINMEM
-
-REGISTRY:
-		# Change X in "Display register X" to correct value, switch DBGREGISTRIES off, execute instruction, switch DBGREGISTRIES on
-	
-		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @_BUTTONS_@
-	LD $dC, @_PREVBUTTONS_@
-	INV $dC, $dC
-	AND $dC, $dD
-	ST $dD, @_PREVBUTTONS_@
-	
-		# Check if button 3 and/or 2 is HIGH
-			# If both LOW, jump to REGISTRYSTATIC
-			# If either HIGH, jump to REGISTRYMOVE
-	SETHI $dB, x"30"
-	SETLO $dB, x"00"
-	AND $dC, $dB
-	BZERO @REGISTRYSTATIC
-	BA @REGISTRYMOVE
-
-REGISTRYMOVE:
-		# If button 3 or 2 is pressed, increment/decrement the XXXX in "Display Register XXXX" 
-	LD $dF, @LBL	
-	CP $dB, $dF
-	AND $dB, "01111"		# $dB = 0..0 XXXX
-	
-	# In use: DA: LBL("Display registry XXXX")
-	# 		TempVal1: Changed buttons
-	# 		TempVal2: 0..0 XXXX
-	
-	CP $dF, $dB
-	SHIFTL $dC, 3
-	BZERO @REGISTRYMOVEADD
-	BA @REGISTRYMOVESUB
-	
-REGISTRYMOVESUB:
-	SUB $dF, x"0001"
-	BA @REGISTRYMOVESET
-
-REGISTRYMOVEADD:
-	ADD $dF, x"0001"
-	BA @REGISTRYMOVESET
-
-REGISTRYMOVESET:
-	AND $dF, "01111"
-	CP $dC, $dF 	
-	LD $dF, @LBL
-	AND $dF, "10000"
-	OR $dF, $dC
-	ST $dF, @LBL
-	
-	SHIFTL $dC, 4
-	OR $dC, "00001"
-	SHIFTL $dC, 4
-	OR $dC, "01111"	# $dC = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
-	DISPRCL $dC 		# DISP Register number + empty on left 2 displays
-	BA @REGISTRYREADOUTPUT
-
-REGISTRYSTATIC:
-	LD $dC, @LBL
-	AND $dC, "01111"
-	
-	SHIFTL $dC, 4
-	OR $dC, "00001"
-	SHIFTL $dC, 4
-	OR $dC, "01111"	# $dC = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
-	DISPRCL $dC 		# DISP Register number + empty on left 2 displays
-	
-	BA @REGISTRYREADOUTPUT
-
-REGISTRYREADOUTPUT:
-	SETHI $dC, x"00"
-	SETLO $dC, x"00"
-	ST $dC, @_DBGREGISTERS_@ 
-LBL:	
-	PUT "1000100000000000" # DUMMY VARIABLE: DISPRHR $r0 # 100OP--0----XXXX, XXXX is registry, OP 01 is right 4 displays 
-	SETHI $dC, x"00"
-	SETLO $dC, x"01"
-	ST $dC, @_DBGREGISTERS_@ 
-	BA @STARTJUMP
-
-
-
-MAINMEM:
-		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @_BUTTONS_@
-	LD $dC, @_PREVBUTTONS_@
-	INV $dC, $dC
-	AND $dC, $dD
-	ST $dD, @_PREVBUTTONS_@
-	
-		# Check if button 3 and/or 2 is HIGH
-		# 	If both LOW, jump to REGISTRYSTATIC
-		# 	If either HIGH, jump to REGISTRYMOVE
-	SETHI $dB, x"30"
-	SETLO $dB, x"00"
-	AND $dC, $dB
-	BZERO @ADDRESVALUEDISPLAY
-	BA @REGISTRYMOVE
-
-MAINMEMSETMOVE:
-	CP $dB, $dE
-	SHIFTR $dB, 4
-	SETLO $dB, x"00"
-	SHIFTL $dB, 4		# $dC = XXXX 0000 0000 0000
-	BZERO @MAINMEMMOVE2
-	SHIFTL $dB, 1
-	BZERO @MAINMEMMOVE20
-	SHIFTL $dB, 1
-	BZERO @MAINMEMMOVE200
-	SHIFTL $dB, 1
-	BZERO @MAINMEMMOVE2000
-	BA @MAINMEMMOVE20000			# If its not 0 after 3 lshifts, lever 3 must be on
-	
-MAINMEMMOVE2:
-	SETHI $dB, x"00"
-	SETLO $dB, x"02"
-	BA @MAINMEMCALCMOVE
-MAINMEMMOVE20:
-	SETHI $dB, x"00"
-	SETLO $dB, x"14"
-	BA @MAINMEMCALCMOVE
-MAINMEMMOVE200:
-	SETHI $dB, x"00"
-	SETLO $dB, x"64"
-	BA @MAINMEMCALCMOVE
-MAINMEMMOVE2000:
-	SETHI $dB, x"07"
-	SETLO $dB, x"D0"
-	BA @MAINMEMCALCMOVE
-MAINMEMMOVE20000:
-	SETHI $dB, x"4E"
-	SETLO $dB, x"20"
-	BA @MAINMEMCALCMOVE
-
-MAINMEMCALCMOVE:
-		# $dC holds changed buttons from 0 to 1	
-	SHIFTL $dC, 3
-	BZERO @MAINMEMMOVEADD
-	BA @MAINMEMMOVESUB
-	
-MAINMEMMOVESUB:
-	SUB $dAD, $dB		
-	# 
-	# 	ACCOUNT FOR OVERFLOW
-	# 	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
-	# 
-	BA @MAINMEMUPDATE
-
-MAINMEMMOVEADD:
-	ADD $dAD, $dB
-	# 
-	# 	ACCOUNT FOR OVERFLOW
-	# 	NEED EXACT TOP/BOTTOM OF USER MEMORY TO CREATE OVERFLOW COUNTERMEASURES
-	# 
-	BA @MAINMEMUPDATE
-
-MAINMEMUPDATE:
-	LD $dVAL, $dAD 
-	BA @ADDRESVALUEDISPLAY
-	
-
 
 ADDRESVALUEDISPLAY:
 		# Check if lever 7 is HIGH
