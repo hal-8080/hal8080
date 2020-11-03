@@ -23,6 +23,13 @@ ARCHITECTURE bhv OF computer_system IS
 	SIGNAL mmData		:	std_logic_vector(15 DOWNTO 0);
 	SIGNAL micro_instr: 	std_logic_vector(32 DOWNTO 0);
 	SIGNAL statusD		: 	std_logic;
+	
+	CONSTANT a_timer0        : std_logic := '1'; -- Activation of timer 0 (Clock) always on!
+    SIGNAL a_timer1          : std_logic := '0'; -- Activation of timer 1
+    SIGNAL a_timer2          : std_logic := '0'; -- Activation of timer 2
+    SIGNAL o_timer0          : std_logic_vector(15 DOWNTO 0); -- Data of timer 0 (Millis Clock)
+    SIGNAL o_timer1          : std_logic_vector(15 DOWNTO 0); -- Data of timer 1
+    SIGNAL o_timer2          : std_logic_vector(15 DOWNTO 0); -- Data of timer 2
 BEGIN
 
 	mm:ENTITY work.memory PORT MAP(
@@ -43,11 +50,16 @@ BEGIN
 		o_seg5 			=> o_seg5,				-- OUT
       o_leds         => o_leds,				-- OUT
       i_switches  	=> i_switches,			-- IN
-      i_buttons		=> i_buttons			-- IN
+      i_buttons		=> i_buttons,			-- IN
+		
+		o_timer1 => a_timer1, 
+		o_timer2 => a_timer2,
+      i_timer0 => o_timer0,
+      i_timer1 => o_timer1,
+      i_timer2 => o_timer2,
+		  
+		  debug_out => statusD
 	);
-	
---	logic:ENTITY work.logic PORT MAP(
---	);
 	
 	processor:ENTITY work.processor PORT MAP(
 		clk			=> clk,
@@ -59,5 +71,26 @@ BEGIN
 		
 		micro_instr	=>	micro_instr		-- OUT
 	);
+	
+	timer0:ENTITY work.timer PORT MAP(
+        clk => clk,
+        reset => reset,
+        activate => a_timer0,
+        output => o_timer0
+    );
+    -- timer1
+    timer1:ENTITY work.timer PORT MAP(
+        clk => clk,
+        reset => reset,
+        activate => a_timer1,
+        output => o_timer1
+    );
+    -- timer2
+    timer2:ENTITY work.timer PORT MAP(
+        clk => clk,
+        reset => reset,
+        activate => a_timer2,
+        output => o_timer2
+    );
 	
 END;

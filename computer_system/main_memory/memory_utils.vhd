@@ -14,19 +14,26 @@ PACKAGE memory_utils IS
     CONSTANT mem_width      : natural :=  8; -- Memory width: 8 bits.
     CONSTANT adr_width      : natural := 16; -- Address width: 16 bits.
     -- INITIAL VALUES     
-    CONSTANT bios_file      : string := "bios.bin"; -- Bin file to populate BIOS rom (Address 0-8191)
-    CONSTANT ram_file       : string := "ram.bin"; -- Bin file to populate user RAM (Address 8192-57343)
+    CONSTANT bios_file      : string := "bios.heks"; -- Heks file to populate BIOS rom (Address 0-8191)
+    CONSTANT ram_file       : string := "ram.heks"; -- Heks file to populate user RAM (Address 8192-57343)
     -- MMIO ADDRESSES
-    CONSTANT start_bios     : natural :=     0;
-    CONSTANT start_ram      : natural :=  8192;
-    CONSTANT start_display  : natural := 57344;
-    CONSTANT start_leds     : natural := 57350;
-    CONSTANT start_switches : natural := 57352;
-    CONSTANT start_buttons  : natural := 57354;
-    CONSTANT start_millis   : natural := 57356;
-    CONSTANT start_debug    : natural := 57358;
+    CONSTANT start_bios     		: natural :=    0;
+    CONSTANT start_ram      		: natural := 1024;
+	 CONSTANT start_leds     		: natural := 2018;	--2 addresses
+	 CONSTANT start_switches 		: natural := 2020;	--2 addresses
+	 CONSTANT start_buttons  		: natural := 2022;	--2 addresses
+    CONSTANT start_display  		: natural := 2024;	--6 addresses
+    CONSTANT start_buttons_prev 	: natural := 2030;	--2 addresses
+    CONSTANT start_millis   		: natural := 2032;	--2 addresses
+    CONSTANT start_debug    		: natural := 2034;	--2 addresses
+    CONSTANT start_A_timer1    	: natural := 2036;	--2 addresses
+    CONSTANT start_timer1    		: natural := 2038;	--2 addresses
+	 CONSTANT start_A_timer2    	: natural := 2040;	--2 addresses
+	 CONSTANT start_timer2    		: natural := 2042;	--2 addresses
+	 CONSTANT start_DBGflags    	: natural := 2044;	--2 addresses
+	 CONSTANT start_DBGRegisters 	: natural := 2046;	--2 addresses
     -- SIZES
-    CONSTANT size_total     : natural := 57360;
+    CONSTANT size_total     : natural := 2048;
 
     -- mbyte consists of size bits
     SUBTYPE mbyte IS std_logic_vector(mem_width-1 DOWNTO 0);
@@ -129,13 +136,13 @@ PACKAGE BODY memory_utils IS
     FUNCTION read_mem(mem: memory_table; address: natural) RETURN word IS
         VARIABLE ret_val: word := (OTHERS => '-');
     BEGIN
-	IF address < size_total THEN
-        	ret_val(adr_width-1 DOWNTO mem_width) := mem(address+1);
-        	ret_val(mem_width-1 DOWNTO 0)         := mem(address);
-        	RETURN ret_val;
-	ELSE
-		RETURN "----------------";
-	END IF;
+        IF address < size_total THEN
+            ret_val(adr_width-1 DOWNTO mem_width) := mem(address+1);
+            ret_val(mem_width-1 DOWNTO 0)         := mem(address);
+            RETURN ret_val;
+        ELSE
+            RETURN "----------------";
+        END IF;
     END read_mem;
 
     FUNCTION read_mem_a(mem: memory_table; address_bus: word) RETURN word IS 

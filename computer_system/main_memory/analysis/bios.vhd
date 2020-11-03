@@ -18,7 +18,7 @@ PACKAGE BODY bios IS
 
     IMPURE FUNCTION get_bios_bin RETURN memory_table IS
     BEGIN
-        RETURN fill_memory_table("bios.bin", start_bios, start_ram-1);
+        RETURN fill_memory_table(bios_file, start_bios, start_ram-1);
     END get_bios_bin;
 
 END PACKAGE BODY bios;
