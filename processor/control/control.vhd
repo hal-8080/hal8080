@@ -39,7 +39,7 @@ BEGIN
         statusZD => statusZD,           --  IN ALU debug zero flag bit for psr
         update_status => update_status, -- IN ALU update status signal when flashing status bits.
         in_debug => in_debug,           --  IN MemoryIO debug signal.
-        micro_instr => micro_inst,      --  IN Micro instruction from microstore
+        micro_in => micro_inst,         --  IN Micro instruction from microstore
         address2cs => address2cs        -- OUT next addres for the microstore
     );
 

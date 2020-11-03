@@ -143,10 +143,10 @@ BEGIN
 
     -- STEP 1: Put on the right addresses based on AMUX.
     -- in_debug will be 1 thus add 16 to registers if we are in debug mode.
-    AdrA <= in_debug & inst_addrA WHEN muxA = '1' ELSE micro_addrA;
+    AdrA <= (in_debug & inst_addrA) WHEN muxA = '1' ELSE micro_addrA;
     -- STEP 1.5: registers will automatically make correct data available on BusA.
     -- STEP 2: Put on the right address based on BMUX
-    AdrB <= in_debug & inst_addrB WHEN muxB = '1' ELSE micro_addrB;
+    AdrB <= (in_debug & inst_addrB) WHEN muxB = '1' ELSE micro_addrB;
     -- STEP 2.5: registers will automatically make data available on BusBR. But we might want a constant instead.
     -- STEP 3: Get the correct B on the Bbus for the ALU.
     GETB: PROCESS(muxB, micro_inst, IR_i, BusBR)
@@ -168,7 +168,7 @@ BEGIN
     END PROCESS;
     -- STEP 4: The ALU will always work immidiatly and output in ALUout.
     -- SETP 5: Set the correct C on the Cbus.
-    AdrC <= in_debug & inst_addrC WHEN muxC = '1' ELSE micro_addrC;
+    AdrC <= (in_debug & inst_addrC) WHEN muxC = '1' ELSE micro_addrC;
     -- STEP 6: Decide whether to use ALU or memory for Cbus.
     BusC <= data_bus_in WHEN do_read = '1' ELSE ALUout;
     -- STEP 7: Expose necessary signals to control / memory.

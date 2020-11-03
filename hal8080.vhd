@@ -85,7 +85,10 @@ BEGIN
     --     dataout => data_bus_from_mem
     -- );
     -- timer0, the millis clock.
-    timer0:ENTITY work.timer PORT MAP(
+    timer0:ENTITY work.timer GENERIC MAP(
+        do_reset = "1"
+    )
+    PORT MAP(
         clk => clk,
         reset => reset,
         activate => a_timer0,

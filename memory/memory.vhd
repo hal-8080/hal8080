@@ -33,7 +33,7 @@ END ENTITY memory;
 
 ARCHITECTURE bhv OF memory IS
 
-    SIGNAL read_address : std_logic_vector(15 DOWNTO 0);
+    SIGNAL read_address : std_logic_vector(15 DOWNTO 0) := "0000000000000000";
     -- MEMORY ENDPOINTS
     SIGNAL memory : memory_table(0 TO start_display-1) :=
     -- bios     - Initialised with the contents of the bios_file.

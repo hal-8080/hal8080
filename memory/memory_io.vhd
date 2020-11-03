@@ -69,14 +69,16 @@ ARCHITECTURE bhv OF memory_io IS
     -- timer2   - Initialised with 00000000, is updated sync. (First address is write, second is read)
     memory_table'(x"00", x"00", x"00", x"00");
 
-    SIGNAL aM1, aM2 : std_logic_vector(15 DOWNTO 0);
+    SIGNAL aM1      : std_logic_vector(15 DOWNTO 0) := "0000000000000000";
+    SIGNAL aM2      : std_logic_vector(15 DOWNTO 0) := "0000000000000001";
     SIGNAL dM1, dM2 : std_logic_vector( 7 DOWNTO 0);
     SIGNAL oM1, oM2 : std_logic_vector( 7 DOWNTO 0);
     SIGNAL wM       : std_logic;
 
 BEGIN
 
-    memory1:ENTITY work.memory PORT MAP(
+    memory1:ENTITY work.memory 
+    PORT MAP(
         -- INTERNALS
         clk => clk, -- 50 MHz Clock
         -- CONTROLL
@@ -85,7 +87,8 @@ BEGIN
         do_write     => wM,  -- Whether we should write
         data_bus_out => oM1  -- Data bus
     );
-    memory2:ENTITY work.memory PORT MAP(
+    memory2:ENTITY work.memory 
+    PORT MAP(
         -- INTERNALS
         clk => clk, -- 50 MHz Clock
         -- CONTROLL
@@ -124,7 +127,7 @@ BEGIN
     BEGIN
         address := to_integer(unsigned(address_bus));
         aM1 <= std_logic_vector(to_unsigned(start_ram-2, 16)); -- End of BIOS just in case
-        aM1 <= std_logic_vector(to_unsigned(start_ram-2, 16)); -- End of BIOS just in case
+        aM2 <= std_logic_vector(to_unsigned(start_ram-2, 16)); -- End of BIOS just in case
         dM1 <= data_bus_in( 7 DOWNTO 0);
         dM2 <= data_bus_in(15 DOWNTO 8);
         wM <= '0'; -- Standard dont write to main memory.
@@ -134,7 +137,7 @@ BEGIN
             IF address >= start_ram OR mmio(start_debug) = x"01" THEN 
                 wM <= do_write;
             END IF;
-            data_bus_out <= oM1 & oM2;
+            data_bus_out <= oM2 & oM1;
         ELSIF address < size_total THEN
             -- Directly output from memory based on address_bus.
             data_bus_out <= read_mem(mmio, address);

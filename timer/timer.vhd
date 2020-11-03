@@ -9,6 +9,9 @@ USE IEEE.std_logic_1164.ALL;
 USE IEEE.numeric_std.ALL;
 
 ENTITY timer IS
+    GENERIC (
+        do_reset : std_logic := "0";
+    )
     PORT (
         -- INTERNALS
         clk : IN std_logic; -- 50 Mhz Clock
@@ -38,7 +41,7 @@ BEGIN
                     cnt <= cnt + 1;
                     subcnt <= 0;
                 END IF;
-            ELSIF activate = '0' THEN
+            ELSIF activate = '0' OR (do_reset = "1" AND cnt = 65535) THEN
                 cnt <= 0;
                 subcnt <= 0;
             END IF;
