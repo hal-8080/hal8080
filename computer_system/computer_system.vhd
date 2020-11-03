@@ -5,15 +5,15 @@ ENTITY computer_system IS
       clk 			: IN std_logic; -- 50 Mhz Clock
       reset 		: IN std_logic; -- Async reset
 		
-		o_seg0 		: OUT std_logic_vector(6 DOWNTO 0);
-		o_seg1  		: OUT std_logic_vector(6 DOWNTO 0);
-      o_seg2 		: OUT std_logic_vector(6 DOWNTO 0);
-		o_seg3 		: OUT std_logic_vector(6 DOWNTO 0);
-      o_seg4 		: OUT std_logic_vector(6 DOWNTO 0);
-		o_seg5  		: OUT std_logic_vector(6 DOWNTO 0);
-      o_leds      : OUT std_logic_vector(9 DOWNTO 0);
-      i_switches  :  IN std_logic_vector(9 DOWNTO 0);
-      i_buttons 	:  IN	std_logic_vector(3 DOWNTO 0)
+		seg0 		: OUT std_logic_vector(6 DOWNTO 0);
+		seg1  		: OUT std_logic_vector(6 DOWNTO 0);
+      seg2 		: OUT std_logic_vector(6 DOWNTO 0);
+		seg3 		: OUT std_logic_vector(6 DOWNTO 0);
+      seg4 		: OUT std_logic_vector(6 DOWNTO 0);
+		seg5  		: OUT std_logic_vector(6 DOWNTO 0);
+      leds      : OUT std_logic_vector(9 DOWNTO 0);
+      switches  :  IN std_logic_vector(9 DOWNTO 0);
+      buttons 	:  IN	std_logic_vector(3 DOWNTO 0)
 		
 	);
 END ENTITY computer_system;
@@ -42,15 +42,15 @@ BEGIN
 		do_write			=> micro_instr(18),	-- IN
 		data_bus_out	=> mmI,					-- OUT
 		
-		o_seg0			=> o_seg0,				-- OUT
-		o_seg1 			=> o_seg1,				-- OUT
-      o_seg2			=> o_seg2,				-- OUT
-		o_seg3			=> o_seg3,				-- OUT
-      o_seg4			=> o_seg4,				-- OUT
-		o_seg5 			=> o_seg5,				-- OUT
-      o_leds         => o_leds,				-- OUT
-      i_switches  	=> i_switches,			-- IN
-      i_buttons		=> i_buttons,			-- IN
+		o_seg0			=> seg0,				-- OUT
+		o_seg1 			=> seg1,				-- OUT
+      o_seg2			=> seg2,				-- OUT
+		o_seg3			=> seg3,				-- OUT
+      o_seg4			=> seg4,				-- OUT
+		o_seg5 			=> seg5,				-- OUT
+      o_leds         => leds,				-- OUT
+      i_switches  	=> switches,			-- IN
+      i_buttons		=> buttons,			-- IN
 		
 		o_timer1 => a_timer1, 
 		o_timer2 => a_timer2,
