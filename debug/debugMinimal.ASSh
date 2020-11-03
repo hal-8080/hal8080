@@ -12,43 +12,49 @@
 # $PC = Program Counter
 # $IR = Instruction Register
 
-@DBGREGISTRIES@ = x"AAAA"
-@DBGFLAGS@ = x"AAAA"
-@USERMEM@ = x"AAAA"
-@LEVERSTATE@ = x"AAAA"
-@BUTTONSTATE@ = x"AAAA"
-@PREVBUTTONSTATE@ = x"AAAA"
+# let preVars = [
+#     ["@_BIOS_@",         0],
+#     ["@_RAM_@",       1024],
+#     ["@_DISPLAY_@",  2024],
+#     ["@_SEG01_@",    2024],
+#     ["@_SEG23_@",    2026],
+#     ["@_SEG45_@",    2028],
+#     ["@_LEDS_@",     2030],
+#     ["@_SWITCHES_@", 2032],
+#     ["@_BUTTONS_@",  2034],
+#     ["@_PREVBUTTONS_@",  2036],
+#     ["@_MILLIS_@",   2038],
+#     ["@_DEBUG_@",    2040],
+#     ["@_ATIMER1_@",  2042],
+#     ["@_TIMER1_@",   2044],
+#     ["@_ATIMER2_@",  2046],
+#     ["@_TIMER2_@",   2048],
+#     ["@_DBGFLAGS_@", 2050],
+#     ["@_DBGREGISTERS_@", 2052]
+# ]
 
 
 	# Set controller to use debug flags and registries
 SETHI $dC, x"00"
 SETLO $dC, x"01"
-ST $dC, @DBGREGISTRIES@
-ST $dC, @DBGFLAGS@
+ST $dC, @_DBGREGISTERS_@
+ST $dC, @_DBGFLAGS_@
 
 	# Store address of start of user program in dbgPC
-LD $dPC, @USERMEM@ 					
+LD $dPC, @_RAM_@ 					
 	# Store first user program instruction in dbgIR
 LD $dIR, $dPC				
-LD $dD, @BUTTONSTATE@
-ST $dD, @PREVBUTTONSTATE@
+LD $dD, @_BUTTONS_@
+ST $dD, @_PREVBUTTONS_@
 
 STARTJUMP:
 	# Set controller to use debug flags and registries
 	SETHI $dC, x"00"
 	SETLO $dC, x"01"
-	ST $dC, @DBGREGISTRIES@
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGREGISTERS_@
+	ST $dC, @_DBGFLAGS_@
 
-	LD $dE, @LEVERSTATE@	
-	
-		# Check if lever 8 is HIGH
-		# 	if off 	jump to MEMORYMODE
-		# 	else 	jump to STEPMODE
-	SETHI $dC, x"00"
-	SETLO $dC, x"80"
-	AND $dC, $dE
-	BZERO @MEMORYMODE
+	LD $dE, @_SWITCHES_@	
 	BA @STEPMODE
 
 
@@ -59,11 +65,11 @@ STEPMODE:
 	CP $dVAL, $dIR	
 	
 		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @BUTTONSTATE@
-	LD $dC, @PREVBUTTONSTATE@
+	LD $dD, @_BUTTONS_@
+	LD $dC, @_PREVBUTTONS_@
 	INV $dC, $dC
 	AND $dC, $dD
-	ST $dD, @PREVBUTTONSTATE@
+	ST $dD, @_PREVBUTTONS_@
 	
 		# Check if button 3 is HIGH
 		# 	If LOW, display value
@@ -127,21 +133,21 @@ USERRETURNINSTRUCTION:
 BNEGCHECK:
 	SETHI $dC, x"00"
 	SETLO $dC, x"00"
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGFLAGS_@
 	BNEG @HOP
 	BA @NOHOP
 	
 BZEROCHECK:
 	SETHI $dC, x"00"
 	SETLO $dC, x"00"
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGFLAGS_@
 	BZERO @HOP
 	BA @NOHOP
 
 HOP:
 	SETHI $dC, x"00"
 	SETLO $dC, x"01"
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGFLAGS_@
 	# 
 	# Get jump address and put in PC 	DEPENDS ON HOW FLAGS WORK
 	# 
@@ -151,7 +157,7 @@ HOP:
 NOHOP:
 	SETHI $dC, x"00"
 	SETLO $dC, x"01"
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGFLAGS_@
 	ADD $dPC, "00010"
 	LD $dIR, $dPC
 	BA @STARTJUMP
@@ -159,20 +165,18 @@ NOHOP:
 NOTBRANCHINSTR:
 	SETHI $dC, x"00"
 	SETLO $dC, x"00"
-	ST $dC, @DBGFLAGS@
+	ST $dC, @_DBGFLAGS_@
 	ST $dIR, @instr
-	ST $dC, @DBGREGISTRIES@
+	ST $dC, @_DBGREGISTERS_@
 instr:
 	PUT 0000000000000000 # DUMMY INSTRUCTION: AND $r0, $r0
 	SETHI $dC, x"00"
 	SETLO $dC, x"01"
-	ST $dC, @DBGFLAGS@
-	ST $dC, @DBGREGISTRIES@
+	ST $dC, @_DBGFLAGS_@
+	ST $dC, @_DBGREGISTERS_@
 	ADD $dPC, "00010"
 	LD $dIR, $dPC
 	BA @STARTJUMP
-
-
 
 ADDRESVALUEDISPLAY:
 		# Check if lever 7 is HIGH

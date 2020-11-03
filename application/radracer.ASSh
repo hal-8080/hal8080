@@ -17,12 +17,26 @@
 # $rE = dispR
 # $rF = Comb
 
-@TIMER0@ = x"AAAA" 
-@TIMER1@ = x"AAAA"
-@BUTTONSTATE@ = x"AAAA"
-@DISPLEFT@ = x"AAAA"
-@DISPMIDDLE@ = x"AAAA"
-@DISPRIGHT@ = x"AAAA"
+# let preVars = [
+#     ["@_BIOS_@",         0],
+#     ["@_RAM_@",       1024],
+#     ["@_DISPLAY_@",  2024],
+#     ["@_SEG01_@",    2024],
+#     ["@_SEG23_@",    2026],
+#     ["@_SEG45_@",    2028],
+#     ["@_LEDS_@",     2030],
+#     ["@_SWITCHES_@", 2032],
+#     ["@_BUTTONS_@",  2034],
+#     ["@_PREVBUTTONS_@",  2036],
+#     ["@_MILLIS_@",   2038],
+#     ["@_DEBUG_@",    2040],
+#     ["@_ATIMER1_@",  2042],
+#     ["@_TIMER1_@",   2044],
+#     ["@_ATIMER2_@",  2046],
+#     ["@_TIMER2_@",   2048],
+#     ["@_DBGFLAGS_@", 2050],
+#     ["@_DBGREGISTERS_@", 2052],
+# ]
 
 
 INIT:
@@ -43,9 +57,9 @@ INIT:
 	OR $r5, $rB
 	INV $rF, $r5
 	
-	ST $rF, @DISPLEFT@
-	ST $rD, @DISPMIDDLE@
-	ST $rE, @DISPRIGHT@
+	ST $rF, @_SEG45_@
+	ST $rD, @_SEG23_@
+	ST $rE, @_SEG01_@
 
 	SETHI $r9, x"00"
 	SETLO $r9, x"00"
@@ -53,8 +67,8 @@ INIT:
 	SETHI $r8, "00000011" # Start at 1000 ms per move
 	SETLO $r8, "11101000"
 	displayLUT
-	ST $r1, @TIMER0@
-	LD $r7, @TIMER1@
+	ST $r1, @_ATIMER1_@
+	LD $r7, @_TIMER1_@
 
 
 
@@ -69,7 +83,7 @@ LOOP:
 
 
 UPDATEPLAYER:
-	LD $r6, @BUTTONSTATE@
+	LD $r6, @_BUTTONS_@
 # checkUP:
 	SETLO $r5, x"00"
 	SETHI $r5, x"10"
@@ -102,7 +116,7 @@ UPDATEFIRSTDISPLAY:
 	INV $r5, $rC
 	OR $r5, $rB
 	INV $rF, $r5
-	ST $rF, @DISPLEFT@
+	ST $rF, @_SEG45_@
 	RET
 
 
@@ -116,14 +130,14 @@ COLLISION:
 
 
 UPDATEDISPLAYS:
-	LD $r7, @TIMER1@
+	LD $r7, @_TIMER1_@
 	CP $r5, $r8
 	SUB $r5, $r7
 	BNEG @MOVEDISPLAYS
 	RET
 
 MOVEDISPLAYS:
-	ST $r0, @TIMER0@
+	ST $r0, @_ATIMER1_@
 	SUB $r8, 10
 	ADD $r9, $r1
 
@@ -144,7 +158,7 @@ MOVEDISPLAYS:
 		# seg1 = seg0 
 	SHIFTL $rE, 8
 
-	ST $r1, @TIMER0@  		# Start the timer
+	ST $r1, @_ATIMER1_@  		# Start the timer
 	
 		# if seg3 == EMPTY
 		# 	seg0 = EMPTY
@@ -208,9 +222,9 @@ WRITEDISPLAYS:
 	OR $r5, $rB
 	INV $rF, $r5
 	
-	ST $rF, @DISPLEFT@
-	ST $rD, @DISPMIDDLE@
-	ST $rE, @DISPRIGHT@
+	ST $rF, @_SEG45_@
+	ST $rD, @_SEG23_@
+	ST $rE, @_SEG01_@
 
 
 
@@ -220,10 +234,10 @@ DEAD:
 	# check for user input
 	# if both buttons pressed, jump INIT
 
-	ST $r0, @TIMER0@
+	ST $r0, @_ATIMER1_@
 	DISPRHR $r9
 
-	LD $r6, @BUTTONSTATE@
+	LD $r6, @_BUTTONS_@
 	SETHI $r5, x"20"
 	SETLO $r5, x"00"
 	AND $r5, $r6

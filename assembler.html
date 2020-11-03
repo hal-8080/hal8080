@@ -88,7 +88,7 @@
             </div>
             <div class="text-center">
                 <input id="filename" type="text" class="form-control d-inline" style="width: 20rem;" placeholder="Filename (def:'ram')">
-                <input id="startaddress" type="number" class="form-control d-inline" style="width: 20rem;" placeholder="Start Address (def:8192)">
+                <input id="startaddress" type="number" class="form-control d-inline" style="width: 20rem;" placeholder="Start Address (def:1024)">
                 <button id="assembleBtn" class="btn btn-success" type="button" style="background-color: #58f00a; color: #25282c; font-weight: bold;">Assemble</button>
                 <a href="#usage" class="btn" role="button">Usage</a>
                 <button id="saveBtn" class="btn btn-primary" type="button">Save</button>
@@ -211,7 +211,7 @@ end:        BA @end`
          * @param {string} extension - The extension to use.
          */
          function getStartAddress() {
-            return parseInt(document.getElementById("startaddress").value || '8192');
+            return parseInt(document.getElementById("startaddress").value || '1024');
         }
 
         /***
