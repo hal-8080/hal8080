@@ -1,23 +1,43 @@
-# User Program
-# Compiled on Tue, 03 Nov 2020 19:08:48 GMT by Hal8080 Assembler [k]
+# User Input Binary Counter
+# Use the buttons to add 1, 2, 4 or 8 to the counter.
+# The binary number is shown on the LEDS.
+# Compiled on Tue, 03 Nov 2020 19:59:11 GMT by Hal8080 Assembler [k]
 =======
-0000-EF
-0001-A9
+0000-C0
+0001-2B
 0002-E0
 0003-F4
-0004-08
+0004-0A
 0005-F5
 0006-0A
-0007-44
-0008-E0
-0009-F4
-000A-06
-000B-F5
+0007-46
+0008-43
+0009-07
+000A-E0
+000B-F4
 000C-0A
-000D-45
-000E-00
-000F-F4
-0010-02
-0011-F5
-0012-8A
-0013-C0
+000D-F5
+000E-0A
+000F-44
+0010-C2
+0011-09
+0012-03
+0013-08
+0014-84
+0015-0A
+0016-C2
+0017-07
+0018-43
+0019-07
+001A-E0
+001B-F4
+001C-06
+001D-F5
+001E-0A
+001F-4B
+0020-00
+0021-F4
+0022-0A
+0023-F5
+0024-8A
+0025-C0

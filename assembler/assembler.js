@@ -446,6 +446,12 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
     memory.push(`# Compiled on ${new Date().toUTCString()} by Hal8080 Assembler [k]`);
     memory.push("======="); // Split the preamble from the binary.
     for (let i = 0; i < data.length; i++) {
+        // Test to compile directly to MIF in quartus. Work in progress.
+        // let low = numToBin(parseInt(data[i], 2) >>> 8, 8); // Lowest 8 bits in memory 1
+        // let hi  = numToBin(parseInt(data[i], 2) & 255, 8); // Lowest 8 bits in memory 0
+        // memory.push(`${address} : ${hi};`);
+        // memory.push(`${address+1} : ${low};`);
+
         // Memory is in Little Endian.
         let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
         let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 0
