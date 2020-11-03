@@ -1,0 +1,6 @@
+# This file contains the assembled assemblyhal code for the BIOS ROM of the HAL8080 processor.
+=======
+0000-AA
+0001-FF
+0002-00
+0003-00
