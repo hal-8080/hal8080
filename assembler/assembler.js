@@ -24,23 +24,20 @@
 // Load usefull addresses in for every user.
 let preVars = [
     ["@_BIOS_@",         0],
-    ["@_RAM_@",       1024],
-    ["@_LEDS_@",     2018],
-    ["@_SWITCHES_@", 2020],
-    ["@_BUTTONS_@",  2022],
-    ["@_DISPLAY_@",  2024],
-    ["@_SEG01_@",    2024],
-    ["@_SEG23_@",    2026],
-    ["@_SEG45_@",    2028],
-    ["@_PREVBUTTONS_@",  2030],
-    ["@_MILLIS_@",   2032],
-    ["@_DEBUG_@",    2034],
-    ["@_ATIMER1_@",  2036],
-    ["@_TIMER1_@",   2038],
-    ["@_ATIMER2_@",  2040],
-    ["@_TIMER2_@",   2042],
-    ["@_DBGFLAGS_@", 2044],
-    ["@_DBGREGISTERS_@", 2046]
+    ["@_RAM_@",       8192],
+    ["@_DISPLAY_@",  57344],
+    ["@_SEG01_@",    57344],
+    ["@_SEG23_@",    57346],
+    ["@_SEG45_@",    57348],
+    ["@_LEDS_@",     57350],
+    ["@_SWITCHES_@", 57352],
+    ["@_BUTTONS_@",  57354],
+    ["@_MILLIS_@",   57356],
+    ["@_DEBUG_@",    57358],
+    ["@_ATIMER1_@",  57360],
+    ["@_TIMER1_@",   57362],
+    ["@_ATIMER2_@",  57364],
+    ["@_TIMER2_@",   57366]
 ]
 
 //==========================================\\
@@ -452,7 +449,7 @@ async function assemble(input, startAddress = 0, percentDone = ()=>{}, warning =
         // Memory is in Little Endian.
         let low = numToHex(parseInt(data[i], 2) >>> 8, 2); // Lowest 8 bits in memory 1
         let hi  = numToHex(parseInt(data[i], 2) & 255, 2); // Lowest 8 bits in memory 0
-        memory.push(`${numToHex(address,   4)}-${ hi}${dataComment[i]}`);
+        memory.push(`${numToHex(address,   4)}-${ hi}`); //${dataComment[i]}
         memory.push(`${numToHex(address+1, 4)}-${low}`);
         address += 2;
         percentDone(75 + (25/data.length) * i);

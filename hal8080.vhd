@@ -54,7 +54,7 @@ BEGIN
     --     do_read => do_read
     -- );
     -- memory, the main memory and mapped IO.
-    memory:ENTITY work.memory PORT MAP(
+    memory:ENTITY work.memory_io PORT MAP(
         -- INTERNALS
         clk => clk,
         reset => reset,
@@ -77,8 +77,18 @@ BEGIN
         i_timer2 => o_timer2,
         debug_out => in_debug
     );
+    -- memtest:ENTITY work.mem_test PORT MAP(
+    --     clk => clk,
+    --     we => do_write,
+    --     address => address_bus,
+    --     datain => data_bus_to_mem,
+    --     dataout => data_bus_from_mem
+    -- );
     -- timer0, the millis clock.
-    timer0:ENTITY work.timer PORT MAP(
+    timer0:ENTITY work.timer GENERIC MAP(
+        do_reset = "1"
+    )
+    PORT MAP(
         clk => clk,
         reset => reset,
         activate => a_timer0,

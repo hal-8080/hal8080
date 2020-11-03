@@ -88,7 +88,7 @@
             </div>
             <div class="text-center">
                 <input id="filename" type="text" class="form-control d-inline" style="width: 20rem;" placeholder="Filename (def:'ram')">
-                <input id="startaddress" type="number" class="form-control d-inline" style="width: 20rem;" placeholder="Start Address (def:1024)">
+                <input id="startaddress" type="number" class="form-control d-inline" style="width: 20rem;" placeholder="Start Address (def:8192)">
                 <button id="assembleBtn" class="btn btn-success" type="button" style="background-color: #58f00a; color: #25282c; font-weight: bold;">Assemble</button>
                 <a href="#usage" class="btn" role="button">Usage</a>
                 <button id="saveBtn" class="btn btn-primary" type="button">Save</button>
@@ -290,7 +290,7 @@ end:        BA @end`
                 ), getFileName('.heks'));
                 setColorProgress("green");
                 popup("success", 'Assembled', `Done assembling ${getFileName('.assh')}!`);
-                setTimeout(()=>setProgress(0), 2000);
+                setTimeout(()=>setProgress(0), 8192);
             } catch (e) {
                 setColorProgress("red");
                 console.error(e);
