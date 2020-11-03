@@ -1,6 +1,13 @@
-# This file contains the assembled assemblyhal code for the BIOS ROM of the HAL8080 processor.
+# User Program
+# Compiled on Tue, 03 Nov 2020 11:29:23 GMT by Hal8080 Assembler [k]
 =======
-0000-AA
-0001-FF
-0002-00
-0003-00
+0000-81
+0001-04
+0002-85
+0003-24
+0004-00
+0005-F4
+0006-04
+0007-F5
+0008-8A
+0009-C0

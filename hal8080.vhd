@@ -77,6 +77,13 @@ BEGIN
         i_timer2 => o_timer2,
         debug_out => in_debug
     );
+    -- memtest:ENTITY work.mem_test PORT MAP(
+    --     clk => clk,
+    --     we => do_write,
+    --     address => address_bus,
+    --     datain => data_bus_to_mem,
+    --     dataout => data_bus_from_mem
+    -- );
     -- timer0, the millis clock.
     timer0:ENTITY work.timer PORT MAP(
         clk => clk,

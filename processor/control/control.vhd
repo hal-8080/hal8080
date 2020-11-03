@@ -18,6 +18,7 @@ ENTITY control IS
         ir                 :  IN std_logic_vector(15 DOWNTO 0);
         statusN, statusZ   :  IN std_logic;
         statusND, statusZD :  IN std_logic;
+        update_status      :  IN std_logic;
         in_debug           :  IN std_logic;
         -- CONTROL STORE
         micro_instr_out    : OUT std_logic_vector(32 DOWNTO 0)
@@ -29,16 +30,17 @@ ARCHITECTURE bhv OF control IS
     SIGNAL micro_inst : std_logic_vector(32 DOWNTO 0); -- The 33 bit microinstruction from the store to controller and outside.
 BEGIN
     cntrl:ENTITY work.controller PORT MAP(
-        clk => clk,                --  IN 50 MHz Clock.
-        reset => reset,            --  IN Async Reset
-        ir    => ir,               --  IN instruction register from datapath
-        statusN => statusN,        --  IN ALU neg flag bit for psr
-        statusZ => statusZ,        --  IN ALU zero flag bit for psr
-        statusND => statusND,      --  IN ALU debug neg flag bit for psr
-        statusZD => statusZD,      --  IN ALU debug zero flag bit for psr
-        in_debug => in_debug,      --  IN MemoryIO debug signal.
-        micro_instr => micro_inst, --  IN Micro instruction from microstore
-        address2cs => address2cs   -- OUT next addres for the microstore
+        clk => clk,                     --  IN 50 MHz Clock.
+        reset => reset,                 --  IN Async Reset
+        ir    => ir,                    --  IN instruction register from datapath
+        statusN => statusN,             --  IN ALU neg flag bit for psr
+        statusZ => statusZ,             --  IN ALU zero flag bit for psr
+        statusND => statusND,           --  IN ALU debug neg flag bit for psr
+        statusZD => statusZD,           --  IN ALU debug zero flag bit for psr
+        update_status => update_status, -- IN ALU update status signal when flashing status bits.
+        in_debug => in_debug,           --  IN MemoryIO debug signal.
+        micro_instr => micro_inst,      --  IN Micro instruction from microstore
+        address2cs => address2cs        -- OUT next addres for the microstore
     );
 
     mstore:ENTITY work.microstore PORT MAP(

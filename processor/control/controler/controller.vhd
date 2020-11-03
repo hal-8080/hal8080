@@ -20,6 +20,7 @@ ENTITY controller IS
         ir    :  IN std_logic_vector(15 DOWNTO 0);
         statusN, statusZ   : IN std_logic;
         statusND, statusZD : IN std_logic;
+        update_status      : IN std_logic; -- Whether to update status flipflops.
         in_debug           : IN std_logic;
         -- CONTROL STORE
         micro_instr :  IN std_logic_vector(32 DOWNTO 0);
@@ -81,11 +82,13 @@ BEGIN
         IF reset='0' THEN
             psr <= (OTHERS=>'0'); -- Reset the status bits to 0.
         ELSIF rising_edge(clk) THEN
-            -- Update status bits based on the signals from datapath.
-            psr(3) <= statusND;
-            psr(2) <= statusZD;
-            psr(1) <= statusN;
-            psr(0) <= statusZ;
+            IF update_status='1' THEN
+                -- Update status bits based on the signals from datapath.
+                psr(3) <= statusND;
+                psr(2) <= statusZD;
+                psr(1) <= statusN;
+                psr(0) <= statusZ;
+            END IF;
         END IF;
     END PROCESS;
 
@@ -122,7 +125,7 @@ BEGIN
     END PROCESS; 
 
     -- NEXT ADDRESS LOGIC
-    NextAddress: PROCESS(micro_instr, cbl, ir)
+    NextAddress: PROCESS(micro_instr, cbl, ir, CSAI_inc)
     BEGIN
         CASE cbl IS
             -- If next (usually) use the counter that is incremented
@@ -144,7 +147,9 @@ BEGIN
                 -- SET / BRANCH Operations
                 ELSIF OP = "11" THEN        
                     IF OPi = '1' THEN address <= "10" & OP & OPi & OPLS & "00000"; -- SETHI/SETLO
-                    ELSE address <= "10" & OP & OPi & OP3 & "0000"; END IF; -- BRANCH
+                    ELSE address <= "10" & OP & OPi & OP2 & "00"; END IF; -- BRANCH
+                ELSE
+                    address <= CSAI_inc; -- Prevent latch.
                 END IF;
         END CASE;
     END PROCESS;
