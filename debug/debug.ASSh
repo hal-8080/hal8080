@@ -1,3 +1,5 @@
+# Debug program for assembler
+
 # $RET = Call Return Address
 # $dA = ASSEMBLERBRANCH
 # $dB = TempVal2
@@ -34,11 +36,6 @@
 # ]
 
 
-	# Set controller to use debug flags and registries
-SETHI $dC, x"00"
-SETLO $dC, x"01"
-ST $dC, @_DBGREGISTERS_@
-ST $dC, @_DBGFLAGS_@
 
 	# Store address of start of user program in dbgPC
 LD $dPC, @_RAM_@ 					

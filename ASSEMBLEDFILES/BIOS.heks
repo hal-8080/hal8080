@@ -1,0 +1,27 @@
+# BIOS of the application
+# Compiled on Tue, 03 Nov 2020 13:05:49 GMT by Hal8080 Assembler [k]
+=======
+0000-07 # SETHI $rA, x"7"
+0001-F4
+0002-F0 # SETLO $rA, x"f0"
+0003-F5
+0004-0A # LD $dE, $rA
+0005-50
+0006-00 # SETHI $dC, x"0"
+0007-EC
+0008-40 # SETLO $dC, x"40"
+0009-ED
+000A-08 # AND $dC, $dE
+000B-0C
+000C-04 # SETHI $rA, x"4"
+000D-F4
+000E-00 # SETLO $rA, x"0"
+000F-F5
+0010-4A # BZERO $rA, 
+0011-C0
+0012-07 # SETHI $rA, x"7"
+0013-F4
+0014-F8 # SETLO $rA, x"f8"
+0015-F5
+0016-8A # BA $rA, 
+0017-C0

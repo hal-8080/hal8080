@@ -24,23 +24,24 @@
 // Load usefull addresses in for every user.
 let preVars = [
     ["@_BIOS_@",         0],
+    ["@_DEBUG_@",      32],
     ["@_RAM_@",       1024],
+    ["@_LEDS_@",     2018],
+    ["@_SWITCHES_@", 2020],
+    ["@_BUTTONS_@",  2022],
     ["@_DISPLAY_@",  2024],
     ["@_SEG01_@",    2024],
     ["@_SEG23_@",    2026],
     ["@_SEG45_@",    2028],
-    ["@_LEDS_@",     2030],
-    ["@_SWITCHES_@", 2032],
-    ["@_BUTTONS_@",  2034],
-    ["@_PREVBUTTONS_@",  2036],
-    ["@_MILLIS_@",   2038],
-    ["@_DEBUG_@",    2040],
-    ["@_ATIMER1_@",  2042],
-    ["@_TIMER1_@",   2044],
-    ["@_ATIMER2_@",  2046],
-    ["@_TIMER2_@",   2048],
-    ["@_DBGFLAGS_@", 2050],
-    ["@_DBGREGISTERS_@", 2052]
+    ["@_PREVBUTTONS_@",  2030],
+    ["@_MILLIS_@",   2032],
+    ["@_DEBUG_@",    2034],
+    ["@_ATIMER1_@",  2036],
+    ["@_TIMER1_@",   2038],
+    ["@_ATIMER2_@",  2040],
+    ["@_TIMER2_@",   2042],
+    ["@_DBGFLAGS_@", 2044],
+    ["@_DBGREGISTERS_@", 2046]
 ]
 
 //==========================================\\

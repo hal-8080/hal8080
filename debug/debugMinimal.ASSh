@@ -1,3 +1,5 @@
+# Debug Minimal Version, only step mode
+
 # $RET = Call Return Address
 # $dA = ASSEMBLERBRANCH
 # $dB = TempVal2
@@ -32,7 +34,6 @@
 #     ["@_DBGFLAGS_@", 2050],
 #     ["@_DBGREGISTERS_@", 2052]
 # ]
-
 
 	# Set controller to use debug flags and registries
 SETHI $dC, x"00"

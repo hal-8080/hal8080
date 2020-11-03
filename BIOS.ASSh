@@ -1,0 +1,9 @@
+# BIOS of the application
+# Check if lever 9
+
+LD $dE, @_SWITCHES_@
+SETHI $dC, x"00"
+SETLO $dC, x"40"
+AND $dC, $dE
+BZERO @_RAM_@
+BA @_DEBUG_@

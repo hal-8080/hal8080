@@ -1,8 +1,8 @@
 # Display "CORONA" on the display
-@DISPMIDDLE@ = x"FFAA"
+# @_SEG23_@ = 2026
 
 DISPCL "01100", "00000"
 SETHI $r5, "01111010"
 SETLO $r5, "00000001"
-ST $r5, @DISPMIDDLE@
+ST $r5, @_SEG23_@
 DISPCR "10100", "01010"
