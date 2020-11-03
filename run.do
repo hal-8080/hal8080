@@ -19,4 +19,5 @@ add wave -position end  sim:/hal8080/buttons
 
 force clk 0 10ps, 1 20ps -repeat 20ps
 force buttons "1110"
+force switches "0000100010"
 run 5000
