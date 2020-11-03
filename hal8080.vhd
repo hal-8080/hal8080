@@ -54,7 +54,7 @@ BEGIN
     --     do_read => do_read
     -- );
     -- memory, the main memory and mapped IO.
-    memory:ENTITY work.memory PORT MAP(
+    memory:ENTITY work.memory_io PORT MAP(
         -- INTERNALS
         clk => clk,
         reset => reset,
