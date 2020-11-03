@@ -3,19 +3,19 @@
 #	RET is expected to have a $Rs
 #	RAND is expected to have a $Rs
  
-@BUTTONSTATE@ = x"FAAA"
-@PREVBUTTONSTATE@ = x"FAAB"
+# @_BUTTONS_@ = x"FAAA"
+# @_PREVBUTTONS_@ = x"FAAB"
 
 # $r2 = TempVal
 # $r3 = ButtonState
 # $r4 = ChangedButtons
 
 GETINPUT:    
-    LD $r3, @BUTTONSTATE@
-    LD $r4, @PREVBUTTONSTATE@
+    LD $r3, @_BUTTONS_@
+    LD $r4, @_PREVBUTTONS_@
     INV $r4, $r4
     AND $r4, $r3
-    ST $r3, @PREVBUTTONSTATE@
+    ST $r3, @_PREVBUTTONS_@
     SETHI $r2, x"10"
     SETLO $r2, x"00"
     AND $r2, $r4

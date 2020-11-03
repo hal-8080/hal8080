@@ -1,44 +1,65 @@
-# Debug program
-# $r0 = %r0 
-# $r1 = %r1
+# Debug program for assembler
 
 # $RET = Call Return Address
-# $dA = TempAddr
+# $dA = ASSEMBLERBRANCH
 # $dB = TempVal2
 # $dC = TempVal1 
 # $dD = ButtonState 
 # $dE = LeverState 
-# $dF = ASSEMBLERBRANCH
+# $dF = TempAddr
 # $dAD = dbgAddr
 # $dVAL = dbgValue 
 # $dPC = dbgPC 
 # $dIR = dbgIR 
 # $PC = Program Counter
 # $IR = Instruction Register
-#
-@DBGREGISTRIES@ = x"AAAA"
-@DBGFLAGS@ = x"AAAA"
-@USERMEM@ = x"AAAA"
-@LEVERSTATE@ = x"AAAA"
-@BUTTONSTATE@ = x"AAAA"
-@PREVBUTTONSTATE@ = x"AAAA"
 
+# let preVars = [
+#     ["@_BIOS_@",         0],
+#     ["@_RAM_@",       1024],
+#     ["@_DISPLAY_@",  2024],
+#     ["@_SEG01_@",    2024],
+#     ["@_SEG23_@",    2026],
+#     ["@_SEG45_@",    2028],
+#     ["@_LEDS_@",     2030],
+#     ["@_SWITCHES_@", 2032],
+#     ["@_BUTTONS_@",  2034],
+#     ["@_PREVBUTTONS_@",  2036],
+#     ["@_MILLIS_@",   2038],
+#     ["@_DEBUG_@",    2040],
+#     ["@_ATIMER1_@",  2042],
+#     ["@_TIMER1_@",   2044],
+#     ["@_ATIMER2_@",  2046],
+#     ["@_TIMER2_@",   2048],
+#     ["@_DBGFLAGS_@", 2050],
+#     ["@_DBGREGISTERS_@", 2052],
+# ]
 
+##### BIOS #####
 
-ST $r1, @DBGREGISTRIES@
-ST $r1, @DBGFLAGS@
+LD $dE, @_SWITCHES_@
+SETHI $dC, x"00"
+SETLO $dC, x"40"
+AND $dC, $dE
+BZERO @_RAM_@
+
+##### BIOS #####
+
 	# Store address of start of user program in dbgPC
-LD $dPC, @USERMEM@ 					
+LD $dPC, @_RAM_@ 					
 	# Store first user program instruction in dbgIR
 LD $dIR, $dPC				
-LD $dD, @BUTTONSTATE@
-ST $dD, @PREVBUTTONSTATE@
+LD $dD, @_BUTTONS_@
+ST $dD, @_PREVBUTTONS_@
 
 STARTJUMP:
-	ST $r1, @DBGREGISTRIES@
-	ST $r1, @DBGFLAGS@
+	# Set controller to use debug flags and registries
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGREGISTERS_@
+	ST $dC, @_DBGFLAGS_@
 
-	LD $dE, @LEVERSTATE@	
+	LD $dE, @_SWITCHES_@	
 	
 		# Check if lever 8 is HIGH
 		# 	if off 	jump to MEMORYMODE
@@ -54,14 +75,14 @@ STARTJUMP:
 STEPMODE:
 		# Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
 	CP $dAD, $dPC
-	CP $dVal, $dIR	
+	CP $dVAL, $dIR	
 	
 		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @BUTTONSTATE@
-	LD $dC, @PREVBUTTONSTATE@
+	LD $dD, @_BUTTONS_@
+	LD $dC, @_PREVBUTTONS_@
 	INV $dC, $dC
 	AND $dC, $dD
-	ST $dD, @PREVBUTTONSTATE@
+	ST $dD, @_PREVBUTTONS_@
 	
 		# Check if button 3 is HIGH
 		# 	If LOW, display value
@@ -123,17 +144,23 @@ USERRETURNINSTRUCTION:
 	BA @STARTJUMP
 	
 BNEGCHECK:
-	ST $r0, @DBGFLAGS@
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
 	BNEG @HOP
 	BA @NOHOP
 	
 BZEROCHECK:
-	ST $r0, @DBGFLAGS@
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
 	BZERO @HOP
 	BA @NOHOP
 
 HOP:
-	ST $r1, @DBGFLAGS@
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
 	# 
 	# Get jump address and put in PC 	DEPENDS ON HOW FLAGS WORK
 	# 
@@ -141,19 +168,25 @@ HOP:
 	BA @STARTJUMP
 	
 NOHOP:
-	ST $r1, @DBGFLAGS@
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
 	ADD $dPC, "00010"
 	LD $dIR, $dPC
 	BA @STARTJUMP
 	
 NOTBRANCHINSTR:
-	ST $r0, @DBGFLAGS@
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
 	ST $dIR, @instr
-	ST $r0, @DBGREGISTRIES@
+	ST $dC, @_DBGREGISTERS_@
 instr:
-	AND $r0, $r0 	# DUMMY INSTRUCTION
-	ST $r1, @DBGFLAGS@
-	ST $r1, @DBGREGISTRIES@
+	PUT "0000000000000000" # DUMMY INSTRUCTION: AND $r0, $r0
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
+	ST $dC, @_DBGREGISTERS_@
 	ADD $dPC, "00010"
 	LD $dIR, $dPC
 	BA @STARTJUMP
@@ -170,17 +203,15 @@ MEMORYMODE:
 	BZERO @REGISTRY
 	BA @MAINMEM
 
-
-
 REGISTRY:
 		# Change X in "Display register X" to correct value, switch DBGREGISTRIES off, execute instruction, switch DBGREGISTRIES on
 	
 		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @BUTTONSTATE@
-	LD $dC, @PREVBUTTONSTATE@
+	LD $dD, @_BUTTONS_@
+	LD $dC, @_PREVBUTTONS_@
 	INV $dC, $dC
 	AND $dC, $dD
-	ST $dD, @PREVBUTTONSTATE@
+	ST $dD, @_PREVBUTTONS_@
 	
 		# Check if button 3 and/or 2 is HIGH
 			# If both LOW, jump to REGISTRYSTATIC
@@ -193,42 +224,40 @@ REGISTRY:
 
 REGISTRYMOVE:
 		# If button 3 or 2 is pressed, increment/decrement the XXXX in "Display Register XXXX" 
-
-	LD $dA, @LBL	
-	CP $dB, $dA
+	LD $dF, @LBL	
+	CP $dB, $dF
 	AND $dB, "01111"		# $dB = 0..0 XXXX
 	
 	# In use: DA: LBL("Display registry XXXX")
 	# 		TempVal1: Changed buttons
 	# 		TempVal2: 0..0 XXXX
 	
-	CP $dA, $dB
+	CP $dF, $dB
 	SHIFTL $dC, 3
 	BZERO @REGISTRYMOVEADD
 	BA @REGISTRYMOVESUB
 	
 REGISTRYMOVESUB:
-	SUB $dA, x"0001"
+	SUB $dF, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVEADD:
-	ADD $dA, x"0001"
+	ADD $dF, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVESET:
-	AND $dA, "01111"
-	CP $dC, $dA 	
-	LD $dA, @LBL
-	AND $dA, "10000"
-	OR $dA, $dC
-	ST $dA, @LBL
+	AND $dF, "01111"
+	CP $dC, $dF 	
+	LD $dF, @LBL
+	AND $dF, "10000"
+	OR $dF, $dC
+	ST $dF, @LBL
 	
 	SHIFTL $dC, 4
 	OR $dC, "00001"
 	SHIFTL $dC, 4
 	OR $dC, "01111"	# $dC = 0000XXXX 00011111 = Register number on 1st, EMPTY on 2nd 
 	DISPRCL $dC 		# DISP Register number + empty on left 2 displays
-
 	BA @REGISTRYREADOUTPUT
 
 REGISTRYSTATIC:
@@ -244,21 +273,25 @@ REGISTRYSTATIC:
 	BA @REGISTRYREADOUTPUT
 
 REGISTRYREADOUTPUT:
-	ST $r0, @DBGREGISTRIES@ 
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGREGISTERS_@ 
 LBL:	
-	DISPRHR x"0000"		# x"0000" is DUMMY VARIABLE
-	ST $r1, @DBGREGISTRIES@ 
+	PUT "1000100000000000" # DUMMY VARIABLE: DISPRHR $r0 # 100OP--0----XXXX, XXXX is registry, OP 01 is right 4 displays 
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGREGISTERS_@ 
 	BA @STARTJUMP
 
 
 
 MAINMEM:
 		# Check which button went from 0 to 1, store results in $dC
-	LD $dD, @BUTTONSTATE@
-	LD $dC, @PREVBUTTONSTATE@
+	LD $dD, @_BUTTONS_@
+	LD $dC, @_PREVBUTTONS_@
 	INV $dC, $dC
 	AND $dC, $dD
-	ST $dD, @PREVBUTTONSTATE@
+	ST $dD, @_PREVBUTTONS_@
 	
 		# Check if button 3 and/or 2 is HIGH
 		# 	If both LOW, jump to REGISTRYSTATIC
@@ -327,7 +360,7 @@ MAINMEMMOVEADD:
 	BA @MAINMEMUPDATE
 
 MAINMEMUPDATE:
-	LD $dVal, $dAD 
+	LD $dVAL, $dAD 
 	BA @ADDRESVALUEDISPLAY
 	
 
@@ -343,9 +376,10 @@ ADDRESVALUEDISPLAY:
 	BA @DISPLAYADDRES
 
 DISPLAYVALUE:
-	DISPRHR $dVal
+	DISPRHR $dVAL
 	BA @STARTJUMP
 
 DISPLAYADDRES:
 	DISPRHR $dAD
 	BA @STARTJUMP
+

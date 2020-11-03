@@ -1,0 +1,17 @@
+# Display "CORONA" on the display
+# Compiled on Tue, 03 Nov 2020 13:11:07 GMT by Hal8080 Assembler [k]
+=======
+0400-80 # DISPCL x"180"
+0401-B1
+0402-7A # SETHI $r5, x"7a"
+0403-EA
+0404-01 # SETLO $r5, x"1"
+0405-EB
+0406-07 # SETHI $rA, x"7"
+0407-F4
+0408-EA # SETLO $rA, x"ea"
+0409-F5
+040A-0A # ST $r5, $rA
+040B-4B
+040C-8A # DISPCR x"28a"
+040D-A2

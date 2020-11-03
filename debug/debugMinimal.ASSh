@@ -1,0 +1,209 @@
+# Debug Minimal Version, only step mode
+
+# $RET = Call Return Address
+# $dA = ASSEMBLERBRANCH
+# $dB = TempVal2
+# $dC = TempVal1 
+# $dD = ButtonState 
+# $dE = LeverState 
+# $dF = TempAddr
+# $dAD = dbgAddr
+# $dVAL = dbgValue 
+# $dPC = dbgPC 
+# $dIR = dbgIR 
+# $PC = Program Counter
+# $IR = Instruction Register
+
+# let preVars = [
+#     ["@_BIOS_@",         0],
+#     ["@_RAM_@",       1024],
+#     ["@_DISPLAY_@",  2024],
+#     ["@_SEG01_@",    2024],
+#     ["@_SEG23_@",    2026],
+#     ["@_SEG45_@",    2028],
+#     ["@_LEDS_@",     2030],
+#     ["@_SWITCHES_@", 2032],
+#     ["@_BUTTONS_@",  2034],
+#     ["@_PREVBUTTONS_@",  2036],
+#     ["@_MILLIS_@",   2038],
+#     ["@_DEBUG_@",    2040],
+#     ["@_ATIMER1_@",  2042],
+#     ["@_TIMER1_@",   2044],
+#     ["@_ATIMER2_@",  2046],
+#     ["@_TIMER2_@",   2048],
+#     ["@_DBGFLAGS_@", 2050],
+#     ["@_DBGREGISTERS_@", 2052]
+# ]
+
+##### BIOS #####
+
+LD $dE, @_SWITCHES_@
+SETHI $dC, x"00"
+SETLO $dC, x"40"
+AND $dC, $dE
+BZERO @_RAM_@
+
+##### BIOS #####
+
+	# Set controller to use debug flags and registries
+SETHI $dC, x"00"
+SETLO $dC, x"01"
+ST $dC, @_DBGREGISTERS_@
+ST $dC, @_DBGFLAGS_@
+
+	# Store address of start of user program in dbgPC
+LD $dPC, @_RAM_@ 					
+	# Store first user program instruction in dbgIR
+LD $dIR, $dPC				
+LD $dD, @_BUTTONS_@
+ST $dD, @_PREVBUTTONS_@
+
+STARTJUMP:
+	# Set controller to use debug flags and registries
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGREGISTERS_@
+	ST $dC, @_DBGFLAGS_@
+
+	LD $dE, @_SWITCHES_@	
+	BA @STEPMODE
+
+
+
+STEPMODE:
+		# Copy the user PC and user IR to dbgAddr en dbgValue so a single display subroutine can be used 
+	CP $dAD, $dPC
+	CP $dVAL, $dIR	
+	
+		# Check which button went from 0 to 1, store results in $dC
+	LD $dD, @_BUTTONS_@
+	LD $dC, @_PREVBUTTONS_@
+	INV $dC, $dC
+	AND $dC, $dD
+	ST $dD, @_PREVBUTTONS_@
+	
+		# Check if button 3 is HIGH
+		# 	If LOW, display value
+		# 	If HIGH, execute instruction
+	SETHI $dB, x"10"
+	SETLO $dB, x"00"
+	AND $dC, $dB
+	BZERO @ADDRESVALUEDISPLAY
+
+			# # # # # EXECUTE USER INSTRUCTION # # # # # 
+	LD $dIR, $dPC		# Should not be needed, but doesn't hurt to put here anyways
+	CP $dC, $dIR
+	SETHI $dB, x"C0"
+	SETLO $dB, x"00"	# $dB = 1100 0000 00000 0000
+	
+	SHIFTR $dC, 6
+	SETLO $dC, x"00"
+	SHIFTL $dC, 6
+	
+	SUB $dC, $dB 	# Check if its a branch instruction
+	BZERO @PANICITSABRANCHINSTRUCTION
+	BA @NOTBRANCHINSTR
+	
+PANICITSABRANCHINSTRUCTION:
+	CP $dC, $dIR
+	SHIFTL $dC, 3
+	SETLO $dC, x"00"
+	SHIFTL $dC, 4 	# COND 0000 0000 0000
+	
+	SETLO $dB, x"00"
+	SETHI $dB, x"40"
+	SUB $dB, $dC
+	BZERO @USERCALLINSTRUCTION 	# Check if the instruction is a call instruction = 0100
+	
+	SETLO $dB, x"00"
+	SETHI $dB, x"50"
+	SUB $dB, $dC
+	BZERO @USERRETURNINSTRUCTION 	# Check if the instruction is a return instruction = 0101
+	
+	SETLO $dB, x"00"
+	SETHI $dB, x"00"
+	SUB $dB, $dC
+	BZERO @BNEGCHECK 	# Check if the instruction is a BNEG instruction = 0000
+	
+	SETLO $dB, x"00"
+	SETHI $dB, x"10"
+	SUB $dB, $dC
+	BZERO @BZEROCHECK 	# Check if the instruction is a BZERO instruction = 0001
+	
+	BA @HOP	# If its a branch instruction and not call, return, bneg, bzero, it must be a branch always
+	
+USERCALLINSTRUCTION:
+	CP $RET, $dPC
+	BA @HOP
+
+USERRETURNINSTRUCTION:
+	CP $dPC, $RET
+	LD $dIR, $dPC
+	BA @STARTJUMP
+	
+BNEGCHECK:
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
+	BNEG @HOP
+	BA @NOHOP
+	
+BZEROCHECK:
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
+	BZERO @HOP
+	BA @NOHOP
+
+HOP:
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
+	# 
+	# Get jump address and put in PC 	DEPENDS ON HOW FLAGS WORK
+	# 
+	LD $dIR, $dPC
+	BA @STARTJUMP
+	
+NOHOP:
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
+	ADD $dPC, "00010"
+	LD $dIR, $dPC
+	BA @STARTJUMP
+	
+NOTBRANCHINSTR:
+	SETHI $dC, x"00"
+	SETLO $dC, x"00"
+	ST $dC, @_DBGFLAGS_@
+	ST $dIR, @instr
+	ST $dC, @_DBGREGISTERS_@
+instr:
+	PUT 0000000000000000 # DUMMY INSTRUCTION: AND $r0, $r0
+	SETHI $dC, x"00"
+	SETLO $dC, x"01"
+	ST $dC, @_DBGFLAGS_@
+	ST $dC, @_DBGREGISTERS_@
+	ADD $dPC, "00010"
+	LD $dIR, $dPC
+	BA @STARTJUMP
+
+ADDRESVALUEDISPLAY:
+		# Check if lever 7 is HIGH
+		# 	if off 	jump to DISPLAYVALUE
+		# 	else 	jump to DISPLAYADDRES
+	SETHI $dC, x"01"
+	SETLO $dC, x"00"
+	AND $dC, $dE
+	BZERO @DISPLAYVALUE
+	BA @DISPLAYADDRES
+
+DISPLAYVALUE:
+	DISPRHR $dVAL
+	BA @STARTJUMP
+
+DISPLAYADDRES:
+	DISPRHR $dAD
+	BA @STARTJUMP
+

@@ -211,7 +211,7 @@ end:        BA @end`
          * @param {string} extension - The extension to use.
          */
          function getStartAddress() {
-            return parseInt(document.getElementById("startaddress").value || '8192');
+            return parseInt(document.getElementById("startaddress").value || '1024');
         }
 
         /***
@@ -290,7 +290,7 @@ end:        BA @end`
                 ), getFileName('.heks'));
                 setColorProgress("green");
                 popup("success", 'Assembled', `Done assembling ${getFileName('.assh')}!`);
-                setTimeout(()=>setProgress(0), 2000);
+                setTimeout(()=>setProgress(0), 8192);
             } catch (e) {
                 setColorProgress("red");
                 console.error(e);
