@@ -3,12 +3,12 @@
 # $r1 = %r1
 
 # $RET = Call Return Address
-# $dA = TempAddr
+# $dA = ASSEMBLERBRANCH
 # $dB = TempVal2
 # $dC = TempVal1 
 # $dD = ButtonState 
 # $dE = LeverState 
-# $dF = ASSEMBLERBRANCH
+# $dF = TempAddr
 # $dAD = dbgAddr
 # $dVAL = dbgValue 
 # $dPC = dbgPC 
@@ -194,34 +194,34 @@ REGISTRY:
 REGISTRYMOVE:
 		# If button 3 or 2 is pressed, increment/decrement the XXXX in "Display Register XXXX" 
 
-	LD $dA, @LBL	
-	CP $dB, $dA
+	LD $dF, @LBL	
+	CP $dB, $dF
 	AND $dB, "01111"		# $dB = 0..0 XXXX
 	
 	# In use: DA: LBL("Display registry XXXX")
 	# 		TempVal1: Changed buttons
 	# 		TempVal2: 0..0 XXXX
 	
-	CP $dA, $dB
+	CP $dF, $dB
 	SHIFTL $dC, 3
 	BZERO @REGISTRYMOVEADD
 	BA @REGISTRYMOVESUB
 	
 REGISTRYMOVESUB:
-	SUB $dA, x"0001"
+	SUB $dF, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVEADD:
-	ADD $dA, x"0001"
+	ADD $dF, x"0001"
 	BA @REGISTRYMOVESET
 
 REGISTRYMOVESET:
-	AND $dA, "01111"
-	CP $dC, $dA 	
-	LD $dA, @LBL
-	AND $dA, "10000"
-	OR $dA, $dC
-	ST $dA, @LBL
+	AND $dF, "01111"
+	CP $dC, $dF 	
+	LD $dF, @LBL
+	AND $dF, "10000"
+	OR $dF, $dC
+	ST $dF, @LBL
 	
 	SHIFTL $dC, 4
 	OR $dC, "00001"

@@ -54,6 +54,8 @@ DELIVERABLES
 
 
 WHAT WE DID
+	Stopwatch
+	Random number generator
 	Syntax highligher
 	Veel te veel instructions
 	Assembler
@@ -94,7 +96,7 @@ Cliche problem statement
 
 <Body: Features>
 	Instructionset
-		ARITHMETIC
+		ARITHMETIC (15)
 			AND 
 			NOT AND 
 			OR 
@@ -111,15 +113,15 @@ Cliche problem statement
 			COPY 
 			!!!!! RANDOM !!!!!
 		
-		MEMORY 
+		MEMORY (2)
 			LOAD
 			STORE 
 		
-		SET 
+		SET (2)
 			SETHI 
 			SETLO 
 
-		BRANCH 
+		BRANCH (5)
 			BRANCH IF ZERO 
 			BRANCH IF NEGATIVE 
 			BRANCH ALWAYS 

@@ -52,7 +52,7 @@ INIT:
 	
 	SETHI $r8, "00000011" # Start at 1000 ms per move
 	SETLO $r8, "11101000"
-	
+	displayLUT
 	ST $r1, @TIMER0@
 	LD $r7, @TIMER1@
 
