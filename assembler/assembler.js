@@ -24,7 +24,6 @@
 // Load usefull addresses in for every user.
 let preVars = [
     ["@_BIOS_@",         0],
-    ["@_DEBUG_@",      32],
     ["@_RAM_@",       1024],
     ["@_LEDS_@",     2018],
     ["@_SWITCHES_@", 2020],

@@ -35,7 +35,15 @@
 #     ["@_DBGREGISTERS_@", 2052],
 # ]
 
+##### BIOS #####
 
+LD $dE, @_SWITCHES_@
+SETHI $dC, x"00"
+SETLO $dC, x"40"
+AND $dC, $dE
+BZERO @_RAM_@
+
+##### BIOS #####
 
 	# Store address of start of user program in dbgPC
 LD $dPC, @_RAM_@ 					
