@@ -2,7 +2,7 @@
 -- Dennis, Kasper, Tjeerd, Nick, Oussama
 --              ram (SYNTHESIS)
 -- This file contains the compiled user RAM in VHDL.
--- NOTE: this file is generated on Tue, 2020-11-03, 17:18 
+-- NOTE: this file is generated on Tue, 2020-11-03, 21:35 
 -- by the ram2vhdl.tcl script.
 -- Compiled and used in synthesis.
 

@@ -1,21 +1,43 @@
-#             HAL8080 Processor               #
-# Kasper, Dennis, Tjeerd, Nick, Oussama 2020  #
-#              Hello World Program            #
-# Simple hello world.                         #
-# Outputs hello on display                    #
-# Compiled on Tue, 03 Nov 2020 16:17:39 GMT by Hal8080 Assembler [k]
+# User Program
+# Compiled on Tue, 03 Nov 2020 20:23:56 GMT by Hal8080 Assembler [k]
 =======
-0000-00 
+0000-07
 0001-F4
-0002-06
+0002-F4
 0003-F5
-0004-8A
-0005-C0
-0006-4B
-0007-B1
-0008-00
-0009-F4
-000A-08
-000B-F5
-000C-8A
-000D-C0
+0004-0A
+0005-41
+0006-07
+0007-F4
+0008-F4
+0009-F5
+000A-0A
+000B-43
+000C-07
+000D-F4
+000E-F6
+000F-F5
+0010-0A
+0011-48
+0012-04
+0013-80
+0014-07
+0015-F4
+0016-E6
+0017-F5
+0018-0A
+0019-4C
+001A-0F
+001B-2C
+001C-00
+001D-F4
+001E-06
+001F-F5
+0020-4A
+0021-C0
+0022-00
+0023-F4
+0024-00
+0025-F5
+0026-8A
+0027-C0
