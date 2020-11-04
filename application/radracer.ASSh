@@ -125,14 +125,15 @@ UPDATEFIRSTDISPLAY:
 	ST $rF, @_SEG45_@
 	RET
 
-
+##### IT WORKS UP TO HERE #####
 
 COLLISION:
 	INV $r5, $rC
 	AND $r5, $rB
-	BZERO @RETFLAG
-	CALL @DEAD
-
+	CP $r6, $rB
+	SUB $r6, $r5 
+	BZERO @DEAD
+	RET
 
 
 UPDATEDISPLAYS:
@@ -143,6 +144,7 @@ UPDATEDISPLAYS:
 	RET
 
 MOVEDISPLAYS:
+		# Stop timer, reduce maxTimer, increment score
 	ST $r0, @_ATIMER1_@
 	SUB $r8, 10
 	ADD $r9, $r1
@@ -172,7 +174,7 @@ MOVEDISPLAYS:
 	SHIFTR $r5, 7
 	SETHI $r5, x"00"
 	SHIFTL $r5, 7
-	OR $r5, $r0 
+	SUB $r5, $r0 
 	BZERO @addNothing
 
 		# if seg2 == EMPTY
@@ -181,12 +183,12 @@ MOVEDISPLAYS:
 	SHIFTL $r5, 1
 	SETHI $r5, x"00"
 	SHIFTR $r5, 1
-	OR $r5, $r0 
+	SUB $r5, $r0 
 	BZERO @addPrevious
 
 		# else
 		# 	seg0 = RAND VAL
-	BZERO @addRandom
+	BA @addRandom
 
 addNothing:
 	SETLO $rE, "01111111"
@@ -195,9 +197,9 @@ addNothing:
 addPrevious: 
 	CP $r5, $rE
 	SHIFTR $r5, 8
-	SETLO $rE, x"00"
-	SETHI $r5, x"00"
-	OR $rE, $r5
+	SETHI $r5, "00000000"	# $r5 = 0000 0000 0XXX XXXX
+	SETLO $rE, "00000000" 	# $rE = 0XXX XXXX 0000 0000
+	OR $rE, $r5				# $rE = 0XXX XXXX 0XXX XXXX
 	RET
 
 addRandom:
@@ -205,6 +207,7 @@ addRandom:
 	SETHI $r4, x"00"
 	SETLO $r4, "01001001"
 	AND $r5, $r4		# Check if not all 3 positions are 0
+	SUB $r5, $r0
 	BZERO @addRandom
 	CP $r4, $r5
 	SETHI $r3, x"00"
@@ -212,9 +215,10 @@ addRandom:
 	SUB $r4, $r3	# Check if not all 3 positions are 1
 	BZERO @addRandom
 
+		# Ensure the new display has format 1X00X00X, invert to 0X11X11X
 	SHIFTL $r5, 1
 	SETHI $r5, x"FF"
-	SHIFTL $r5, 1
+	SHIFTR $r5, 1
 	SETHI $r5, x"00"
 	INV $r5, $r5
 	SETLO $rE, x"00"
@@ -227,7 +231,7 @@ WRITEDISPLAYS:
 	INV $r5, $rC
 	OR $r5, $rB
 	INV $rF, $r5
-	
+
 	ST $rF, @_SEG45_@
 	ST $rD, @_SEG23_@
 	ST $rE, @_SEG01_@
@@ -244,18 +248,12 @@ DEAD:
 	DISPRHR $r9
 
 	LD $r6, @_BUTTONS_@
-	SETHI $r5, x"20"
-	SETLO $r5, x"00"
-	AND $r5, $r6
-	BZERO @DEAD
-	SETHI $r5, x"10"
-	SETLO $r5, x"00"
-	AND $r5, $r6
-	BZERO @DEAD
+	SETHI $r5, x"00"
+	SETLO $r5, x"0C"
+	SUB $r5, $r6
+	BZERO @INIT
 
-	BA @INIT
-
-
+	BA @DEAD
 
 RETFLAG: 	# For conditional RETS
 	RET
