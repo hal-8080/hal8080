@@ -92,10 +92,10 @@ BEGIN
             mmio(start_buttons) <= x"0" & (NOT i_buttons);
             mmio(start_millis+1) <= i_timer0(15 DOWNTO 8);
             mmio(start_millis)   <= i_timer0(7 DOWNTO 0);
-            mmio(start_timer1+3) <= i_timer1(15 DOWNTO 8);
-            mmio(start_timer1+2) <= i_timer1(7 DOWNTO 0);
-            mmio(start_timer2+3) <= i_timer2(15 DOWNTO 8);
-            mmio(start_timer2+2) <= i_timer2(7 DOWNTO 0);
+            mmio(start_timer1+1) <= i_timer1(15 DOWNTO 8);
+            mmio(start_timer1) <= i_timer1(7 DOWNTO 0);
+            mmio(start_timer2+1) <= i_timer2(15 DOWNTO 8);
+            mmio(start_timer2) <= i_timer2(7 DOWNTO 0);
         END IF; 
     END PROCESS;
     -- Directly output from memory based on address_bus.
@@ -109,8 +109,8 @@ BEGIN
     o_seg4    <= mmio(start_display+4)(6 DOWNTO 0);
     o_seg5    <= mmio(start_display+5)(6 DOWNTO 0);
     o_leds    <= mmio(start_leds+1)(1 DOWNTO 0) & mmio(start_leds);
-    o_timer1  <= mmio(start_timer1)(0);
-    o_timer2  <= mmio(start_timer2)(0);
+    o_timer1  <= mmio(start_A_timer1)(0);
+    o_timer2  <= mmio(start_A_timer2)(0);
     debug_out <= mmio(start_debug)(0);
 
 END bhv;
