@@ -39,19 +39,24 @@
 # ]
 
 
+# Buttons: XXXX XXXX XXXX 3210
+# Levers:  XXXX XX98 7654 3210
+
 INIT:
 		# Set segments to empty
-		# Top half is left segment, bottom half is right segment
-	SETHI $rC, "11111111"
-	SETLO $rC, "11111111"
-	SETHI $rD, "11111111"
-	SETLO $rD, "11111111"
-	SETHI $rE, "11111111"
-	SETLO $rE, "11111111"
+		# SETHI is left segment, SETLO is right segment
+		# The segments are ordered as follows: X6543210. They are active LOW.
+	SETHI $rC, "01111111"
+	SETLO $rC, "01111111"
+	SETHI $rD, "01111111"
+	SETLO $rD, "01111111"
+	SETHI $rE, "01111111"
+	SETLO $rE, "01111111"
 	
-	SETHI $rB, "00000001" 
+		# Set player to the middle
+	SETHI $rB, "01000000" 
 	SETLO $rB, "00000000"
-	
+
 		# Create superposition of player and first display
 	INV $r5, $rC
 	OR $r5, $rB
@@ -61,12 +66,15 @@ INIT:
 	ST $rD, @_SEG23_@
 	ST $rE, @_SEG01_@
 
+		# Set score to 0
 	SETHI $r9, x"00"
 	SETLO $r9, x"00"
 	
-	SETHI $r8, "00000011" # Start at 1000 ms per move
+		# Set MaxTimer to 1000ms
+	SETHI $r8, "00000011"
 	SETLO $r8, "11101000"
-	displayLUT
+
+		# Start the timer
 	ST $r1, @_ATIMER1_@
 	LD $r7, @_TIMER1_@
 
@@ -75,40 +83,38 @@ INIT:
 LOOP:
 	CALL @UPDATEPLAYER
 	CALL @UPDATEFIRSTDISPLAY
-	CALL @COLLISION
-	CALL @UPDATEDISPLAYS
-	CALL @WRITEDISPLAYS
-	BA @LOOP
-	
-
+	#CALL @COLLISION
+	#CALL @UPDATEDISPLAYS
+	#CALL @WRITEDISPLAYS
+	BA @LOOP	
 
 UPDATEPLAYER:
-	LD $r6, @_BUTTONS_@
-# checkUP:
-	SETLO $r5, x"00"
-	SETHI $r5, x"10"
-	AND $r5, $r6
-	BZERO @checkDOWN
-	
-	SETHI $rB, "01000000"	# Player state = up
-	SETLO $rB, x"00"
-	RET
-	
-checkDOWN:
-	SETHI $r5, x"20"
-	SETLO $r5, x"00"
-	AND $r5, $r6
-	BZERO @setMIDDLE
-	
-	SETHI $rB, "00001000"	# Player state = down
-	SETLO $rB, x"00"
+    LD $r6, @_BUTTONS_@
+    SETHI $r5, x"00"
+    SETLO $r5, x"08"
+    SUB $r5, $r6
+    BZERO @up
+    
+    SETHI $r5, x"00"
+    SETLO $r5, x"04"
+    SUB $r5, $r6
+    BZERO @down
+    BA @middle
+
+middle:
+    SETHI $rB, "01000000"
+    SETLO $rB, "00000000"
 	RET
 
-setMIDDLE:
-	SETHI $rB, x"01"
-	SETLO $rB, x"00"
+up: 
+    SETHI $rB, "00000001"
+	SETLO $rB, "00000000"
 	RET
 
+down:
+    SETHI $rB, "00001000"
+	SETLO $rB, "00000000"
+	RET
 
 
 UPDATEFIRSTDISPLAY:
